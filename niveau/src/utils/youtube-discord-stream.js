@@ -53,14 +53,13 @@ function spawnYtdlpWebmOpusStream(watchUrl) {
 
     const kill = () => {
         try {
-            subprocess.kill('SIGKILL');
+            if (!subprocess.killed) subprocess.kill('SIGKILL');
         } catch (_) {
             /* ignore */
         }
     };
 
     stream.once('error', kill);
-    stream.once('close', kill);
     subprocess.once('error', (err) => {
         logger.warn('[MUSIC] yt-dlp process:', err?.message || err);
         kill();
