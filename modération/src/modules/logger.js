@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const CONFIG = require('../config.js');
+const { resolveAllLogChannelId } = require('../utils/log-channel-resolve');
 
 class Logger {
     constructor(client) {
@@ -12,7 +13,7 @@ class Logger {
             return;
         }
 
-        const logChannelId = CONFIG.ALL_LOG_CHANNEL_ID;
+        const logChannelId = resolveAllLogChannelId(guild.id);
         if (!logChannelId) {
             console.log('[DEBUG] Logger: No logChannelId configured');
             return;
