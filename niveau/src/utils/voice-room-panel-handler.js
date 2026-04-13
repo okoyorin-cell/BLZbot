@@ -68,9 +68,7 @@ async function handleVoiceRoomPanelButton(interaction) {
 
     if (!canUseVoicePanel(interaction, voiceChannelId, restricted)) {
         return interaction.reply({
-            content: restricted
-                ? 'Tu n’as pas accès à ce panneau (créateur du salon ou staff uniquement).'
-                : 'Tu n’as pas accès à ce panneau (créateur du salon ou staff uniquement).',
+            content: 'Tu n’as pas accès à ce panneau (créateur du salon ou staff uniquement).',
             flags: 64,
         });
     }
