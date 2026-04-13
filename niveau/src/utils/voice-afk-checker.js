@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const logger = require('./logger');
 const { penalizeUser, DEFAULT_PENALTY_DURATION } = require('./ranked-state');
-const { usersInVoice } = require('./global-state');
+const { runWithEconomyGuild } = require('./economy-scope');
 
 // Configuration
 const CONFIG = {
