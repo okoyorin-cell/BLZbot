@@ -103,9 +103,37 @@ class GuildMusicSession {
      * @param {string} channelId
      * @param {string} messageId
      */
-    setPanelMessage(channelId, messageId) {
-        this.panelChannelId = channelId;
-        this.panelMessageId = messageId;
+    addPanelRegistration(channelId, messageId) {
+        if (this.panelRegistrations.some((x) => x.channelId === channelId && x.messageId === messageId)) {
+            return;
+        }
+        this.panelRegistrations.push({ channelId, messageId });
+        while (this.panelRegistrations.length > 15) {
+            this.panelRegistrations.shift();
+        }
+    }
+
+    /**
+     * Supprime les panneaux enregistrés pour ce salon texte (messages + entrées).
+     * @param {import('discord.js').Client} client
+     * @param {string} channelId
+     */
+    async removePanelsInChannel(client, channelId) {
+        const keep = [];
+        for (const r of this.panelRegistrations) {
+            if (r.channelId !== channelId) {
+                keep.push(r);
+                continue;
+            }
+            try {
+                const ch = await client.channels.fetch(r.channelId).catch(() => null);
+                const msg = await ch?.messages?.fetch(r.messageId).catch(() => null);
+                await msg?.delete().catch(() => null);
+            } catch (_) {
+                /* ignore */
+            }
+        }
+        this.panelRegistrations = keep;
     }
 
     /**
