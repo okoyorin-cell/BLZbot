@@ -394,7 +394,10 @@ async function setLevel(userId, level, client = null) {
                 if (!announceMember) announceMember = member;
             });
             if (announceMember && level > originalLevel) {
-                const levelUpChannel = await client.channels.fetch(process.env.LEVEL_UP_CHANNEL).catch(() => null);
+                const levelChId = resolveLevelUpChannelId(economyGuildId.getStore());
+                const levelUpChannel = levelChId
+                    ? await client.channels.fetch(levelChId).catch(() => null)
+                    : null;
                 if (levelUpChannel) {
                     const user = getUserStmt.get(userId);
                     const notify = user ? user.notify_level_up : 1;
