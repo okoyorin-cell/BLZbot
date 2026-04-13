@@ -4,12 +4,9 @@
 const {
     ContainerBuilder,
     TextDisplayBuilder,
-    SectionBuilder,
-    ThumbnailBuilder,
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
-    SeparatorBuilder,
     MessageFlags,
 } = require('discord.js');
 const CONFIG = require('../config.js');
