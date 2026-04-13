@@ -445,7 +445,7 @@ async function createPrivateVoice(client, member, cfg) {
 
     if (panelWhere.where === 'voice' || panelWhere.where === 'voice-rest') {
         try {
-            await postOrReplaceMusicPanel(client, guild.id, fresh, member);
+            await postOrReplaceMusicPanel(client, guild.id, channel, member);
         } catch (e) {
             logger.warn(`[PRIVATE_ROOM] Panneau musique: ${e?.message || e}`);
         }
