@@ -304,22 +304,25 @@ function registerClientReady(client, { isHalloweenActive }) {
     setInterval(async () => {
         if (usersInVoice.size === 0) return;
 
-        const guild = await client.guilds.fetch(process.env.GUILD_ID).catch(() => null);
-        if (!guild) {
-            logger.error("Impossible de fetch le serveur principal pour les récompenses vocales.");
-            return;
-        }
-
-        // Préparer les données pour traitement parallèle
-        const userIds = Array.from(usersInVoice);
+        const voiceKeys = Array.from(usersInVoice);
 
         // Traiter par lots de 10 pour ne pas surcharger le CPU ou l'API d'un coup
         const batchSize = 10;
-        for (let i = 0; i < userIds.length; i += batchSize) {
-            const batch = userIds.slice(i, i + batchSize);
+        for (let i = 0; i < voiceKeys.length; i += batchSize) {
+            const batch = voiceKeys.slice(i, i + batchSize);
 
-            await Promise.all(batch.map(async (userId) => {
+            await Promise.all(batch.map(async (vKey) => {
                 try {
+                    const { guildId, userId } = parseVoiceTrackingKey(vKey);
+                    if (!guildId) {
+                        return;
+                    }
+
+                    const guild = await client.guilds.fetch(guildId).catch(() => null);
+                    if (!guild) {
+                        return;
+                    }
+
                     const member = await guild.members.fetch(userId).catch(() => null);
                     // Ignorer si le membre n'est plus là ou plus en vocal
                     if (!member || !member.voice.channel) {
@@ -332,6 +335,7 @@ function registerClientReady(client, { isHalloweenActive }) {
                     logger.debug(`Voice check: ${member.user.username} | membres humains: ${humanMembersCount}`);
 
                     if (humanMembersCount >= 2) {
+                        await runWithEconomyGuild(guildId, async () => {
                         const user = member.user;
                         getOrCreateUser(userId, user.username);
                         updateUserActivityTimestamp(userId);
