@@ -268,6 +268,17 @@ function getMusicSession(guildId) {
 async function postOrReplaceMusicPanel(client, guildId, textChannel, member) {
     const session = getMusicSession(guildId);
     session._client = client;
+    if (session.panelChannelId && session.panelMessageId) {
+        try {
+            const oldCh = await client.channels.fetch(session.panelChannelId).catch(() => null);
+            if (oldCh?.isTextBased?.()) {
+                const oldMsg = await oldCh.messages.fetch(session.panelMessageId).catch(() => null);
+                await oldMsg?.delete?.().catch(() => null);
+            }
+        } catch (_) {
+            /* ignore */
+        }
+    }
     const { buildMusicPanelPayload } = require('./voice-music-panel');
     const payload = {
         content: `<@${member.id}>`,
