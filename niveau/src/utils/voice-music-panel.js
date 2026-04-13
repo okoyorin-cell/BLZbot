@@ -68,7 +68,20 @@ function buildMusicPanelPayload(guildId, session) {
             .setEmoji('⏹️')
     );
 
-    return { embeds: [embed], components: [row] };
+    const row2 = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(btnId(guildId, 'playprompt'))
+            .setStyle(ButtonStyle.Success)
+            .setLabel('Ajouter')
+            .setEmoji('➕'),
+        new ButtonBuilder()
+            .setCustomId(btnId(guildId, 'clear'))
+            .setStyle(secondary)
+            .setLabel('Vider file')
+            .setEmoji('🧹')
+    );
+
+    return { embeds: [embed], components: [row, row2] };
 }
 
 function truncate(s, n) {
