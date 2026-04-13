@@ -232,37 +232,47 @@ async function handleMusicSelect(interaction) {
         return interaction.reply({ content: 'Serveur incorrect.', flags: 64 });
     }
 
+    await interaction.deferUpdate().catch(() => null);
+
     prunePending();
     const key = pendingKey(guildId, userId);
     const pending = pendingSearches.get(key);
     if (!pending) {
-        return interaction.update({
-            content: 'Résultats expirés — relance **Ajouter** ou `/musique play`.',
-            components: [],
-        });
+        return interaction
+            .editReply({
+                content: 'Résultats expirés — relance **Ajouter** ou `/musique play`.',
+                components: [],
+            })
+            .catch(() => null);
     }
 
     const idx = parseInt(interaction.values[0], 10);
     const pick = pending.results[idx];
     pendingSearches.delete(key);
     if (!pick) {
-        return interaction.update({
-            content: 'Choix invalide.',
-            components: [],
-        });
+        return interaction.editReply({ content: 'Choix invalide.', components: [] }).catch(() => null);
     }
 
     const vc = interaction.member?.voice?.channel;
     if (!vc?.isVoiceBased?.()) {
-        return interaction.update({
-            content: 'Tu n’es plus en vocal — reconnecte-toi et relance la commande.',
-            components: [],
-        });
+        return interaction
+            .editReply({
+                content: 'Tu n’es plus en vocal — reconnecte-toi et relance la commande.',
+                components: [],
+            })
+            .catch(() => null);
     }
 
     const session = getMusicSession(guildId);
     session._client = interaction.client;
-    session.ensureConnection(interaction.client, vc);
+    try {
+        session.ensureConnection(interaction.client, vc);
+    } catch (e) {
+        logger.error('[MUSIC] select join:', e);
+        return interaction
+            .editReply({ content: 'Impossible de rejoindre le vocal.', components: [] })
+            .catch(() => null);
+    }
 
     const track = {
         title: pick.title,
@@ -270,16 +280,17 @@ async function handleMusicSelect(interaction) {
         requestedBy: userId,
     };
     if (!session.enqueue(track)) {
-        return interaction.update({
-            content: 'La file est pleine (limite atteinte).',
-            components: [],
-        });
+        return interaction
+            .editReply({ content: 'La file est pleine (limite atteinte).', components: [] })
+            .catch(() => null);
     }
 
-    await interaction.update({
-        content: `Ajouté à la file : **${pick.title.slice(0, 120)}**`,
-        components: [],
-    });
+    await interaction
+        .editReply({
+            content: `Ajouté à la file : **${pick.title.slice(0, 120)}**`,
+            components: [],
+        })
+        .catch(() => null);
 
     await session.startOrContinue(interaction.client, vc);
     await session.refreshPanel();
