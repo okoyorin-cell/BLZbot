@@ -402,5 +402,5 @@ module.exports = {
     handleVoiceRoomPanelButton,
     handleVoiceRoomPanelModal,
     handleVocPanelOpenButton,
-    canUseVoiceVoicePanel: undefined,
+    canUseVoicePanel,
 };
