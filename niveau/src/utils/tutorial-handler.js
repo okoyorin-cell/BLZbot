@@ -507,7 +507,7 @@ async function initializeTutorial(member, thread) {
                 );
 
             logger.debug(`[TUTORIAL] Envoi du message dans le fil...`);
-            await thread.send({ content: `<@${member.id}>`, embeds: [embed], components: [row] });
+            await thread.send({ embeds: [embed], components: [row] });
             logger.debug(`[TUTORIAL] Message envoyé avec succès`);
         } catch (sendError) {
             logger.error('[TUTORIAL] Erreur envoi message:', sendError);
