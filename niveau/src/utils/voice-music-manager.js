@@ -8,6 +8,7 @@ const {
 const play = require('play-dl');
 const logger = require('./logger');
 const { searchYoutubeViaHtml, isYoutubeWatchUrl, normalizeYoutubePlayUrl } = require('./youtube-html-search');
+const { getYoutubeStreamForDiscord } = require('./youtube-discord-stream');
 
 /** @typedef {{ title: string, url: string, requestedBy: string }} MusicTrack */
 
