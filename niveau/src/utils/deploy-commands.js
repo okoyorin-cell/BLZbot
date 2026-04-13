@@ -111,33 +111,23 @@ module.exports = async function deployCommands(client) {
     }
 
     try {
-        const guild = await client.guilds.fetch(process.env.GUILD_ID);
-        if (!guild) {
-            const msg = 'Guilde introuvable pour enregistrer les commandes (vérifie GUILD_ID dans .env).';
+        const guildIds = getSlashDeployGuildIds();
+        if (guildIds.length === 0) {
+            const msg = 'Aucun GUILD_ID valide pour enregistrer les commandes (vérifie le .env).';
             console.error(`[DEPLOY] ❌ ${msg}`);
             logger.error(msg);
             throw new Error(msg);
         }
 
-        if (!compact) console.log(`[DEPLOY] Guild found: ${guild.name}\n`);
+        if (!compact) console.log(`[DEPLOY] Guildes cibles: ${guildIds.join(', ')}`);
 
-        const existingCommands = await guild.commands.fetch();
-        const existingMap = new Map();
-        existingCommands.forEach(cmd => existingMap.set(cmd.name, cmd));
-
-        if (!compact) console.log(`[DEPLOY] ${existingMap.size} commands already on Discord`);
-
-        // 3. Filtrer les commandes actives
         const commandsToCreate = [];
-        const managedNames = new Set(); // Noms gérés par ce script
-
         for (const [name, command] of localCommands.entries()) {
-            const shouldBeActive = command.source === 'normal' ||
+            const shouldBeActive =
+                command.source === 'normal' ||
                 (command.source === 'halloween' && isHalloweenActive) ||
                 (command.source === 'christmas' && isChristmasActive) ||
                 (command.source === 'valentin' && isValentinActive);
-
-            managedNames.add(name);
 
             if (shouldBeActive) {
                 const { source, ...cleanCmd } = command;
@@ -145,53 +135,73 @@ module.exports = async function deployCommands(client) {
             }
         }
 
-        // 4. Comparer et ne déployer que ce qui a changé
         let createdCount = 0;
         let updatedCount = 0;
         let skippedCount = 0;
         let errorCount = 0;
+        let anyGuildOk = false;
 
-        for (let i = 0; i < commandsToCreate.length; i++) {
-            const commandData = commandsToCreate[i];
-            const existing = existingMap.get(commandData.name);
+        for (const gid of guildIds) {
+            const guild = await client.guilds.fetch(gid).catch((err) => {
+                console.error(`[DEPLOY] Guilde ${gid} introuvable ou pas membre: ${err.message || err}`);
+                return null;
+            });
+            if (!guild) continue;
+            anyGuildOk = true;
 
-            if (existing && commandsAreEqual(existing, commandData)) {
-                // La commande existe et n'a pas changé → skip
-                skippedCount++;
-                continue;
+            if (!compact) console.log(`\n[DEPLOY] — ${guild.name} (${guild.id})`);
+
+            const existingCommands = await guild.commands.fetch();
+            const existingMap = new Map();
+            existingCommands.forEach((cmd) => existingMap.set(cmd.name, cmd));
+
+            if (!compact) console.log(`[DEPLOY] ${existingMap.size} commandes déjà sur cette guilde`);
+
+            for (let i = 0; i < commandsToCreate.length; i++) {
+                const commandData = commandsToCreate[i];
+                const existing = existingMap.get(commandData.name);
+
+                if (existing && commandsAreEqual(existing, commandData)) {
+                    skippedCount++;
+                    continue;
+                }
+
+                const action = existing ? 'Updating' : 'Creating';
+                try {
+                    if (!compact) {
+                        console.log(`[${createdCount + updatedCount + errorCount + 1}] ${action} /${commandData.name}...`);
+                    }
+                    if (existing) {
+                        await guild.commands.edit(existing.id, commandData);
+                    } else {
+                        await guild.commands.create(commandData);
+                    }
+                    if (!compact) {
+                        console.log(`  ✅ ${action === 'Creating' ? 'Created' : 'Updated'}: /${commandData.name}`);
+                    }
+                    if (existing) updatedCount++;
+                    else createdCount++;
+                } catch (cmdError) {
+                    const errLine = `${cmdError?.message || cmdError}${cmdError?.code ? ` [${cmdError.code}]` : ''}`;
+                    console.error(`[DEPLOY] /${commandData.name}: ${errLine}`);
+                    logger.error(`Erreur commande /${commandData.name}: ${errLine}`);
+                    errorCount++;
+                }
             }
+        }
 
-            const action = existing ? 'Updating' : 'Creating';
-            try {
-                if (!compact) {
-                    console.log(`[${createdCount + updatedCount + errorCount + 1}] ${action} /${commandData.name}...`);
-                }
-                if (existing) {
-                    await guild.commands.edit(existing.id, commandData);
-                } else {
-                    await guild.commands.create(commandData);
-                }
-                if (!compact) {
-                    console.log(`  ✅ ${action === 'Creating' ? 'Created' : 'Updated'}: /${commandData.name}`);
-                }
-                if (existing) updatedCount++;
-                else createdCount++;
-            } catch (cmdError) {
-                const errLine = `${cmdError?.message || cmdError}${cmdError?.code ? ` [${cmdError.code}]` : ''}`;
-                console.error(`[DEPLOY] /${commandData.name}: ${errLine}`);
-                logger.error(`Erreur commande /${commandData.name}: ${errLine}`);
-                errorCount++;
-            }
+        if (!anyGuildOk) {
+            throw new Error('Aucune guilde accessible pour le déploiement des slash.');
         }
 
         if (compact) {
             const hasPanelVoc = localCommands.has('panel-voc');
             console.log(
-                `[niveau] Slash : +${createdCount} ~${updatedCount} skip ${skippedCount} err ${errorCount} (${guild.name}) · chargé /panel-voc:${hasPanelVoc}`
+                `[niveau] Slash : +${createdCount} ~${updatedCount} skip ${skippedCount} err ${errorCount} · guildes ${guildIds.join(',')} · /panel-voc:${hasPanelVoc}`
             );
         } else {
             console.log('\n═══════════════════════════════════════════════════════════════');
-            console.log(`[DEPLOY] ✅ Deployment complete:`);
+            console.log(`[DEPLOY] ✅ Deployment complete (${guildIds.length} guilde(s)):`);
             console.log(`  📦 ${createdCount} created, 🔄 ${updatedCount} updated, ⏭️ ${skippedCount} unchanged, ❌ ${errorCount} errors`);
             console.log('═══════════════════════════════════════════════════════════════\n');
         }
@@ -199,7 +209,6 @@ module.exports = async function deployCommands(client) {
         if (!compact) {
             logger.info(`Commandes niveau: ${createdCount} new, ${updatedCount} updated, ${skippedCount} skipped, ${errorCount} errors`);
         }
-
     } catch (error) {
         const code = error && error.code;
         if (code === 10004) {
