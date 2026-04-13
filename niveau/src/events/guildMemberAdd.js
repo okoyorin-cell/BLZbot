@@ -1,4 +1,4 @@
-const { Events, EmbedBuilder } = require('discord.js');
+const { Events } = require('discord.js');
 const logger = require('../utils/logger');
 const { runWithEconomyGuild } = require('../utils/economy-scope');
 const { resolveTutorialChannelId } = require('../utils/blz-guild-channels');
