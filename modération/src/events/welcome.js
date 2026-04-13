@@ -56,27 +56,20 @@ function buildWelcomeMessage(member, options = {}) {
 
     const guildId = member.guild.id;
     const serverName = member.guild.name;
-    const avatar = member.user.displayAvatarURL({ extension: 'png', size: 512 });
     const joinedAt = options.joinedAt ?? member.joinedAt ?? new Date();
     const createdAt = member.user.createdAt;
 
-    const thumbnail = new ThumbnailBuilder().setURL(avatar).setDescription(`Avatar — ${member.user.username}`);
-
-    /** Bloc « titre » comme un embed : uniquement la ligne de bienvenue + miniature à droite */
-    const header = new TextDisplayBuilder().setContent(`# 👋 Bienvenue, ${member} !`);
-
-    const section = new SectionBuilder().addTextDisplayComponents(header).setThumbnailAccessory(thumbnail);
-
-    /** Corps : uniquement les 3 lignes (comme l’embed d’origine), sans blocs ##/### */
-    const body = new TextDisplayBuilder().setContent(
-        `➔ Nous sommes ravis de te voir arriver sur **${serverName}** !\n` +
-            `➔ N'hésite pas à aller faire un tour dans <#${regId}> et <#${ticketsId}> si t'as besoin d'aide.\n` +
-            `➔ Passe un agréable séjour ici ! 🔥`
-    );
-
-    /** Pied type embed : une seule ligne discrète (italique + sous-texte Discord si supporté) */
-    const footerMeta = new TextDisplayBuilder().setContent(
-        `-# Compte créé le ${formatFrCompactDate(createdAt)} · Arrivée ${formatFrCompactDateTime(joinedAt)}`
+    /** Tout le texte en pied de message (sous-texte) : pas de titre, pas de corps séparé, pas d’avatar. */
+    const footerOnly = new TextDisplayBuilder().setContent(
+        [
+            `-# 👋 Bienvenue, ${member} !`,
+            '',
+            `-# ➔ Nous sommes ravis de te voir arriver sur **${serverName}** !`,
+            `-# ➔ N'hésite pas à aller faire un tour dans <#${regId}> et <#${ticketsId}> si t'as besoin d'aide.`,
+            `-# ➔ Passe un agréable séjour ici ! 🔥`,
+            '',
+            `-# Compte créé le ${formatFrCompactDate(createdAt)} · Arrivée ${formatFrCompactDateTime(joinedAt)}`,
+        ].join('\n')
     );
 
     const row = new ActionRowBuilder().addComponents(
