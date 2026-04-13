@@ -1,0 +1,27 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy via SSH
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to VPS
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.SERVER_IP }}
+          REMOTE_USER: ${{ secrets.SERVER_USER }}
+          TARGET: /opt/BLZbot
+          EXCLUDE: "/node_modules/, /.git/, /.github/, /.env, *.log, *.db, *.sqlite, *.sqlite3"
+          SCRIPT_AFTER: |
+            cd /opt/BLZbot
+            pm2 restart BLZbot

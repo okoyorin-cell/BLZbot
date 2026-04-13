@@ -1,0 +1,72 @@
+const { SlashCommandBuilder, PermissionFlagsBits, Colors } = require('discord.js');
+const roleConfig = require('../../config/role.config.json');
+
+const RANKS = roleConfig.rankRoles.creation;
+
+function resolveColor(color) {
+    if (!color) return undefined;
+    if (typeof color === 'string' && Colors[color]) return Colors[color];
+    return color;
+}
+
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('creer-roles')
+        .setDescription('Crée tous les rôles de rangs du bot.')
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    async execute(interaction) {
+        await interaction.deferReply({ ephemeral: true });
+
+        const guild = interaction.guild;
+        const rolesToCreate = [...RANKS].reverse(); // Copie et inverse pour créer du plus haut au plus bas
+
+        try {
+            // 1. Trouver le rôle le plus peuplé
+            await guild.members.fetch(); // S'assurer que tous les membres sont dans le cache
+            const roles = await guild.roles.fetch();
+
+            let mostPopulatedRole = null;
+            let maxMembers = 0;
+
+            roles.forEach(role => {
+                if (role.name === '@everyone') return;
+                if (role.members.size > maxMembers) {
+                    maxMembers = role.members.size;
+                    mostPopulatedRole = role;
+                }
+            });
+
+            const targetPosition = mostPopulatedRole ? mostPopulatedRole.position : 1;
+
+            // 2. Créer les rôles
+            const createdRoles = [];
+            for (const rank of rolesToCreate) {
+                const existingRole = guild.roles.cache.find(r => r.name === rank.name);
+                if (!existingRole) {
+                    const newRole = await guild.roles.create({
+                        name: rank.name,
+                        color: resolveColor(rank.color),
+                        permissions: [],
+                    });
+                    createdRoles.push(newRole);
+                    console.log(`Rôle "${rank.name}" créé.`);
+                }
+            }
+
+            // 3. Positionner les rôles
+            // On positionne du plus bas (Plastique I) au plus haut (GOAT)
+            const orderedRolesToPosition = createdRoles.reverse();
+            for (let i = 0; i < orderedRolesToPosition.length; i++) {
+                const role = orderedRolesToPosition[i];
+                await role.setPosition(targetPosition + i + 1);
+            }
+
+            await interaction.followUp('Tous les rôles de rangs ont été créés et positionnés avec succès !');
+
+        } catch (error) {
+            console.error('Erreur lors de la création des rôles :', error);
+            await interaction.followUp('Une erreur est survenue. Vérifiez les permissions du bot et réessayez.');
+        }
+    },
+};

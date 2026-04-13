@@ -1,0 +1,1200 @@
+const { SlashCommandBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, EmbedBuilder, UserSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags, ContainerBuilder, TextDisplayBuilder, StringSelectMenuBuilder } = require('discord.js');
+const db = require('../../database/database');
+const { getGuildByName, updateGuildDetails, changeGuildOwner, addMemberToGuild, removeGuildSubChief, getGuildOfUser, getAllGuilds, dissolveGuild, createGuild, addGuildSubChief, updateGuildUpgrade, updateGuildLevel, getGuildById } = require('../../utils/db-guilds');
+const { getOrCreateUser, updateUserBalance, setPoints, transferUserData } = require('../../utils/db-users');
+const { updateGuildPrivateChannelName, UPGRADE_MATRIX } = require('../../utils/guild/guild-upgrades');
+const { updateUserRank } = require('../../utils/ranks');
+const logger = require('../../utils/logger');
+const roleConfig = require('../../config/role.config.json');
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('admin')
+        .setDescription('Commandes administratives générales.')
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('guilde-changer-nom')
+                .setDescription('Changer le nom d\'une guilde.')
+                .addStringOption(option =>
+                    option.setName('guilde')
+                        .setDescription('Le nom actuel de la guilde')
+                        .setRequired(true)
+                        .setAutocomplete(true))
+                .addStringOption(option =>
+                    option.setName('nouveau_nom')
+                        .setDescription('Le nouveau nom de la guilde')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('guilde-transferer-propriete')
+                .setDescription('Transférer la propriété d\'une guilde à un autre utilisateur.')
+                .addStringOption(option =>
+                    option.setName('guilde')
+                        .setDescription('Le nom de la guilde')
+                        .setRequired(true)
+                        .setAutocomplete(true))
+                .addUserOption(option =>
+                    option.setName('nouveau_proprietaire')
+                        .setDescription('Le nouveau propriétaire')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('guilde-supprimer')
+                .setDescription('Supprimer définitivement une guilde.')
+                .addStringOption(option =>
+                    option.setName('guilde')
+                        .setDescription('Le nom de la guilde à supprimer')
+                        .setRequired(true)
+                        .setAutocomplete(true)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('add-rp')
+                .setDescription('Ajouter des RP (Points) à un utilisateur.')
+                .addUserOption(option => option.setName('utilisateur').setDescription('L\'utilisateur').setRequired(true))
+                .addIntegerOption(option => option.setName('montant').setDescription('Le montant de RP à ajouter').setRequired(true).setMinValue(1)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('remove-rp')
+                .setDescription('Retirer des RP (Points) à un utilisateur.')
+                .addUserOption(option => option.setName('utilisateur').setDescription('L\'utilisateur').setRequired(true))
+                .addIntegerOption(option => option.setName('montant').setDescription('Le montant de RP à retirer').setRequired(true).setMinValue(1)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('set-rp')
+                .setDescription('Définir le montant de RP (Points) d\'un utilisateur.')
+                .addUserOption(option => option.setName('utilisateur').setDescription('L\'utilisateur').setRequired(true))
+                .addIntegerOption(option => option.setName('montant').setDescription('Le nouveau montant de RP').setRequired(true).setMinValue(0)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('transferer-compte')
+                .setDescription('Transférer les données d\'un compte vers un autre (Irréversible).')
+                .addUserOption(option => option.setName('source').setDescription('Le compte source (données à garder)').setRequired(true))
+                .addUserOption(option => option.setName('cible').setDescription('Le compte cible (recevra les données)').setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('cree-guilde')
+                .setDescription('Créer une nouvelle guilde avec configuration complète (admin only).'))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('guilde-fix')
+                .setDescription('Corriger/reconfigurer les paramètres d\'une guilde existante.')
+                .addStringOption(option =>
+                    option.setName('guilde')
+                        .setDescription('Le nom de la guilde à corriger')
+                        .setRequired(true)
+                        .setAutocomplete(true))
+                .addIntegerOption(option =>
+                    option.setName('upgrade')
+                        .setDescription('Le niveau d\'upgrade à appliquer (0-10)')
+                        .setRequired(true)
+                        .setMinValue(0)
+                        .setMaxValue(10)))
+        .addSubcommandGroup(group =>
+            group
+                .setName('nerf-vocal')
+                .setDescription('Gérer le système de nerf vocal.')
+                .addSubcommand(subcommand =>
+                    subcommand
+                        .setName('voir')
+                        .setDescription('Voir le statut du nerf vocal d\'un utilisateur.')
+                        .addUserOption(option => option.setName('utilisateur').setDescription('L\'utilisateur').setRequired(true)))
+                .addSubcommand(subcommand =>
+                    subcommand
+                        .setName('reset')
+                        .setDescription('Réinitialiser le nerf vocal d\'un utilisateur (remet l\'XP vocal journalier à 0).')
+                        .addUserOption(option => option.setName('utilisateur').setDescription('L\'utilisateur').setRequired(true)))
+                .addSubcommand(subcommand =>
+                    subcommand
+                        .setName('definir')
+                        .setDescription('Définir manuellement l\'XP vocal journalier d\'un utilisateur.')
+                        .addUserOption(option => option.setName('utilisateur').setDescription('L\'utilisateur').setRequired(true))
+                        .addIntegerOption(option => option.setName('montant').setDescription('Le montant d\'XP vocal journalier').setRequired(true).setMinValue(0))))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('guilde-war-fix')
+                .setDescription('Reset une guerre de guilde (points et/ou temps).')
+                .addStringOption(option =>
+                    option.setName('guilde')
+                        .setDescription('Nom d\'une des guildes en guerre')
+                        .setRequired(true)
+                        .setAutocomplete(true))
+                .addBooleanOption(option =>
+                    option.setName('reset-points')
+                        .setDescription('Recapturer les valeurs initiales et remettre les points à 0')
+                        .setRequired(false))
+                .addIntegerOption(option =>
+                    option.setName('ajouter-heures')
+                        .setDescription('Ajouter des heures au temps restant')
+                        .setRequired(false)
+                        .setMinValue(1)
+                        .setMaxValue(168)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('guilde-victoires')
+                .setDescription('Ajouter manuellement des victoires à une guilde.')
+                .addStringOption(option =>
+                    option.setName('guilde')
+                        .setDescription('Nom de la guilde')
+                        .setRequired(true)
+                        .setAutocomplete(true))
+                .addIntegerOption(option =>
+                    option.setName('victoires')
+                        .setDescription('Nombre de victoires à ajouter au compteur wars_won')
+                        .setRequired(false)
+                        .setMinValue(1))
+                .addIntegerOption(option =>
+                    option.setName('victoires-70')
+                        .setDescription('Nombre de victoires 70%+ à ajouter')
+                        .setRequired(false)
+                        .setMinValue(1))
+                .addIntegerOption(option =>
+                    option.setName('victoires-80')
+                        .setDescription('Nombre de victoires 80%+ à ajouter')
+                        .setRequired(false)
+                        .setMinValue(1))
+                .addIntegerOption(option =>
+                    option.setName('victoires-90')
+                        .setDescription('Nombre de victoires 90%+ à ajouter')
+                        .setRequired(false)
+                        .setMinValue(1)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('guilde-war-supprimer')
+                .setDescription('Supprimer une guerre de guilde en cours ou une déclaration en attente.'))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('reset-profil')
+                .setDescription('Réinitialise complètement les données d\'un membre')
+                .addUserOption(option =>
+                    option.setName('membre')
+                        .setDescription('Le membre dont le profil doit être réinitialisé')
+                        .setRequired(true))),
+
+    async autocomplete(interaction) {
+        const focusedValue = interaction.options.getFocused();
+        const guilds = getAllGuilds();
+        const filtered = guilds.filter(guild => guild.name.toLowerCase().includes(focusedValue.toLowerCase()));
+
+        // Discord limits autocomplete choices to 25
+        await interaction.respond(
+            filtered.slice(0, 25).map(guild => ({ name: guild.name, value: guild.name }))
+        );
+    },
+
+    async execute(interaction) {
+        const subcommand = interaction.options.getSubcommand();
+        const subcommandGroup = interaction.options.getSubcommandGroup(); // Récupérer le groupe
+
+        if (subcommandGroup === 'nerf-vocal') {
+            const targetUser = interaction.options.getUser('utilisateur');
+            const user = getOrCreateUser(targetUser.id, targetUser.username); // Ensure user exists in DB logic
+            // Note: getOrCreateUser returns DB object, not Discord user. But we need DB read/write.
+
+            if (subcommand === 'voir') {
+                const dailyXP = user.daily_voice_xp || 0;
+                const dailyPoints = user.daily_voice_points || 0;
+                const lastReset = user.daily_voice_last_reset || 0;
+
+                let status = "✅ Normal (100%)";
+                let multiplier = 1;
+
+                // Check reset validity
+                const today = new Date().setHours(0, 0, 0, 0);
+                let effectiveXP = dailyXP;
+                let effectivePoints = dailyPoints;
+
+                if (lastReset < today) {
+                    effectiveXP = 0;
+                    effectivePoints = 0;
+                    status += " (Sera reset à la prochaine activité)";
+                } else {
+                    // Hard Caps
+                    if (dailyXP >= 15000 || dailyPoints >= 7000) {
+                        status = "⛔ Hard Nerf (STOP - 0 gains)";
+                        multiplier = 0;
+                    }
+                    // Soft Caps
+                    else if (dailyXP >= 10000 || dailyPoints >= 5000) {
+                        status = "⚠️ Soft Nerf (Divisé par 5)";
+                        multiplier = 0.2;
+                    }
+                }
+
+                const embed = new EmbedBuilder()
+                    .setTitle(`🎙️ Statut Nerf Vocal : ${targetUser.username}`)
+                    .setColor(multiplier < 1 ? (multiplier === 0 ? 0xFF0000 : 0xFFA500) : 0x00FF00)
+                    .addFields(
+                        { name: 'XP Journalier', value: `${effectiveXP.toLocaleString()} / 10 000 (Soft) - 15 000 (Hard)`, inline: true },
+                        { name: 'RP Journalier', value: `${effectivePoints.toLocaleString()} / 5 000 (Soft) - 7 000 (Hard)`, inline: true },
+                        { name: 'Multiplicateur', value: `x${multiplier}`, inline: true },
+                        { name: 'Statut', value: status, inline: false },
+                        { name: 'Dernier Reset', value: lastReset ? `<t:${Math.floor(lastReset / 1000)}:R>` : 'Jamais', inline: false }
+                    );
+
+                return interaction.reply({ embeds: [embed], ephemeral: true });
+            }
+
+            else if (subcommand === 'reset') {
+                const today = new Date().setHours(0, 0, 0, 0);
+                db.prepare('UPDATE users SET daily_voice_points = 0, daily_voice_last_reset = ? WHERE id = ?').run(today, targetUser.id);
+                return interaction.reply({ content: `✅ Le nerf vocal de **${targetUser.username}** a été réinitialisé (RP vocal journalier remis à 0).` });
+            }
+
+            else if (subcommand === 'definir') {
+                const amount = interaction.options.getInteger('montant');
+                const today = new Date().setHours(0, 0, 0, 0);
+                // On met à jour le montant ET la date de reset pour que ce soit pris en compte immédiatement
+                // We assume the admin specifies the accumulated points
+                db.prepare('UPDATE users SET daily_voice_points = ?, daily_voice_last_reset = ? WHERE id = ?').run(amount, today, targetUser.id);
+                return interaction.reply({ content: `✅ Le RP vocal journalier de **${targetUser.username}** a été défini à **${amount}**.` });
+            }
+        }
+
+        if (subcommand === 'guilde-changer-nom') {
+            const guildName = interaction.options.getString('guilde');
+            const newName = interaction.options.getString('nouveau_nom');
+
+            const guild = getGuildByName(guildName);
+
+            if (!guild) {
+                return interaction.reply({ content: `❌ La guilde "**${guildName}**" n'existe pas.`, ephemeral: true });
+            }
+
+            // Vérifier si le nouveau nom est déjà pris
+            const existingGuild = getGuildByName(newName);
+            if (existingGuild) {
+                return interaction.reply({ content: `❌ Une guilde avec le nom "**${newName}**" existe déjà.`, ephemeral: true });
+            }
+
+            await interaction.deferReply();
+
+            try {
+                // Update guild name
+                updateGuildDetails(guild.id, newName, guild.emoji);
+
+                // Update private channel name
+                await updateGuildPrivateChannelName(interaction.client, guild, newName, guild.emoji);
+
+                return interaction.editReply({ content: `✅ Le nom de la guilde a été changé de "**${guildName}**" à "**${newName}**".` });
+            } catch (error) {
+                logger.error(`Erreur lors du changement de nom de la guilde ${guildName}:`, error);
+                return interaction.editReply({ content: '❌ Une erreur est survenue lors du changement de nom.' });
+            }
+        }
+
+        else if (subcommand === 'guilde-supprimer') {
+            const guildName = interaction.options.getString('guilde');
+            const guild = getGuildByName(guildName);
+
+            if (!guild) {
+                return interaction.reply({ content: `❌ La guilde "**${guildName}**" n'existe pas.`, ephemeral: true });
+            }
+
+            const confirmButton = new ButtonBuilder()
+                .setCustomId('delete_guild_confirm')
+                .setLabel('🗑️ SUPPRIMER DÉFINITIVEMENT')
+                .setStyle(ButtonStyle.Danger);
+
+            const cancelButton = new ButtonBuilder()
+                .setCustomId('delete_guild_cancel')
+                .setLabel('Annuler')
+                .setStyle(ButtonStyle.Secondary);
+
+            const row = new ActionRowBuilder().addComponents(confirmButton, cancelButton);
+
+            const reply = await interaction.reply({
+                content: `⚠️ **ATTENTION : SUPPRESSION DE GUILDE** ⚠️\n\nVous êtes sur le point de supprimer la guilde **${guild.name}**.\nCette action est **IRRÉVERSIBLE**.\n\nÊtes-vous sûr de vouloir continuer ?`,
+                components: [row],
+                fetchReply: true
+            });
+
+            const collector = reply.createMessageComponentCollector({
+                componentType: ComponentType.Button,
+                time: 60000
+            });
+
+            collector.on('collect', async (i) => {
+                if (i.user.id !== interaction.user.id) {
+                    return i.reply({ content: '❌ Seul l\'administrateur ayant lancé la commande peut confirmer.', ephemeral: true });
+                }
+
+                if (i.customId === 'delete_guild_confirm') {
+                    try {
+                        await i.deferUpdate();
+
+                        // Delete Discord channel if exists
+                        if (guild.channel_id) {
+                            const channel = await interaction.guild.channels.fetch(guild.channel_id).catch(() => null);
+                            if (channel) {
+                                await channel.delete().catch(err => logger.error(`Failed to delete channel for guild ${guild.name}:`, err));
+                            }
+                        }
+
+                        // Remove 'Créateur de Guilde' role from owner
+                        const ownerRole = interaction.guild.roles.cache.find(r => r.name === roleConfig.questRewardRoles.guildCreator);
+                        if (ownerRole && guild.owner_id) {
+                            const ownerMember = await interaction.guild.members.fetch(guild.owner_id).catch(() => null);
+                            if (ownerMember) {
+                                await ownerMember.roles.remove(ownerRole).catch(err => logger.warn(`Failed to remove role from owner ${guild.owner_id}:`, err));
+                            }
+                        }
+
+                        dissolveGuild(guild.id);
+
+                        await i.editReply({
+                            content: `✅ La guilde **${guild.name}** a été supprimée avec succès.`,
+                            components: []
+                        });
+                    } catch (error) {
+                        logger.error(`Erreur lors de la suppression de la guilde ${guild.name}:`, error);
+                        await i.editReply({
+                            content: `❌ Une erreur est survenue lors de la suppression : ${error.message}`,
+                            components: []
+                        });
+                    }
+                    collector.stop();
+                } else if (i.customId === 'delete_guild_cancel') {
+                    await i.update({
+                        content: '❌ Suppression annulée.',
+                        components: []
+                    });
+                    collector.stop();
+                }
+            });
+        }
+
+        else if (subcommand === 'guilde-transferer-propriete') {
+            const guildName = interaction.options.getString('guilde');
+            const newOwnerUser = interaction.options.getUser('nouveau_proprietaire');
+
+            const guild = getGuildByName(guildName);
+            if (!guild) {
+                return interaction.reply({ content: `❌ La guilde "**${guildName}**" n'existe pas.`, ephemeral: true });
+            }
+
+            if (guild.owner_id === newOwnerUser.id) {
+                return interaction.reply({ content: `❌ ${newOwnerUser} est déjà le propriétaire de cette guilde.`, ephemeral: true });
+            }
+
+            const currentGuildOfTarget = getGuildOfUser(newOwnerUser.id);
+            if (currentGuildOfTarget && currentGuildOfTarget.id !== guild.id) {
+                return interaction.reply({ content: `❌ ${newOwnerUser} est déjà membre de la guilde "**${currentGuildOfTarget.name}**". Il doit la quitter avant de pouvoir devenir propriétaire d'une autre guilde.`, ephemeral: true });
+            }
+
+            try {
+                const oldOwnerId = guild.owner_id;
+
+                // Si l'utilisateur n'est pas dans la guilde, on l'ajoute
+                if (!currentGuildOfTarget) {
+                    addMemberToGuild(newOwnerUser.id, guild.id);
+                }
+
+                // S'il était sous-chef, on le retire de la liste
+                removeGuildSubChief(guild.id, newOwnerUser.id);
+
+                // Changer le propriétaire dans la DB
+                changeGuildOwner(guild.id, newOwnerUser.id);
+
+                // --- Gestion des rôles Discord ---
+                const guildDiscord = interaction.guild;
+                const ownerRole = guildDiscord.roles.cache.find(r => r.name === roleConfig.questRewardRoles.guildCreator);
+
+                if (ownerRole) {
+                    // Retirer le rôle à l'ancien propriétaire
+                    const oldOwnerMember = await guildDiscord.members.fetch(oldOwnerId).catch(() => null);
+                    if (oldOwnerMember) {
+                        await oldOwnerMember.roles.remove(ownerRole).catch(e => logger.warn(`Impossible de retirer le rôle owner à ${oldOwnerId}: ${e.message}`));
+                    }
+
+                    // Ajouter le rôle au nouveau propriétaire
+                    const newOwnerMember = await guildDiscord.members.fetch(newOwnerUser.id).catch(() => null);
+                    if (newOwnerMember) {
+                        await newOwnerMember.roles.add(ownerRole).catch(e => logger.warn(`Impossible d'ajouter le rôle owner à ${newOwnerUser.id}: ${e.message}`));
+                    }
+                }
+
+                // Mettre à jour les permissions du salon
+                const { updateGuildChannelPermissions } = require('../../utils/guild/guild-upgrades');
+                // Need to re-fetch guild to get updated owner? No, we have IDs.
+                // But updateGuildChannelPermissions checks guild.owner_id. 
+                // We should manually pass the correct IDs or update the guild object.
+                // Actually, updateGuildChannelPermissions takes (client, guild, userId, action).
+                // It checks `if (userId === guild.owner_id)`.
+                // Since we just updated the DB, if we re-fetch the guild it will be correct.
+                const { getGuildById } = require('../../utils/db-guilds');
+                const updatedGuild = getGuildById(guild.id);
+
+                await updateGuildChannelPermissions(interaction.client, updatedGuild, newOwnerUser.id, 'add');
+                // Retirer d'abord toutes les permissions de l'ancien propriétaire pour effacer "ManageMessages"
+                await updateGuildChannelPermissions(interaction.client, updatedGuild, oldOwnerId, 'remove');
+                // Puis lui remettre les permissions classiques de membre
+                await updateGuildChannelPermissions(interaction.client, updatedGuild, oldOwnerId, 'add');
+
+                return interaction.reply({ content: `✅ La propriété de la guilde "**${guild.name}**" a été transférée à ${newOwnerUser}.` });
+
+            } catch (error) {
+                logger.error(`Erreur lors du transfert de propriété de la guilde ${guildName}:`, error);
+                return interaction.reply({ content: '❌ Une erreur est survenue lors du transfert de propriété.', ephemeral: true });
+            }
+        }
+
+        else if (subcommand === 'add-rp') {
+            const user = interaction.options.getUser('utilisateur');
+            const amount = interaction.options.getInteger('montant');
+
+            try {
+                getOrCreateUser(user.id, user.username);
+                updateUserBalance(user.id, { points: amount });
+                await updateUserRank(interaction.client, user.id);
+                return interaction.reply({ content: `✅ **${amount} RP** ont été ajoutés à ${user}.` });
+            } catch (error) {
+                logger.error(`Erreur add-rp pour ${user.id}:`, error);
+                return interaction.reply({ content: '❌ Erreur lors de l\'ajout de RP.', ephemeral: true });
+            }
+        }
+
+        else if (subcommand === 'remove-rp') {
+            const user = interaction.options.getUser('utilisateur');
+            const amount = interaction.options.getInteger('montant');
+
+            try {
+                getOrCreateUser(user.id, user.username);
+                updateUserBalance(user.id, { points: -amount });
+                await updateUserRank(interaction.client, user.id);
+                return interaction.reply({ content: `✅ **${amount} RP** ont été retirés à ${user}.` });
+            } catch (error) {
+                logger.error(`Erreur remove-rp pour ${user.id}:`, error);
+                return interaction.reply({ content: '❌ Erreur lors du retrait de RP.', ephemeral: true });
+            }
+        }
+
+        else if (subcommand === 'set-rp') {
+            const user = interaction.options.getUser('utilisateur');
+            const amount = interaction.options.getInteger('montant');
+
+            try {
+                getOrCreateUser(user.id, user.username);
+                setPoints(user.id, amount);
+                await updateUserRank(interaction.client, user.id);
+                return interaction.reply({ content: `✅ Les RP de ${user} ont été définis à **${amount}**.` });
+            } catch (error) {
+                logger.error(`Erreur set-rp pour ${user.id}:`, error);
+                return interaction.reply({ content: '❌ Erreur lors de la définition des RP.', ephemeral: true });
+            }
+        }
+
+        else if (subcommand === 'transferer-compte') {
+            const sourceUser = interaction.options.getUser('source');
+            const targetUser = interaction.options.getUser('cible');
+
+            if (sourceUser.id === targetUser.id) {
+                return interaction.reply({ content: '❌ La source et la cible doivent être différentes.', ephemeral: true });
+            }
+
+            const confirmButton = new ButtonBuilder()
+                .setCustomId('transfer_confirm')
+                .setLabel('✅ CONFIRMER LE TRANSFERT')
+                .setStyle(ButtonStyle.Danger);
+
+            const cancelButton = new ButtonBuilder()
+                .setCustomId('transfer_cancel')
+                .setLabel('❌ Annuler')
+                .setStyle(ButtonStyle.Secondary);
+
+            const row = new ActionRowBuilder().addComponents(confirmButton, cancelButton);
+
+            const reply = await interaction.reply({
+                content: `⚠️ **ATTENTION : TRANSFERT DE COMPTE** ⚠️\n\nVous êtes sur le point de transférer les données de **${sourceUser.tag}** vers **${targetUser.tag}**.\n\n**Conséquences :**\n1. Toutes les données actuelles de **${targetUser.tag}** (cible) seront **SUPPRIMÉES**.\n2. Les données de **${sourceUser.tag}** (source) seront copiées sur **${targetUser.tag}**.\n3. Le compte **${sourceUser.tag}** (source) sera **RÉINITIALISÉ**.\n\nCette action est **IRRÉVERSIBLE**.\nÊtes-vous sûr de vouloir continuer ?`,
+                components: [row],
+                fetchReply: true
+            });
+
+            const collector = reply.createMessageComponentCollector({
+                componentType: ComponentType.Button,
+                time: 60000
+            });
+
+            collector.on('collect', async (i) => {
+                if (i.user.id !== interaction.user.id) {
+                    return i.reply({ content: '❌ Seul l\'administrateur ayant lancé la commande peut confirmer.', ephemeral: true });
+                }
+
+                if (i.customId === 'transfer_confirm') {
+                    try {
+                        await i.deferUpdate();
+                        transferUserData(sourceUser.id, targetUser.id);
+                        await updateUserRank(interaction.client, targetUser.id);
+
+                        await i.editReply({
+                            content: `✅ **Transfert réussi !**\n\nLes données de ${sourceUser} ont été transférées vers ${targetUser}.\nLe compte source a été réinitialisé.`,
+                            components: []
+                        });
+                    } catch (error) {
+                        logger.error(`Erreur lors du transfert de compte de ${sourceUser.id} vers ${targetUser.id}:`, error);
+                        await i.editReply({
+                            content: `❌ Une erreur est survenue lors du transfert : ${error.message}`,
+                            components: []
+                        });
+                    }
+                    collector.stop();
+                } else if (i.customId === 'transfer_cancel') {
+                    await i.update({
+                        content: '❌ Transfert annulée.',
+                        components: []
+                    });
+                    collector.stop();
+                }
+            });
+
+            collector.on('end', (collected, reason) => {
+                if (reason === 'time') {
+                    interaction.editReply({
+                        content: '⏱️ Temps écoulé. Le transfert a été annulé.',
+                        components: []
+                    }).catch(() => { });
+                }
+            });
+        }
+        // ============================================
+        // SUBCOMMAND: cree-guilde
+        // ============================================
+        else if (subcommand === 'cree-guilde') {
+            // Créer le modal V2 avec format JSON brut (type 18 = Label, type 5 = UserSelect, type 4 = TextInput)
+            // Note: Discord limite les modals à 5 composants maximum
+            const modalData = {
+                title: '🏰 Création de Guilde (Admin)',
+                custom_id: 'admin_create_guild_modal',
+                components: [
+                    {
+                        type: 18, // Label container
+                        label: '👑 Chef de guilde (obligatoire)',
+                        component: {
+                            type: 5, // USER_SELECT
+                            custom_id: 'guild_chef',
+                            placeholder: 'Sélectionner le chef',
+                            max_values: 1,
+                            min_values: 1
+                        }
+                    },
+                    {
+                        type: 18, // Label container
+                        label: '⚔️ Sous-Chef (optionnel)',
+                        required: false,
+                        component: {
+                            type: 5, // USER_SELECT
+                            custom_id: 'guild_souschef',
+                            placeholder: 'Sélectionner un sous-chef',
+                            max_values: 1
+                        }
+                    },
+                    {
+                        type: 18, // Label container
+                        label: '👥 Membres (optionnel, max 10)',
+                        required: false,
+                        component: {
+                            type: 5, // USER_SELECT
+                            custom_id: 'guild_membres',
+                            placeholder: 'Sélectionner les membres',
+                            max_values: 10
+                        }
+                    },
+                    {
+                        type: 18, // Label container
+                        label: '📝 Emoji + Nom (ex: 💀 Ma Guilde)',
+                        component: {
+                            type: 4, // TEXT_INPUT
+                            custom_id: 'guild_emoji_nom',
+                            style: 1, // Short
+                            placeholder: '⚔️ Les Conquérants',
+                            min_length: 3,
+                            max_length: 35,
+                            required: true
+                        }
+                    },
+                    {
+                        type: 18, // Label container
+                        label: '⬆️ Niveau d\'upgrade (0-10, optionnel)',
+                        required: false,
+                        component: {
+                            type: 4, // TEXT_INPUT
+                            custom_id: 'guild_upgrade',
+                            style: 1, // Short
+                            placeholder: '0',
+                            max_length: 2
+                        }
+                    }
+                ]
+            };
+
+            await interaction.showModal(modalData);
+
+            try {
+                const modalSubmit = await interaction.awaitModalSubmit({
+                    time: 300_000, // 5 minutes
+                    filter: (submission) => submission.customId === 'admin_create_guild_modal' && submission.user.id === interaction.user.id
+                });
+
+                await modalSubmit.deferReply({ ephemeral: true });
+
+                // Récupérer les valeurs du modal V2
+                let chefId, sousChefId, membresIds, guildName, guildEmoji, upgradeStr;
+
+                try {
+                    // UserSelect values sont dans .values[], TextInput values sont dans .value
+                    chefId = modalSubmit.fields.fields.get('guild_chef')?.values?.[0];
+                    sousChefId = modalSubmit.fields.fields.get('guild_souschef')?.values?.[0] || null;
+                    membresIds = modalSubmit.fields.fields.get('guild_membres')?.values || [];
+
+                    // Parse le champ combiné "emoji nom" - l'emoji est au début
+                    const emojiNomRaw = modalSubmit.fields.fields.get('guild_emoji_nom')?.value || '';
+
+                    // Regex pour détecter les emojis au début du texte (Unicode emoji pattern)
+                    const emojiRegex = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F?)/u;
+                    const emojiMatch = emojiNomRaw.match(emojiRegex);
+
+                    if (emojiMatch) {
+                        guildEmoji = emojiMatch[0];
+                        guildName = emojiNomRaw.slice(emojiMatch[0].length).trim();
+                    } else {
+                        // Pas d'emoji trouvé - utiliser un placeholder
+                        guildEmoji = '🏰';
+                        guildName = emojiNomRaw.trim();
+                    }
+
+                    // Upgrade séparé
+                    upgradeStr = modalSubmit.fields.fields.get('guild_upgrade')?.value || '0';
+                } catch (err) {
+                    logger.error('Erreur lors de la récupération des champs du modal:', err);
+                    return modalSubmit.editReply({ content: '❌ Erreur lors de la récupération des données du modal.' });
+                }
+
+                // Validation du chef
+                if (!chefId) {
+                    return modalSubmit.editReply({ content: '❌ Vous devez sélectionner un **Chef** pour créer une guilde.' });
+                }
+
+                // Vérifier si le chef est déjà dans une guilde
+                const chefGuild = getGuildOfUser(chefId);
+                if (chefGuild) {
+                    return modalSubmit.editReply({
+                        content: `❌ **Création annulée !**\n\nLe chef sélectionné (<@${chefId}>) est déjà membre de la guilde **${chefGuild.name}**.\n\nLe chef doit d'abord quitter sa guilde actuelle.`
+                    });
+                }
+
+                // Validation du nom
+                if (!guildName || guildName.length < 2) {
+                    return modalSubmit.editReply({ content: '❌ Le nom de la guilde doit contenir au moins 2 caractères (après l\'emoji).' });
+                }
+
+                // Vérifier si le nom est déjà pris
+                if (getGuildByName(guildName)) {
+                    return modalSubmit.editReply({ content: `❌ Une guilde avec le nom **${guildName}** existe déjà.` });
+                }
+
+                const upgradeLevel = Math.min(10, Math.max(0, parseInt(upgradeStr) || 0));
+
+                // Créer la guilde
+                const newGuildId = createGuild(guildName, chefId, guildEmoji);
+
+                // S'assurer que le chef existe dans la DB users
+                const chefDiscord = await interaction.client.users.fetch(chefId).catch(() => null);
+                if (chefDiscord) {
+                    getOrCreateUser(chefId, chefDiscord.username);
+                }
+
+                // Ajouter le chef comme membre
+                addMemberToGuild(chefId, newGuildId);
+
+                // Configurer la guilde en fonction du niveau d'upgrade
+                // Calculer les slots totaux (5 de base + cumul des slots_gained pour chaque niveau)
+                let totalSlots = 5; // Slots de base
+                let treasuryCapacity = 0;
+
+                for (let lvl = 1; lvl <= upgradeLevel; lvl++) {
+                    const upgradeData = UPGRADE_MATRIX[lvl];
+                    if (upgradeData) {
+                        totalSlots += upgradeData.slots_gained || 0;
+                        treasuryCapacity = upgradeData.treasury_capacity || treasuryCapacity;
+                    }
+                }
+
+                // Mettre à jour la guilde avec tous les paramètres
+                db.prepare('UPDATE guilds SET upgrade_level = ?, member_slots = ?, treasury_capacity = ? WHERE id = ?')
+                    .run(upgradeLevel, totalSlots, treasuryCapacity, newGuildId);
+
+                logger.info(`Guilde ${guildName} initialisée: upgrade=${upgradeLevel}, slots=${totalSlots}, treasury_cap=${treasuryCapacity}`);
+
+                // Traitement des erreurs pour les membres déjà dans une guilde
+                const membresAjoutes = [];
+                const membresErreur = [];
+
+                // Ajouter le sous-chef si spécifié
+                if (sousChefId && sousChefId !== chefId) {
+                    const sousChefGuild = getGuildOfUser(sousChefId);
+                    if (sousChefGuild) {
+                        membresErreur.push({ id: sousChefId, reason: `déjà dans la guilde "${sousChefGuild.name}"` });
+                    } else {
+                        const sousChefDiscord = await interaction.client.users.fetch(sousChefId).catch(() => null);
+                        if (sousChefDiscord) {
+                            getOrCreateUser(sousChefId, sousChefDiscord.username);
+                        }
+                        addMemberToGuild(sousChefId, newGuildId);
+                        addGuildSubChief(newGuildId, sousChefId);
+                        membresAjoutes.push(sousChefId);
+                    }
+                }
+
+                // Ajouter les membres
+                for (const membreId of membresIds) {
+                    if (membreId === chefId || membreId === sousChefId) continue;
+
+                    const membreGuild = getGuildOfUser(membreId);
+                    if (membreGuild) {
+                        membresErreur.push({ id: membreId, reason: `déjà dans la guilde "${membreGuild.name}"` });
+                    } else {
+                        const membreDiscord = await interaction.client.users.fetch(membreId).catch(() => null);
+                        if (membreDiscord) {
+                            getOrCreateUser(membreId, membreDiscord.username);
+                        }
+                        addMemberToGuild(membreId, newGuildId);
+                        membresAjoutes.push(membreId);
+                    }
+                }
+
+                // Mettre à jour le niveau de la guilde (somme des niveaux des membres)
+                updateGuildLevel(newGuildId);
+
+                // Récupérer les infos de la guilde après mise à jour
+                const createdGuild = getGuildById(newGuildId);
+                const guildLevel = createdGuild?.level || 0;
+
+                // Construire le message de résultat
+                let resultMessage = `# ✅ Guilde créée avec succès !\n\n`;
+                resultMessage += `**${guildEmoji} ${guildName}**\n`;
+                resultMessage += `• **Chef:** <@${chefId}>\n`;
+                if (sousChefId && !membresErreur.find(e => e.id === sousChefId)) {
+                    resultMessage += `• **Sous-Chef:** <@${sousChefId}>\n`;
+                }
+                resultMessage += `\n### 📊 Statistiques\n`;
+                resultMessage += `• **Niveau de guilde:** ${guildLevel}\n`;
+                resultMessage += `• **Upgrade:** Niveau ${upgradeLevel}\n`;
+                resultMessage += `• **Places:** ${totalSlots}\n`;
+                resultMessage += `• **Capacité trésorerie:** ${treasuryCapacity > 0 ? treasuryCapacity.toLocaleString('fr-FR') + ' ⭐' : 'Non débloquée (< U2)'}\n`;
+                resultMessage += `• **Membres ajoutés:** ${membresAjoutes.length + 1}/${totalSlots}\n`;
+
+                if (membresErreur.length > 0) {
+                    resultMessage += `\n### ⚠️ Membres non ajoutés\n`;
+                    for (const err of membresErreur) {
+                        resultMessage += `• <@${err.id}> - ${err.reason}\n`;
+                    }
+                }
+
+                await modalSubmit.editReply({ content: resultMessage });
+
+            } catch (modalError) {
+                if (modalError.code === 'InteractionCollectorError') {
+                    // Modal timeout - pas besoin de répondre car l'utilisateur n'a rien soumis
+                    logger.info('Modal cree-guilde timeout');
+                } else {
+                    logger.error('Erreur lors de la création de guilde (modal):', modalError);
+                    try {
+                        await interaction.followUp({
+                            content: `❌ Une erreur est survenue: ${modalError.message}`,
+                            ephemeral: true
+                        });
+                    } catch (e) { }
+                }
+            }
+        }
+
+        // ============================================
+        // SUBCOMMAND: guilde-fix
+        // ============================================
+        else if (subcommand === 'guilde-fix') {
+            const guildeName = interaction.options.getString('guilde');
+            const upgradeLevel = interaction.options.getInteger('upgrade');
+
+            // Récupérer la guilde
+            const guild = getGuildByName(guildeName);
+            if (!guild) {
+                return interaction.reply({
+                    content: `❌ Guilde **${guildeName}** introuvable.`,
+                    ephemeral: true
+                });
+            }
+
+            // Calculer les slots totaux (5 de base + cumul des slots_gained pour chaque niveau)
+            let totalSlots = 5; // Slots de base
+            let treasuryCapacity = 0;
+
+            for (let lvl = 1; lvl <= upgradeLevel; lvl++) {
+                const upgradeData = UPGRADE_MATRIX[lvl];
+                if (upgradeData) {
+                    totalSlots += upgradeData.slots_gained || 0;
+                    treasuryCapacity = upgradeData.treasury_capacity || treasuryCapacity;
+                }
+            }
+
+            // Mettre à jour la guilde avec tous les paramètres
+            db.prepare('UPDATE guilds SET upgrade_level = ?, member_slots = ?, treasury_capacity = ? WHERE id = ?')
+                .run(upgradeLevel, totalSlots, treasuryCapacity, guild.id);
+
+            // Recalculer le niveau de guilde
+            updateGuildLevel(guild.id);
+
+            // Récupérer les infos mises à jour
+            const updatedGuild = getGuildById(guild.id);
+
+            logger.info(`Guilde ${guild.name} corrigée: upgrade=${upgradeLevel}, slots=${totalSlots}, treasury_cap=${treasuryCapacity}`);
+
+            await interaction.reply({
+                content: `# ✅ Guilde corrigée !\n\n**${guild.emoji} ${guild.name}**\n\n### 📊 Nouveaux paramètres\n• **Upgrade:** Niveau ${upgradeLevel}\n• **Places:** ${totalSlots}\n• **Capacité trésorerie:** ${treasuryCapacity > 0 ? treasuryCapacity.toLocaleString('fr-FR') + ' ⭐' : 'Non débloquée (< U2)'}\n• **Niveau de guilde:** ${updatedGuild?.level || 0}`,
+                ephemeral: true
+            });
+        }
+
+        // ============================================
+        // SUBCOMMAND: guilde-war-fix
+        // ============================================
+        else if (subcommand === 'guilde-war-fix') {
+            const guildeName = interaction.options.getString('guilde');
+            const resetPoints = interaction.options.getBoolean('reset-points') || false;
+            const addHours = interaction.options.getInteger('ajouter-heures') || 0;
+
+            // Récupérer la guilde
+            const guild = getGuildByName(guildeName);
+            if (!guild) {
+                return interaction.reply({
+                    content: `❌ Guilde **${guildeName}** introuvable.`,
+                    ephemeral: true
+                });
+            }
+
+            // Trouver la guerre en cours
+            const war = db.prepare("SELECT * FROM guild_wars WHERE (guild1_id = ? OR guild2_id = ?) AND (status = 'ongoing' OR status = 'overtime')").get(guild.id, guild.id);
+            if (!war) {
+                return interaction.reply({
+                    content: `❌ La guilde **${guild.name}** n'est pas en guerre actuellement.`,
+                    ephemeral: true
+                });
+            }
+
+            const guild1 = getGuildById(war.guild1_id);
+            const guild2 = getGuildById(war.guild2_id);
+
+            let resultMessage = `# ⚔️ Guerre corrigée !\n\n**${guild1?.emoji || '🛡️'} ${guild1?.name}** VS **${guild2?.emoji || '🛡️'} ${guild2?.name}**\n\n`;
+
+            // Reset des points
+            if (resetPoints) {
+                // Récupérer tous les membres de la guerre
+                const warMembers = db.prepare('SELECT * FROM guild_war_members WHERE war_id = ?').all(war.id);
+
+                for (const member of warMembers) {
+                    const user = db.prepare('SELECT xp, points, stars, points_comptage FROM users WHERE id = ?').get(member.user_id);
+                    if (user) {
+                        // Recapturer les valeurs actuelles comme nouvelles valeurs initiales et remettre war_points à 0
+                        db.prepare('UPDATE guild_war_members SET initial_xp = ?, initial_points = ?, initial_stars = ?, initial_pc = ?, war_points = 0 WHERE war_id = ? AND user_id = ?')
+                            .run(user.xp, user.points, user.stars, user.points_comptage || 0, war.id, member.user_id);
+                    }
+                }
+
+                resultMessage += `### ✅ Points réinitialisés\n`;
+                resultMessage += `• Les valeurs initiales ont été recapturées\n`;
+                resultMessage += `• Les deux guildes sont maintenant à **0 points**\n\n`;
+
+                logger.info(`War ${war.id} points reset by ${interaction.user.tag}`);
+            }
+
+            // Ajout de temps
+            if (addHours > 0) {
+                const additionalMs = addHours * 60 * 60 * 1000;
+                const newEndTime = war.end_time + additionalMs;
+                db.prepare('UPDATE guild_wars SET end_time = ? WHERE id = ?').run(newEndTime, war.id);
+
+                resultMessage += `### ⏱️ Temps ajouté\n`;
+                resultMessage += `• **+${addHours} heure(s)** ajoutée(s)\n`;
+                resultMessage += `• Nouvelle fin: <t:${Math.floor(newEndTime / 1000)}:F>\n`;
+
+                logger.info(`War ${war.id} extended by ${addHours}h by ${interaction.user.tag}`);
+            }
+
+            if (!resetPoints && !addHours) {
+                resultMessage += `⚠️ Aucune modification effectuée. Utilisez \`reset-points:true\` et/ou \`ajouter-heures:N\`.`;
+            }
+
+            await interaction.reply({
+                content: resultMessage,
+                ephemeral: true
+            });
+        }
+
+        // ============================================
+        // SUBCOMMAND: guilde-victoires
+        // ============================================
+        else if (subcommand === 'guilde-victoires') {
+            const guildeName = interaction.options.getString('guilde');
+            const addVictoires = interaction.options.getInteger('victoires') || 0;
+            const addVictoires70 = interaction.options.getInteger('victoires-70') || 0;
+            const addVictoires80 = interaction.options.getInteger('victoires-80') || 0;
+            const addVictoires90 = interaction.options.getInteger('victoires-90') || 0;
+
+            // Récupérer la guilde
+            const guild = getGuildByName(guildeName);
+            if (!guild) {
+                return interaction.reply({
+                    content: `❌ Guilde **${guildeName}** introuvable.`,
+                    ephemeral: true
+                });
+            }
+
+            // Vérifier qu'au moins une option est spécifiée
+            if (addVictoires === 0 && addVictoires70 === 0 && addVictoires80 === 0 && addVictoires90 === 0) {
+                return interaction.reply({
+                    content: `❌ Vous devez spécifier au moins une option (victoires, victoires-70, victoires-80 ou victoires-90).`,
+                    ephemeral: true
+                });
+            }
+
+            // Mettre à jour les compteurs
+            if (addVictoires > 0) {
+                db.prepare('UPDATE guilds SET wars_won = wars_won + ? WHERE id = ?').run(addVictoires, guild.id);
+            }
+            if (addVictoires70 > 0) {
+                db.prepare('UPDATE guilds SET wars_won_70 = wars_won_70 + ? WHERE id = ?').run(addVictoires70, guild.id);
+            }
+            if (addVictoires80 > 0) {
+                db.prepare('UPDATE guilds SET wars_won_80 = wars_won_80 + ? WHERE id = ?').run(addVictoires80, guild.id);
+            }
+            if (addVictoires90 > 0) {
+                db.prepare('UPDATE guilds SET wars_won_90 = wars_won_90 + ? WHERE id = ?').run(addVictoires90, guild.id);
+            }
+
+            // Récupérer les valeurs mises à jour
+            const updatedGuild = getGuildById(guild.id);
+
+            let resultMessage = `# ✅ Victoires ajoutées !\n\n`;
+            resultMessage += `**${guild.emoji || '🏰'} ${guild.name}**\n\n`;
+            resultMessage += `### 📊 Modifications\n`;
+            if (addVictoires > 0) resultMessage += `• **+${addVictoires}** victoire(s) (total: ${updatedGuild.wars_won})\n`;
+            if (addVictoires70 > 0) resultMessage += `• **+${addVictoires70}** victoire(s) 70%+ (total: ${updatedGuild.wars_won_70})\n`;
+            if (addVictoires80 > 0) resultMessage += `• **+${addVictoires80}** victoire(s) 80%+ (total: ${updatedGuild.wars_won_80})\n`;
+            if (addVictoires90 > 0) resultMessage += `• **+${addVictoires90}** victoire(s) 90%+ (total: ${updatedGuild.wars_won_90})\n`;
+
+            logger.info(`Admin ${interaction.user.tag} added victories to guild ${guild.name}: wars_won+${addVictoires}, 70%+${addVictoires70}, 80%+${addVictoires80}, 90%+${addVictoires90}`);
+
+            await interaction.reply({
+                content: resultMessage,
+                ephemeral: true
+            });
+        }
+
+        // ============================================
+        // SUBCOMMAND: guilde-war-supprimer
+        // ============================================
+        else if (subcommand === 'guilde-war-supprimer') {
+            const { getAllActiveWars, deleteWar: deleteWarFn } = require('../../utils/guild/guild-wars');
+            const { wars, declarations } = getAllActiveWars();
+
+            if (wars.length === 0 && declarations.length === 0) {
+                return interaction.reply({
+                    content: '❌ Aucune guerre en cours ni déclaration en attente à supprimer.',
+                    ephemeral: true
+                });
+            }
+
+            // Construire les options du sélecteur
+            const options = [];
+
+            for (const war of wars) {
+                const statusText = war.status === 'overtime' ? '⏰ Overtime' : '⚔️ En cours';
+                const durationText = war.duration_type === 'short' ? '12h' : war.duration_type === 'normal' ? '48h' : '7j';
+                options.push({
+                    label: `${war.guild1_name} VS ${war.guild2_name}`,
+                    description: `${statusText} | ${durationText} | Fin: ${new Date(war.end_time).toLocaleDateString('fr-FR')} ${new Date(war.end_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`,
+                    value: `war_${war.id}`,
+                    emoji: '⚔️'
+                });
+            }
+
+            for (const decl of declarations) {
+                const durationText = decl.duration_type === 'short' ? '12h' : decl.duration_type === 'normal' ? '48h' : '7j';
+                options.push({
+                    label: `${decl.from_guild_name} → ${decl.to_guild_name} (Déclaration)`,
+                    description: `📩 En attente | ${durationText} | ${new Date(decl.timestamp).toLocaleDateString('fr-FR')}`,
+                    value: `decl_${decl.id}`,
+                    emoji: '📩'
+                });
+            }
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('admin_delete_war_select')
+                .setPlaceholder('Sélectionner la guerre à supprimer...')
+                .addOptions(options.slice(0, 25));
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+
+            const reply = await interaction.reply({
+                content: `## 🗑️ Supprimer une guerre\n\nSélectionnez la guerre ou déclaration à supprimer.\n⚠️ **Cette action est irréversible** — aucun résultat ne sera appliqué.\n\n**${wars.length}** guerre(s) en cours, **${declarations.length}** déclaration(s) en attente.`,
+                components: [row],
+                ephemeral: true,
+                fetchReply: true
+            });
+
+            const collector = reply.createMessageComponentCollector({
+                componentType: ComponentType.StringSelect,
+                time: 60000
+            });
+
+            collector.on('collect', async (selectInteraction) => {
+                if (selectInteraction.user.id !== interaction.user.id) {
+                    return selectInteraction.reply({ content: '❌ Seul l\'administrateur ayant lancé la commande peut sélectionner.', ephemeral: true });
+                }
+
+                const selectedValue = selectInteraction.values[0];
+                const [type, id] = selectedValue.split('_');
+                const warId = parseInt(id);
+
+                // Déterminer le label pour la confirmation
+                let warLabel;
+                if (type === 'war') {
+                    const war = wars.find(w => w.id === warId);
+                    warLabel = `⚔️ Guerre **${war.guild1_emoji} ${war.guild1_name}** VS **${war.guild2_emoji} ${war.guild2_name}** (#${warId})`;
+                } else {
+                    const decl = declarations.find(d => d.id === warId);
+                    warLabel = `📩 Déclaration **${decl.from_guild_emoji} ${decl.from_guild_name}** → **${decl.to_guild_emoji} ${decl.to_guild_name}** (#${warId})`;
+                }
+
+                // Boutons de confirmation
+                const confirmButton = new ButtonBuilder()
+                    .setCustomId('confirm_delete_war')
+                    .setLabel('🗑️ SUPPRIMER')
+                    .setStyle(ButtonStyle.Danger);
+
+                const cancelButton = new ButtonBuilder()
+                    .setCustomId('cancel_delete_war')
+                    .setLabel('Annuler')
+                    .setStyle(ButtonStyle.Secondary);
+
+                const confirmRow = new ActionRowBuilder().addComponents(confirmButton, cancelButton);
+
+                await selectInteraction.update({
+                    content: `## ⚠️ Confirmer la suppression\n\n${warLabel}\n\nCette action va **supprimer définitivement** cette ${type === 'war' ? 'guerre et toutes ses données (points, membres)' : 'déclaration de guerre'} sans appliquer aucun résultat.\n\n**Êtes-vous sûr ?**`,
+                    components: [confirmRow]
+                });
+
+                const buttonCollector = reply.createMessageComponentCollector({
+                    componentType: ComponentType.Button,
+                    time: 30000
+                });
+
+                buttonCollector.on('collect', async (btnInteraction) => {
+                    if (btnInteraction.user.id !== interaction.user.id) {
+                        return btnInteraction.reply({ content: '❌ Seul l\'administrateur ayant lancé la commande peut confirmer.', ephemeral: true });
+                    }
+
+                    if (btnInteraction.customId === 'confirm_delete_war') {
+                        try {
+                            deleteWarFn(warId, type === 'decl' ? 'declaration' : 'war');
+
+                            await btnInteraction.update({
+                                content: `## ✅ Suppression effectuée\n\n${warLabel}\n\nLa ${type === 'war' ? 'guerre' : 'déclaration'} a été supprimée avec succès.`,
+                                components: []
+                            });
+
+                            logger.info(`Admin ${interaction.user.tag} deleted ${type === 'war' ? 'war' : 'declaration'} #${warId}`);
+                        } catch (error) {
+                            logger.error(`Erreur lors de la suppression de la guerre #${warId}:`, error);
+                            await btnInteraction.update({
+                                content: `❌ Erreur lors de la suppression : ${error.message}`,
+                                components: []
+                            });
+                        }
+                    } else if (btnInteraction.customId === 'cancel_delete_war') {
+                        await btnInteraction.update({
+                            content: '❌ Suppression annulée.',
+                            components: []
+                        });
+                    }
+
+                    buttonCollector.stop();
+                    collector.stop();
+                });
+
+                buttonCollector.on('end', (collected, reason) => {
+                    if (reason === 'time' && collected.size === 0) {
+                        interaction.editReply({
+                            content: '⏱️ Temps écoulé. Suppression annulée.',
+                            components: []
+                        }).catch(() => { });
+                    }
+                });
+            });
+
+            collector.on('end', (collected, reason) => {
+                if (reason === 'time' && collected.size === 0) {
+                    interaction.editReply({
+                        content: '⏱️ Temps écoulé. Suppression annulée.',
+                        components: []
+                    }).catch(() => { });
+                }
+            });
+        }
+
+        // ============================================
+        // SUBCOMMAND: reset-profil
+        // ============================================
+        if (subcommand === 'reset-profil') {
+            const targetUser = interaction.options.getUser('membre');
+            const { resetUser } = require('../../utils/db-users');
+
+            // Vérifier si l'utilisateur existe dans la DB avant de demander confirmation
+            getOrCreateUser(targetUser.id, targetUser.username);
+
+            const confirmButton = new ButtonBuilder()
+                .setCustomId('confirm_reset')
+                .setLabel('Oui, réinitialiser')
+                .setStyle(ButtonStyle.Danger);
+
+            const cancelButton = new ButtonBuilder()
+                .setCustomId('cancel_reset')
+                .setLabel('Non, annuler')
+                .setStyle(ButtonStyle.Secondary);
+
+            const row = new ActionRowBuilder().addComponents(confirmButton, cancelButton);
+
+            const response = await interaction.reply({
+                content: `⚠️ **ATTENTION** ⚠️\n\nÊtes-vous sûr de vouloir réinitialiser complètement le profil de **${targetUser.username}** ?\n\n**Cette action est irréversible** et supprimera:\n• Niveau et XP\n• Points de rang\n• Starss\n• Inventaire\n• Quêtes\n• Statistiques d'événements`,
+                components: [row],
+                flags: 64,
+            });
+
+            const collector = response.createMessageComponentCollector({
+                componentType: ComponentType.Button,
+                time: 60 * 1000, // 60 secondes pour confirmer
+            });
+
+            collector.on('collect', async i => {
+                if (i.user.id !== interaction.user.id) {
+                    await i.reply({ content: 'Vous ne pouvez pas interagir avec cette confirmation.', flags: 64 });
+                    return;
+                }
+
+                if (i.customId === 'confirm_reset') {
+                    resetUser(targetUser.id);
+                    logger.info(`Admin ${interaction.user.tag} reset profile of ${targetUser.tag}`);
+                    await i.update({ content: `✅ Le profil de **${targetUser.username}** a été complètement réinitialisé.`, components: [] });
+                } else if (i.customId === 'cancel_reset') {
+                    await i.update({ content: '❌ Réinitialisation annulée.', components: [] });
+                }
+                collector.stop();
+            });
+
+            collector.on('end', (collected, reason) => {
+                if (reason === 'time') {
+                    response.edit({ content: '⏱️ Confirmation expirée. Réinitialisation annulée.', components: [] }).catch(() => { });
+                }
+            });
+        }
+    }
+};

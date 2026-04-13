@@ -1,0 +1,185 @@
+{
+  "guildId": "YOUR_GUILD_ID_HERE",
+  "roleIds": {
+    "vip": "1170361439345704962",
+    "vipAliases": ["1323305704932507648"]
+  },
+  "rankRoles": {
+    "ranks": [
+      { "name": "Plastique I", "points": 10 },
+      { "name": "Plastique II", "points": 50 },
+      { "name": "Plastique III", "points": 100 },
+      { "name": "Carton I", "points": 200 },
+      { "name": "Carton II", "points": 300 },
+      { "name": "Carton III", "points": 400 },
+      { "name": "Bronze I", "points": 500 },
+      { "name": "Bronze II", "points": 600 },
+      { "name": "Bronze III", "points": 800 },
+      { "name": "Fer I", "points": 1000 },
+      { "name": "Fer II", "points": 1500 },
+      { "name": "Fer III", "points": 2000 },
+      { "name": "Or I", "points": 2500 },
+      { "name": "Or II", "points": 3000 },
+      { "name": "Or III", "points": 4000 },
+      { "name": "Diamant I", "points": 5000 },
+      { "name": "Diamant II", "points": 6000 },
+      { "name": "Diamant III", "points": 8000 },
+      { "name": "Émeraude I", "points": 10000, "decay": 100, "decayIntervalHours": 2 },
+      { "name": "Émeraude II", "points": 15000, "decay": 200, "decayIntervalHours": 2 },
+      { "name": "Émeraude III", "points": 20000, "decay": 300, "decayIntervalHours": 2 },
+      { "name": "Rubis I", "points": 25000, "decay": 500, "decayIntervalHours": 2 },
+      { "name": "Rubis II", "points": 30000, "decay": 750, "decayIntervalHours": 2 },
+      { "name": "Rubis III", "points": 40000, "decay": 1000, "decayIntervalHours": 2 },
+      { "name": "Légendaire I", "points": 50000, "decay": 1500, "decayIntervalHours": 2 },
+      { "name": "Légendaire II", "points": 60000, "decay": 2000, "decayIntervalHours": 2 },
+      { "name": "Mythique I", "points": 70000, "decay": 3000, "decayIntervalHours": 2 },
+      { "name": "Mythique II", "points": 80000, "decay": 4000, "decayIntervalHours": 2 },
+      { "name": "GOAT", "points": 100000, "decay": 5000, "decayIntervalHours": 2 }
+    ],
+    "mainRanks": [
+      "Plastique",
+      "Carton",
+      "Bronze",
+      "Fer",
+      "Or",
+      "Diamant",
+      "Émeraude",
+      "Rubis",
+      "Légendaire",
+      "Mythique",
+      "GOAT"
+    ],
+    "lockedRanks": ["Mythique I", "Mythique II", "GOAT"],
+    "part2Ranks": [
+      { "name": "GOAT", "coefficient": 0, "roleName": "GOAT" },
+      { "name": "SUPER GOAT", "coefficient": 0.10, "roleName": "SUPER GOAT" },
+      { "name": "THE GOAT", "coefficient": 0.20, "roleName": "THE GOAT" },
+      { "name": "MAGNIFIQUE", "coefficient": 0.30, "roleName": "MAGNIFIQUE" }
+    ],
+    "part2Threshold": 100000,
+    "creation": [
+      { "name": "Plastique I", "color": "Greyple" },
+      { "name": "Plastique II", "color": "Greyple" },
+      { "name": "Plastique III", "color": "Greyple" },
+      { "name": "Plastique", "color": "DarkGrey" },
+      { "name": "Carton I", "color": "#8B4513" },
+      { "name": "Carton II", "color": "#8B4513" },
+      { "name": "Carton III", "color": "#8B4513" },
+      { "name": "Carton", "color": "#A0522D" },
+      { "name": "Bronze I", "color": "#cd7f32" },
+      { "name": "Bronze II", "color": "#cd7f32" },
+      { "name": "Bronze III", "color": "#cd7f32" },
+      { "name": "Bronze", "color": "#a5602a" },
+      { "name": "Fer I", "color": "#808080" },
+      { "name": "Fer II", "color": "#808080" },
+      { "name": "Fer III", "color": "#808080" },
+      { "name": "Fer", "color": "#696969" },
+      { "name": "Or I", "color": "Gold" },
+      { "name": "Or II", "color": "Gold" },
+      { "name": "Or III", "color": "Gold" },
+      { "name": "Or", "color": "Orange" },
+      { "name": "Diamant I", "color": "Aqua" },
+      { "name": "Diamant II", "color": "Aqua" },
+      { "name": "Diamant III", "color": "Aqua" },
+      { "name": "Diamant", "color": "Blue" },
+      { "name": "Émeraude I", "color": "#50C878" },
+      { "name": "Émeraude II", "color": "#50C878" },
+      { "name": "Émeraude III", "color": "#50C878" },
+      { "name": "Émeraude", "color": "#00AA66" },
+      { "name": "Rubis I", "color": "#DC143C" },
+      { "name": "Rubis II", "color": "#DC143C" },
+      { "name": "Rubis III", "color": "#DC143C" },
+      { "name": "Rubis", "color": "#8B0000" },
+      { "name": "Légendaire I", "color": "Purple" },
+      { "name": "Légendaire II", "color": "Purple" },
+      { "name": "Légendaire", "color": "LuminousVividPink" },
+      { "name": "Mythique I", "color": "Red" },
+      { "name": "Mythique II", "color": "Red" },
+      { "name": "Mythique", "color": "DarkRed" },
+      { "name": "GOAT", "color": "#C27AED" },
+      { "name": "SUPER GOAT", "color": "#9B6DFF" },
+      { "name": "THE GOAT", "color": "#5DADE2" },
+      { "name": "MAGNIFIQUE", "color": "#6C5CE7" }
+    ]
+  },
+  "levelRoles": {
+    "thresholds": {
+      "1": "Pleb | Niveau 1 - 5",
+      "5": "Paysans | Niveau 5 - 10",
+      "10": "Paysan Riche | Niveau 10 - 20",
+      "20": "Noble | Niveau 20 - 30",
+      "30": "Prince | Niveau 30 - 50",
+      "50": "Dirigeant | Niveau 50 - 75",
+      "75": "Roi | Niveau 75 - 100",
+      "100": "Empereur | Niveau 100+"
+    },
+    "legacy": [
+      "Névrons | Niveau 1 - 5",
+      "Intérmediaire | Niveau 5 - 15",
+      "Guilder | Niveau 15 - 30",
+      "Avancé | Niveau 30 - 50",
+      "Puant | Niveau 50 - 75",
+      "Sans âme | Niveau 75 - 100",
+      "Démon | Niveau 100+",
+      "🎮 Pleb | Niveau 1 - 5",
+      "🎮 Paysans | Niveau 5 - 10",
+      "🎮 Paysan Riche | Niveau 10 - 20",
+      "🎮 Noble | Niveau 20 - 30",
+      "🎮 Prince | Niveau 30 - 50",
+      "🎮 Dirigeant | Niveau 50 - 75",
+      "🎮 Roi | Niveau 75 - 100",
+      "🎮 Empereur | Niveau 100+"
+    ]
+  },
+  "eventRoles": {
+    "halloween": {
+      "bonbonRewards": {
+        "bonbonDore": { "name": "Bonbon doré", "color": "#FFD700" },
+        "bonbonLegendaire": { "name": "Bonbon Légendaire", "color": "#9932CC" },
+        "masterBonbon": { "name": "Master Bonbon", "color": "#9932CC" }
+      },
+      "legendaryPumpkin": { "name": "Citrouille légendaire" }
+    },
+    "noel": {
+      "roles": {
+        "pereNoel": { "name": "Père de Noël", "color": "#DC143C" },
+        "maitreNoel": { "name": "Maître de Noël", "color": "#FFD700" }
+      },
+      "shopRoles": {
+        "richWinter": { "name": "Riche de l'Hiver", "color": "#FFD700" }
+      }
+    }
+  },
+  "specialRoles": {
+    "pirate": "Pirate",
+    "megaPirate": "Mega Pirate",
+    "hacker": "Hacker",
+    "vip": { "name": "VIP", "id": "1170361439345704962" },
+    "valentin": {
+      "couple": { "name": "En couple BB", "color": "#FF1493" },
+      "celib": { "name": "Célibatard", "color": "#808080" }
+    }
+  },
+  "topRoles": {
+    "stars": { "1": "Top 1 Stars", "5": "Top 5 Stars", "10": "Top 10 Stars" },
+    "level": { "1": "Top 1 Niveaux", "5": "Top 5 Niveaux", "10": "Top 10 Niveaux" },
+    "counting": { "1": "Top 1 Comptage", "5": "Top 5 Comptage", "10": "Top 10 Comptage" },
+    "guild": { "1": "Top 1 Guilde", "5": "Top 5 Guilde", "10": "Top 10 Guilde" }
+  },
+  "topRoleColors": {
+    "1": "#FFD700",
+    "5": "#C0C0C0",
+    "10": "#CD7F32"
+  },
+  "questRewardRoles": {
+    "guildCreator": "Créateur de Guilde",
+    "ultimateGuildCreator": "Créateur de Guild Ultime",
+    "rich": "Riche",
+    "ultimateChatter": "Piplette ultime",
+    "consistent": "Consistent"
+  },
+  "guildPrestigeRoles": {
+    "owner": "Créateur de guild ultime",
+    "member": "membre de guild ultime"
+  }
+}

@@ -1,0 +1,38 @@
+node_modules/
+
+# Secrets & environnement local (ne jamais commit)
+# (.env = n’importe quel dossier ; .env.* sauf le modèle)
+.env
+.env.*
+!.env.example
+
+# OAuth / clés fichiers
+credentials.json
+token.json
+
+# Bases SQLite & état local (recréées au runtime)
+*.db
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# Logs locaux
+link_logs.txt
+
+# Données runtime à la racine
+candidate_votes.json
+channelActivity.json
+
+# Logs & OS
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Éditeur / outils locaux
+.cursor/
+.idea/
+*.swp
+
+# Optionnel : caches
+.cache/

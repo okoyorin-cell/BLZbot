@@ -1,0 +1,67 @@
+[
+  {
+    "title": "recuperation RP",
+    "content": "pour récuperer des RP (rank points), il faut soit envoyer des messages, soit mettre des réactions, soit être dans un salon vocal"
+  },
+  {
+    "title": "salons invisibles",
+    "content": "si vous ne trouvez pas de salon, cocher \"montrer tout les salons\" dans les paramêtres du serveur"
+  },
+
+  {
+    "title": "faire de la publicité",
+    "content": "vous ne pouvez mettre de la publicité que dans \"https://canary.discord.com/channels/1097110036192448656/1388993273875533824\"cependant la publicité est strictement interdite en dehors de ce salon. Toute infraction peut entraîner une sanction immédiate."
+  },
+  {
+    "title": "blzbot ne répond pas",
+    "content": "en cas de bug avec blzbot, veuillez executer \"/bug\" avec le contenu du problème que vous avez rencontré."
+  },
+  {
+    "title": "localisation du règlement du serveur",
+    "content": "le règlement est disponible dans le salon https://canary.discord.com/channels/1097110036192448656/1257317206937571350 . Il doit être lu et accepté pour participer au serveur."
+  },
+  {
+    "title": "meilleur bot",
+    "content": "le meilleur bot est sans aucun doute moi(BLZbot)."
+  },
+  {
+    "title": "quel est le plus haut rank possible",
+    "content": "le rank le plus élevé est \"Master\"."
+  },
+  {
+    "title": "recevoir les annonces",
+    "content": "vous pouvez recevoir tout types d'annonce dans <id:customize>."
+  },
+  {
+    "title": "devenir modérateur",
+    "content": "Consultez le salon https://canary.discord.com/channels/1097110036192448656/1323247488525795338 pour savoir si le recrutements mdoératur est ouvert, vpus y trouverez également dans les messages épinglé les ocnditions."
+  },
+  {
+    "title": "comment faire une suggestion",
+    "content": "vous pouvez poster vos idées **en rapport avec le serveur discord ** dans le salon https://canary.discord.com/channels/1097110036192448656/1388999927593435156."
+  },
+  {
+    "title": "signification des rôles",
+    "content": "chaque rôle a une signification spécifique. Consultez le salon https://canary.discord.com/channels/1097110036192448656/1389163683304833157 pour en savoir plus."
+  },
+  {
+    "title": "problème de recuperation de RP",
+    "content": "assurez vous de ne pas avoir attent votre limite quotidienne, vous pouvez la voir via la commande \"/check\" du bot \"Ascend\"."
+  },
+  {
+    "title": "Qui est BLZ",
+    "content": "BLZstarss est un youtubeur de 90 000 abbonés qui est connu pour faire des vidéo critique"
+  },
+  {
+    "title": "contacter BLZ",
+    "content": "vous pouvez vous rendre dans le salon \"ticket\" et en faire un, cela vous mettera en contacte avec le staff de BLZstarss et eux pourront si nessesaire le contacter, cependant les idée pour des potentiels sujets de vidéo ne sont plus acceptés. "
+  },
+  {
+    "title": "modification des paramêtres de BLZbot",
+    "content": "affin de modifier les paramêtres du bot, vous devez executer \"/ia-settings\"."
+  },
+  {
+    "title": "general",
+    "content": "le salon géneral se trouve ici : https://discordapp.com/channels/1097110036192448656/1388970340440473650."
+  }
+]

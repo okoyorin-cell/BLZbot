@@ -1,0 +1,156 @@
+const db = require('../database/database');
+const logger = require('./logger');
+
+/**
+ * Permissions disponibles pour les rôles personnalisés
+ */
+const CUSTOM_ROLE_PERMISSIONS = {
+    KICK_MEMBER: 'kick_member',
+    MANAGE_BLACKLIST: 'manage_blacklist',
+    START_WAR: 'start_war',
+    EMPTY_TREASURY: 'empty_treasury'
+};
+
+/**
+ * Récupère les rôles personnalisés d'une guilde
+ */
+function getCustomRoles(guildId) {
+    const guild = db.prepare('SELECT custom_roles FROM guilds WHERE id = ?').get(guildId);
+    if (!guild || !guild.custom_roles) return [];
+    
+    try {
+        return JSON.parse(guild.custom_roles);
+    } catch (error) {
+        logger.error(`Erreur parsing custom_roles pour guilde ${guildId}:`, error);
+        return [];
+    }
+}
+
+/**
+ * Sauvegarde les rôles personnalisés d'une guilde
+ */
+function saveCustomRoles(guildId, roles) {
+    if (!Array.isArray(roles) || roles.length > 3) {
+        throw new Error('Maximum 3 rôles personnalisés autorisés');
+    }
+    
+    db.prepare('UPDATE guilds SET custom_roles = ? WHERE id = ?')
+        .run(JSON.stringify(roles), guildId);
+}
+
+/**
+ * Ajoute ou met à jour un rôle personnalisé
+ * @param {number} guildId - ID de la guilde
+ * @param {object} role - { name: string, position: number, permissions: string[] }
+ */
+function addOrUpdateCustomRole(guildId, role) {
+    const guild = db.prepare('SELECT upgrade_level FROM guilds WHERE id = ?').get(guildId);
+    if (!guild || guild.upgrade_level < 7) {
+        throw new Error('Les rôles personnalisés sont débloqués à l\'Upgrade 7');
+    }
+    
+    const roles = getCustomRoles(guildId);
+    
+    // Vérifier que les permissions sont valides
+    if (role.permissions) {
+        const validPerms = Object.values(CUSTOM_ROLE_PERMISSIONS);
+        for (const perm of role.permissions) {
+            if (!validPerms.includes(perm)) {
+                throw new Error(`Permission invalide: ${perm}`);
+            }
+        }
+    }
+    
+    // Chercher si le rôle existe déjà (par nom)
+    const existingIndex = roles.findIndex(r => r.name === role.name);
+    
+    if (existingIndex >= 0) {
+        // Mettre à jour
+        roles[existingIndex] = {
+            name: role.name,
+            position: role.position || 0,
+            permissions: role.permissions || []
+        };
+    } else {
+        // Ajouter
+        if (roles.length >= 3) {
+            throw new Error('Maximum 3 rôles personnalisés');
+        }
+        roles.push({
+            name: role.name,
+            position: role.position || 0,
+            permissions: role.permissions || []
+        });
+    }
+    
+    saveCustomRoles(guildId, roles);
+    return roles;
+}
+
+/**
+ * Supprime un rôle personnalisé
+ */
+function deleteCustomRole(guildId, roleName) {
+    const roles = getCustomRoles(guildId);
+    const filtered = roles.filter(r => r.name !== roleName);
+    saveCustomRoles(guildId, filtered);
+    return filtered;
+}
+
+/**
+ * Assigne un rôle personnalisé à un utilisateur
+ */
+function assignCustomRoleToUser(guildId, userId, roleName) {
+    // Vérifier que le rôle existe
+    const roles = getCustomRoles(guildId);
+    const role = roles.find(r => r.name === roleName);
+    if (!role) {
+        throw new Error(`Rôle "${roleName}" introuvable`);
+    }
+    
+    // Stocker l'assignation dans guild_members ou créer une nouvelle table
+    // Pour simplifier, on va ajouter une colonne custom_role dans guild_members
+    db.prepare('UPDATE guild_members SET custom_role = ? WHERE guild_id = ? AND user_id = ?')
+        .run(roleName, guildId, userId);
+}
+
+/**
+ * Vérifie si un utilisateur a une permission via son rôle personnalisé
+ */
+function hasCustomPermission(guildId, userId, permission) {
+    const member = db.prepare('SELECT custom_role FROM guild_members WHERE guild_id = ? AND user_id = ?')
+        .get(guildId, userId);
+    
+    if (!member || !member.custom_role) return false;
+    
+    const roles = getCustomRoles(guildId);
+    const role = roles.find(r => r.name === member.custom_role);
+    
+    if (!role) return false;
+    
+    return role.permissions.includes(permission);
+}
+
+/**
+ * Récupère le rôle personnalisé d'un utilisateur
+ */
+function getUserCustomRole(guildId, userId) {
+    const member = db.prepare('SELECT custom_role FROM guild_members WHERE guild_id = ? AND user_id = ?')
+        .get(guildId, userId);
+    
+    if (!member || !member.custom_role) return null;
+    
+    const roles = getCustomRoles(guildId);
+    return roles.find(r => r.name === member.custom_role) || null;
+}
+
+module.exports = {
+    CUSTOM_ROLE_PERMISSIONS,
+    getCustomRoles,
+    saveCustomRoles,
+    addOrUpdateCustomRole,
+    deleteCustomRole,
+    assignCustomRoleToUser,
+    hasCustomPermission,
+    getUserCustomRole
+};
