@@ -4,6 +4,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { getSlashDeployGuildIds } = require(path.join(__dirname, '..', '..', '..', 'blzbot-env.js'));
 
 const COMMANDS_DIR = path.join(__dirname, '..', 'commands');
 const PANEL_COMMAND_NAMES = new Set(['panel']);
