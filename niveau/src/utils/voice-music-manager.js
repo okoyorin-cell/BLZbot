@@ -401,6 +401,7 @@ async function searchYoutubeVideos(query, requestedBy) {
 module.exports = {
     getMusicSession,
     postOrReplaceMusicPanel,
+    postServerMusicPanel,
     resolveYoutubeQueryToTracks,
     searchYoutubeVideos,
     MAX_QUEUE,
