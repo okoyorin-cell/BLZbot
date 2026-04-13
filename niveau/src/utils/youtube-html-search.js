@@ -121,7 +121,7 @@ async function searchYoutubeViaHtml(query, limit = 10) {
     }
 
     const renderers = [];
-    collectVideoRenderers(json, renderers, Math.max(limit * 8, 40));
+    collectVideoRenderers(json, renderers, 80);
 
     const out = [];
     const seen = new Set();
