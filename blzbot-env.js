@@ -67,7 +67,10 @@ function applyTestGuildOverride() {
     if (!keepPanel) {
         process.env.PANEL_GUILD_ID = id;
     }
-    console.warn(`[BLZ] ——— Mode TEST ———  guilde cible GUILD_ID=${id}`);
+    const mainRef = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
+    console.warn(
+        `[BLZ] ——— Mode TEST ———  GUILD_ID=${id} (runtime + slash) · serveur principal slash aussi : BLZ_MAIN_GUILD_ID=${mainRef || '—'}`
+    );
 }
 
 module.exports = {
