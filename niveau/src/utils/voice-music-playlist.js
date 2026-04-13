@@ -85,7 +85,7 @@ function getPlaylistRow(guildId, userId, rowId) {
 
 /**
  * @param {string} customId
- * @returns {{ kind: 'play' | 'queue' | 'next' | 'prev', guildId: string, userId: string, rowId?: number, page?: number } | null}
+ * @returns {{ kind: 'play' | 'queue' | 'goto', guildId: string, userId: string, rowId?: number, page?: number } | null}
  */
 function parsePlaylistButtonId(customId) {
     if (!customId.startsWith('blzmpl:')) return null;
@@ -93,10 +93,10 @@ function parsePlaylistButtonId(customId) {
     if (parts.length !== 5) return null;
     const [, kind, guildId, userId, payload] = parts;
     if (!/^\d{17,22}$/.test(guildId) || !/^\d{17,22}$/.test(userId)) return null;
-    if (kind === 'n' || kind === 'p') {
+    if (kind === 'g') {
         const page = parseInt(payload, 10);
         if (Number.isNaN(page) || page < 0) return null;
-        return { kind: kind === 'n' ? 'next' : 'prev', guildId, userId, page };
+        return { kind: 'goto', guildId, userId, page };
     }
     if (kind === 'j' || kind === 'q') {
         const rowId = parseInt(payload, 10);
@@ -114,12 +114,9 @@ function idQueue(guildId, userId, rowId) {
     return `blzmpl:q:${guildId}:${userId}:${rowId}`;
 }
 
-function idNavNext(guildId, userId, page) {
-    return `blzmpl:n:${guildId}:${userId}:${page}`;
-}
-
-function idNavPrev(guildId, userId, page) {
-    return `blzmpl:p:${guildId}:${userId}:${page}`;
+/** @param {number} pageIndex 0-based page to show */
+function idGotoPage(guildId, userId, pageIndex) {
+    return `blzmpl:g:${guildId}:${userId}:${pageIndex}`;
 }
 
 module.exports = {
@@ -131,6 +128,5 @@ module.exports = {
     parsePlaylistButtonId,
     idPlay,
     idQueue,
-    idNavNext,
-    idNavPrev,
+    idGotoPage,
 };
