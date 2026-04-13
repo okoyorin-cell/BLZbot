@@ -74,11 +74,12 @@ jobs:
 
           import paramiko
 
-          host = os.environ["SFTP_HOST"].strip()
-          port = int(os.environ["SFTP_PORT"].strip())
-          user = os.environ["SFTP_USER"].strip()
-          password = os.environ["SFTP_PASS"]
-          remote_base = os.environ["REMOTE_BASE"].strip().rstrip("/")
+          # Retours à la ligne fréquents si copier-coller depuis le panel Pebble → GitHub Secrets
+          host = os.environ["SFTP_HOST"].strip().strip("\r\n")
+          port = int(os.environ["SFTP_PORT"].strip().strip("\r\n"))
+          user = os.environ["SFTP_USER"].strip().strip("\r\n")
+          password = os.environ["SFTP_PASS"].strip("\r\n")
+          remote_base = os.environ["REMOTE_BASE"].strip().strip("\r\n").rstrip("/")
           local_root = os.path.join(os.environ["GITHUB_WORKSPACE"], "_deploy_out")
 
           if not os.path.isdir(local_root):
@@ -101,7 +102,12 @@ jobs:
                   look_for_keys=False,
               )
           except paramiko.AuthenticationException:
-              print("::_error::Authentification SFTP refusée (utilisateur ou mot de passe).", file=sys.stderr)
+              print(
+                  "::_error::Authentification SFTP refusée. Vérifie sur GitHub les secrets "
+                  "PEBBLE_SFTP_USERNAME / PEBBLE_SFTP_PASSWORD / PEBBLE_SFTP_HOST / PEBBLE_SFTP_PORT "
+                  "(même valeurs que « SFTP Details » sur Pebble, sans espace en trop ; régénère le MDP SFTP si besoin).",
+                  file=sys.stderr,
+              )
               sys.exit(1)
           except Exception as e:
               print(f"::_error::Connexion impossible ({type(e).__name__}): {e}", file=sys.stderr)
