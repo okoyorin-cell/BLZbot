@@ -441,9 +441,10 @@ function registerClientReady(client, { isHalloweenActive }) {
                         } catch (err) {
                             logger.debug(`War voice increment skipped for ${userId}: ${err.message}`);
                         }
+                        });
                     }
                 } catch (error) {
-                    logger.error(`Erreur lors de la récompense vocale pour ${userId}:`, error);
+                    logger.error(`Erreur lors de la récompense vocale pour ${vKey}:`, error);
                 }
             }));
         }
