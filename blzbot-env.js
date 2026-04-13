@@ -89,6 +89,16 @@ function getSlashDeployGuildIds() {
     return [...ids];
 }
 
+/** ID du serveur de test BLZ (surcharge TEST_GUILD_ID). */
+function getTestGuildId() {
+    return String(process.env.TEST_GUILD_ID || BLZ_DEFAULT_TEST_GUILD_ID).trim();
+}
+
+function isBlzTestGuild(guildId) {
+    if (guildId == null || guildId === '') return false;
+    return String(guildId) === getTestGuildId();
+}
+
 module.exports = {
     PEBBLE_HOST_ENV_PATH,
     resolveDotenvPath,
@@ -96,4 +106,6 @@ module.exports = {
     isTestBotProfile,
     applyTestGuildOverride,
     getSlashDeployGuildIds,
+    getTestGuildId,
+    isBlzTestGuild,
 };
