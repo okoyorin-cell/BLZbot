@@ -106,15 +106,15 @@ function addPlayerRP(userId, gainRP) {
     const newTotalShares = total_shares_global + deltaShares;
     const newPoolRP = pool_rp_total + gainRP;
     
-    const updateTransaction = db.transaction(() => {
-        db.prepare('UPDATE users SET shares = ? WHERE id = ?').run(newShares, userId);
+    const updateTransaction = dbm.transaction(() => {
+        dbm.prepare('UPDATE users SET shares = ? WHERE id = ?').run(newShares, userId);
         setServerConfig('total_shares_global', newTotalShares);
         setServerConfig('pool_rp_total', newPoolRP);
         
         // Maintien synchrone de la colonne points (Part 1 de ranked se basait là dessus et sur getPoints)
         // en mettant à jour la bdd, on préserve tout le code de la Part 1 Ranked qui check `user.points`
         const finalRP = Math.floor((newShares * newPoolRP) / newTotalShares);
-        db.prepare('UPDATE users SET points = ? WHERE id = ?').run(finalRP, userId);
+        dbm.prepare('UPDATE users SET points = ? WHERE id = ?').run(finalRP, userId);
     });
     
     try {
