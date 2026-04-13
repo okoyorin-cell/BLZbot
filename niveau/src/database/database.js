@@ -1105,6 +1105,24 @@ function initializeDatabase(db) {
     `);
     logger.debug('Table vip_custom_roles créée/vérifiée avec succès.');
 
+    // --- Playlist YouTube perso (musique / lecteur) ---
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS user_youtube_playlist (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            url TEXT NOT NULL,
+            added_at INTEGER NOT NULL,
+            UNIQUE(guild_id, user_id, url)
+        );
+    `);
+    try {
+        db.exec('CREATE INDEX IF NOT EXISTS idx_user_yt_playlist_gu ON user_youtube_playlist(guild_id, user_id)');
+    } catch (_) {
+        /* ignore */
+    }
+
     logger.debug('Base de données initialisée avec succès.');
 }
 
