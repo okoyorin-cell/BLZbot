@@ -305,17 +305,7 @@ function getMusicSession(guildId) {
 async function postOrReplaceMusicPanel(client, guildId, textChannel, member) {
     const session = getMusicSession(guildId);
     session._client = client;
-    if (session.panelChannelId && session.panelMessageId) {
-        try {
-            const oldCh = await client.channels.fetch(session.panelChannelId).catch(() => null);
-            if (oldCh?.isTextBased?.()) {
-                const oldMsg = await oldCh.messages.fetch(session.panelMessageId).catch(() => null);
-                await oldMsg?.delete?.().catch(() => null);
-            }
-        } catch (_) {
-            /* ignore */
-        }
-    }
+    await session.removePanelsInChannel(client, textChannel.id);
     const { buildMusicPanelPayload } = require('./voice-music-panel');
     const payload = {
         content: `<@${member.id}>`,
@@ -325,7 +315,25 @@ async function postOrReplaceMusicPanel(client, guildId, textChannel, member) {
         ...payload,
         allowedMentions: { users: [member.id] },
     });
-    session.setPanelMessage(textChannel.id, msg.id);
+    session.addPanelRegistration(textChannel.id, msg.id);
+    return msg;
+}
+
+/**
+ * Panneau musique public (ex. /music-panel) — n’efface pas les autres salons.
+ * @param {import('discord.js').Client} client
+ * @param {string} guildId
+ * @param {import('discord.js').TextChannel} textChannel
+ */
+async function postServerMusicPanel(client, guildId, textChannel) {
+    const session = getMusicSession(guildId);
+    session._client = client;
+    const { buildMusicPanelPayload } = require('./voice-music-panel');
+    const msg = await textChannel.send({
+        content: '🎵 **Panneau musique** — tout le monde peut utiliser les boutons ci-dessous.',
+        ...buildMusicPanelPayload(guildId, session),
+    });
+    session.addPanelRegistration(textChannel.id, msg.id);
     return msg;
 }
 
