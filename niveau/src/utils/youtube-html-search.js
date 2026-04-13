@@ -234,4 +234,6 @@ async function searchYoutubeViaHtml(query, limit = 10) {
 module.exports = {
     searchYoutubeViaHtml,
     isYoutubeWatchUrl,
+    normalizeYoutubePlayUrl,
+    extractYoutubeVideoId,
 };
