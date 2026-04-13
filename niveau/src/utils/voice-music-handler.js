@@ -232,7 +232,7 @@ async function handleMusicSelect(interaction) {
     const pending = pendingSearches.get(key);
     if (!pending) {
         return interaction.update({
-            content: 'Résultats expirés — relance `/musique play`.',
+            content: 'Résultats expirés — relance **Ajouter** ou `/musique play`.',
             components: [],
         });
     }
