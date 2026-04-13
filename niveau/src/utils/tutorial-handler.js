@@ -492,11 +492,10 @@ async function initializeTutorial(member, thread) {
         // Envoyer le message de bienvenue avec bouton
         try {
             logger.debug(`[TUTORIAL] Construction de l'embed...`);
+            const welcomeFooter = `👋 Bienvenue, <@${member.id}> !\n\n${TUTORIAL_CONTENT.welcome.footerText.replace('<user>', `<@${member.id}>`)}`;
             const embed = new EmbedBuilder()
-                .setTitle(TUTORIAL_CONTENT.welcome.title)
-                .setDescription(TUTORIAL_CONTENT.welcome.description.replace('<user>', `<@${member.id}>`))
                 .setColor(TUTORIAL_CONTENT.welcome.color)
-                .setTimestamp();
+                .setFooter({ text: welcomeFooter.slice(0, 2048) });
 
             logger.debug(`[TUTORIAL] Construction du bouton...`);
             const row = new ActionRowBuilder()
