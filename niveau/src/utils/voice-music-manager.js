@@ -144,10 +144,16 @@ class GuildMusicSession {
         if (this.queue.length >= MAX_QUEUE) {
             return false;
         }
-        this.queue.push(track);
+        const playUrl = normalizeYoutubePlayUrl(track.url);
+        if (!playUrl) {
+            logger.warn('[MUSIC] Morceau ignoré (URL YouTube non reconnue):', track?.url);
+            return false;
+        }
+        const t = { ...track, url: playUrl };
+        this.queue.push(t);
         try {
             const { recordUserPlayedTrack } = require('./voice-music-playlist');
-            recordUserPlayedTrack(this.guildId, track.requestedBy, track.title, track.url);
+            recordUserPlayedTrack(this.guildId, t.requestedBy, t.title, t.url);
         } catch (_) {
             /* ignore */
         }
