@@ -22,16 +22,17 @@ function getPrivateRoomStaffRoleId() {
 }
 
 /**
- * Bouton du panneau : lettre + libellé court + emoji (repère lisible sur mobile).
  * @param {string} customId
- * @param {string} letter
- * @param {string} shortLabel
+ * @param {string} label
  * @param {string} emoji
  * @param {import('discord.js').ButtonStyle} style
  */
-function panelButton(customId, letter, shortLabel, emoji, style = ButtonStyle.Secondary) {
-    const label = `${letter} · ${shortLabel}`.slice(0, 80);
-    return new ButtonBuilder().setCustomId(customId).setStyle(style).setEmoji(emoji).setLabel(label);
+function panelButton(customId, label, emoji, style = ButtonStyle.Secondary) {
+    return new ButtonBuilder()
+        .setCustomId(customId)
+        .setStyle(style)
+        .setEmoji(emoji)
+        .setLabel(String(label).slice(0, 80));
 }
 
 /**
