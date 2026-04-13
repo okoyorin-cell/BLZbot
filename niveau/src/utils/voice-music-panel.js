@@ -126,7 +126,8 @@ function parseMusicButtonId(customId) {
 function parseMusicSelectId(customId) {
     if (!customId.startsWith('blzmpick:')) return null;
     const parts = customId.split(':');
-    if (parts.length !== 4) return null;
+    // Format: blzmpick:<guildId>:<userId> → 3 segments (les IDs ne contiennent pas de ":")
+    if (parts.length !== 3) return null;
     const [, guildId, userId] = parts;
     if (!/^\d{17,22}$/.test(guildId) || !/^\d{17,22}$/.test(userId)) return null;
     return { guildId, userId };
