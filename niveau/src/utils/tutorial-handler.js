@@ -30,9 +30,7 @@ initializeTutorialDatabase();
 const TUTORIAL_CONTENT = {
     welcome: {
         /** Texte intégralement affiché dans le footer de l’embed (pas de titre / description). */
-        footerText: `<user> — Salut ! Bienvenue sur notre serveur Discord !
-
-Avant de pouvoir accéder à l'entièreté du serveur, tu vas devoir passer par un petit tutoriel pour découvrir toutes les fonctionnalités incroyables que nous proposons.
+        footerText: `Avant de pouvoir accéder à l'entièreté du serveur, tu vas devoir passer par un petit tutoriel pour découvrir toutes les fonctionnalités incroyables que nous proposons.
 
 📋 Première étape : Accepter le règlement
 
