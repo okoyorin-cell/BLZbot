@@ -442,21 +442,6 @@ async function createPrivateVoice(client, member, cfg) {
         });
     }
 
-    if (
-        (panelWhere.where === 'voice' || panelWhere.where === 'voice-rest') &&
-        cfg.panelTextChannelId &&
-        /^\d{17,22}$/.test(cfg.panelTextChannelId)
-    ) {
-        const tch = await guild.channels.fetch(cfg.panelTextChannelId).catch(() => null);
-        if (tch?.isTextBased()) {
-            await tch
-                .send({
-                    content: `<@${member.id}> Salon vocal privé : ${channel}\nPanneau : **chat du salon vocal** (icône 💬 sur le salon).`,
-                })
-                .catch(() => null);
-        }
-    }
-
     logger.info(`[PRIVATE_ROOM] Créé ${channel.name} (${channel.id}) pour ${member.user.tag}`);
     return { ok: true, channel };
 }
