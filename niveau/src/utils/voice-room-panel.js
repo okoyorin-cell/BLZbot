@@ -44,16 +44,12 @@ function buildPrivateVoicePanelPayload(voiceChannelId, panelMode) {
     const cid = (action) => `${PREFIX_BTN}:${m}:${voiceChannelId}:${action}`;
     const color = getPanelEmbedColor();
 
-    const legend =
-        '**Ligne 1** — **A** Renommer · **B** Limite de places · **C** Verrouiller (invités seulement) · **D** Minuteur auto · **E** Déverrouiller\n' +
-        '**Ligne 2** — **F** Lien d’invitation · **G** Autoriser un membre · **H** Sonner / appeler · **I** Déconnecter les autres · **J** Région vocale\n' +
-        '**Ligne 3** — **K** Expulser du salon · **L** Bannir du salon · **M** Transférer la propriété · **N** Récupérer le salon · **O** Supprimer le salon';
-
     const embed = new EmbedBuilder()
         .setColor(color)
         .setTitle('Panneau — salon vocal privé')
         .setDescription(
-            `${legend}\n\nLes boutons reprennent la **lettre** et l’action. Réglages Discord supplémentaires : clic droit sur le salon → **Modifier le salon**.`
+            'Cette interface peut être utilisée pour éditer votre salon vocal temporaire.\n\n' +
+                'D’autres réglages sont disponibles via le salon (clic droit → **Modifier le salon**).'
         )
         .setFooter({
             text:
