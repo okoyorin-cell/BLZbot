@@ -72,11 +72,11 @@ function buildWelcomeMessage(member, options = {}) {
         .setDescription(`Avatar — ${member.user.username}`);
     const section = new SectionBuilder().addTextDisplayComponents(header).setThumbnailAccessory(thumbnail);
 
-    /** Corps : uniquement les 3 lignes ➔ (le titre est dans la section au-dessus). */
+    /** Corps : 3 lignes ➜ (le titre est dans la section au-dessus). */
     const body = new TextDisplayBuilder().setContent(
-        `➔ Nous sommes ravis de te voir arriver sur **${serverName}** !\n\n` +
-            `➔ N'hésite pas à aller faire un tour dans <#${regId}> et <#${ticketsId}> si t'as besoin d'aide.\n\n` +
-            `➔ **Passe un agréable séjour ici !** 🔥`
+        `➜ Nous sommes ravis de te voir arriver sur Le serveur de **${serverName}** !\n\n` +
+            `➜ N'hésite pas à aller faire un tour dans <#${regId}> et <#${ticketsId}> si t'as besoin d'aide.\n\n` +
+            `➜ Passe un agréable séjour ici ! 🔥`
     );
 
     /** Plus petit que le reste (sous-texte Discord). */
