@@ -1108,8 +1108,37 @@ function initializeDatabase(db) {
     logger.debug('Base de données initialisée avec succès.');
 }
 
-// Initialiser la DB au premier chargement
-initializeDatabase();
+initializeDatabase(mainDb);
+if (testDb) {
+    initializeDatabase(testDb);
+}
 
-// Exporter l'objet db pour l'utiliser ailleurs
-module.exports = db;
+const { economyGuildId } = require('../utils/economy-scope');
+
+function getDbImpl() {
+    if (!testDb) return mainDb;
+    const gid = economyGuildId.getStore();
+    if (gid && String(gid) === testG) return testDb;
+    return mainDb;
+}
+
+const dbProxy = new Proxy(
+    {},
+    {
+        get(_target, prop) {
+            if (prop === 'getMainDb') return () => mainDb;
+            if (prop === 'getTestDb') return () => testDb;
+            if (prop === 'forEachEconomyDatabase') {
+                return (fn) => {
+                    fn(mainDb);
+                    if (testDb) fn(testDb);
+                };
+            }
+            const d = getDbImpl();
+            const v = d[prop];
+            return typeof v === 'function' ? v.bind(d) : v;
+        },
+    }
+);
+
+module.exports = dbProxy;
