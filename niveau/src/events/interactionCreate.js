@@ -5,6 +5,8 @@ const { handleCommandError } = require('../utils/error-handler');
 module.exports = {
     name: Events.InteractionCreate,
     async execute(interaction) {
+        const { runWithEconomyGuild } = require('../utils/economy-scope');
+        const run = async () => {
         // Gérer l'autocomplete
         if (interaction.isAutocomplete()) {
             const command = interaction.client.commands.get(interaction.commandName);
