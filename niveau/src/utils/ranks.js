@@ -215,11 +215,11 @@ async function updateUserRank(client, userId) {
             `Montée de rang: ${hasRankedUp}`);
 
         if (oldRank?.name !== newRank.name && hasRankedUp) {
-            const rankUpChannelId = process.env.RANK_UP_CHANNEL;
+            const rankUpChannelId = resolveRankUpChannelId(targetGuildId);
             logger.info(`Envoi de la notification de montée de rang pour ${member.user.username} vers le salon ${rankUpChannelId}.`);
 
             if (!rankUpChannelId) {
-                logger.warn('RANK_UP_CHANNEL n\'est pas défini dans le fichier .env. Notification annulée.');
+                logger.warn('RANK_UP_CHANNEL (ou TEST_RANK_UP_CHANNEL sur le serveur test) non défini. Notification annulée.');
             } else {
                 const rankUpChannel = await client.channels.fetch(rankUpChannelId).catch((e) => {
                     logger.error(`Impossible de trouver le salon de montée de rang (ID: ${rankUpChannelId}). Erreur: ${e.message}`);
