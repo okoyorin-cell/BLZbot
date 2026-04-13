@@ -124,19 +124,22 @@ function updateStreak(client, userId) {
  */
 async function sendStreakAnnouncement(client, userId, newStreak, reward) {
     try {
-        if (!process.env.STREAK_CHANNEL) {
+        const { economyGuildId } = require('./economy-scope');
+        const { resolveStreakChannelId } = require('./blz-guild-channels');
+        const streakChannelId = resolveStreakChannelId(economyGuildId.getStore());
+        if (!streakChannelId) {
             if (!_warnedStreakChannel) {
                 _warnedStreakChannel = true;
-                logger.warn('STREAK_CHANNEL non défini dans les variables d\'environnement');
+                logger.warn('STREAK_CHANNEL (ou TEST_STREAK_CHANNEL sur le serveur test) non défini — annonce streak ignorée.');
             }
             return;
         }
 
-        const channel = await client.channels.fetch(process.env.STREAK_CHANNEL).catch(() => null);
+        const channel = await client.channels.fetch(streakChannelId).catch(() => null);
         if (!channel) {
             if (!_warnedStreakChannel) {
                 _warnedStreakChannel = true;
-                logger.warn(`Canal de streak ${process.env.STREAK_CHANNEL} introuvable`);
+                logger.warn(`Canal de streak ${streakChannelId} introuvable`);
             }
             return;
         }

@@ -82,7 +82,10 @@ const getUserPointsStmt = db.prepare('SELECT points FROM users WHERE id = ?');
  */
 async function updateUserRank(client, userId) {
     try {
-        const guild = await client.guilds.fetch(process.env.GUILD_ID);
+        const { economyGuildId } = require('./economy-scope');
+        const { resolveRankUpChannelId } = require('./blz-guild-channels');
+        const targetGuildId = economyGuildId.getStore() || process.env.GUILD_ID;
+        const guild = await client.guilds.fetch(targetGuildId).catch(() => null);
         if (!guild) return;
 
         const member = await guild.members.fetch(userId).catch(() => null);
