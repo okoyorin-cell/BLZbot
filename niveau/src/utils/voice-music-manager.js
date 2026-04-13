@@ -30,8 +30,8 @@ class GuildMusicSession {
         this.current = null;
         this.connection = null;
         this.voiceChannelId = null;
-        this.panelChannelId = null;
-        this.panelMessageId = null;
+        /** @type {{ channelId: string, messageId: string }[]} */
+        this.panelRegistrations = [];
         /** @type {import('discord.js').Client | null} */
         this._client = null;
         this.skipIdlePushOnce = false;
