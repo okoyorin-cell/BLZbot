@@ -184,7 +184,8 @@ module.exports = {
                 // RANKED V2: Si l'utilisateur est en vocal, pas de RP (points) par message
                 // XP et Stars restent inchangés
                 const { usersInVoice } = require('../utils/global-state');
-                const isUserInVoice = usersInVoice.has(author.id);
+                const { voiceTrackingKey } = require('../utils/economy-scope');
+                const isUserInVoice = usersInVoice.has(voiceTrackingKey(message.guild.id, author.id));
 
                 // Appliquer les récompenses (les boosts sont gérés dans grantResources)
                 const baseXp = 10, basePoints = 10;
