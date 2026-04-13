@@ -9,6 +9,7 @@ const {
 const logger = require('./logger');
 const { getMusicSession, resolveYoutubeQueryToTracks, searchYoutubeVideos } = require('./voice-music-manager');
 const { parseMusicButtonId, parseMusicSelectId } = require('./voice-music-panel');
+const { normalizeYoutubePlayUrl } = require('./youtube-html-search');
 
 /** @type {Map<string, { results: { title: string, url: string, durationRaw?: string }[], expires: number }>} */
 const pendingSearches = new Map();
