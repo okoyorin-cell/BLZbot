@@ -156,9 +156,15 @@ class GuildMusicSession {
     /** @param {MusicTrack[]} tracks */
     enqueueMany(tracks) {
         let n = 0;
+        const { recordUserPlayedTrack } = require('./voice-music-playlist');
         for (const t of tracks) {
             if (this.queue.length >= MAX_QUEUE) break;
             this.queue.push(t);
+            try {
+                recordUserPlayedTrack(this.guildId, t.requestedBy, t.title, t.url);
+            } catch (_) {
+                /* ignore */
+            }
             n++;
         }
         return n;
