@@ -44,13 +44,14 @@ function isUserPenalized(userId) {
  * @param {string} reason Raison de la pénalité
  */
 function penalizeUser(userId, durationMs = DEFAULT_PENALTY_DURATION, reason = 'AFK Voice Check') {
+    const key = penaltyKey(userId);
     const expireAt = Date.now() + durationMs;
-    penalizedUsers.set(userId, {
+    penalizedUsers.set(key, {
         expireAt,
         reason,
         appliedAt: Date.now()
     });
-    logger.info(`[RANKED] Pénalité appliquée à ${userId}: ${reason} (expire dans ${Math.round(durationMs / 60000)} min)`);
+    logger.info(`[RANKED] Pénalité appliquée à ${key}: ${reason} (expire dans ${Math.round(durationMs / 60000)} min)`);
 }
 
 /**
