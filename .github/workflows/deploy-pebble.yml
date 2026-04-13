@@ -47,28 +47,85 @@ jobs:
           if [ -z "$P" ]; then P="22"; fi
           echo "port=$P" >> "$GITHUB_OUTPUT"
 
-      # SFTP uniquement (pas de « ssh mkdir ») : compatible PebbleHost port 2222.
-      - name: Déployer en SFTP (lftp mirror)
+      # Paramiko : SFTP pur, gère mieux mots de passe spéciaux que lftp en ligne de commande.
+      - name: Déployer en SFTP (Python + paramiko)
         env:
-          LFTP_PASSWORD: ${{ secrets.PEBBLE_SFTP_PASSWORD }}
           SFTP_HOST: ${{ secrets.PEBBLE_SFTP_HOST }}
           SFTP_USER: ${{ secrets.PEBBLE_SFTP_USERNAME }}
-          REMOTE_PATH: ${{ secrets.PEBBLE_REMOTE_PATH }}
+          SFTP_PASS: ${{ secrets.PEBBLE_SFTP_PASSWORD }}
+          REMOTE_BASE: ${{ secrets.PEBBLE_REMOTE_PATH }}
           SFTP_PORT: ${{ steps.sftp_port.outputs.port }}
         run: |
           set -euo pipefail
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq lftp
-          if [ -z "${SFTP_HOST:-}" ] || [ -z "${SFTP_USER:-}" ] || [ -z "${LFTP_PASSWORD:-}" ] || [ -z "${REMOTE_PATH:-}" ]; then
+          if [ -z "${SFTP_HOST:-}" ] || [ -z "${SFTP_USER:-}" ] || [ -z "${SFTP_PASS:-}" ] || [ -z "${REMOTE_BASE:-}" ]; then
             echo "::error::Secret(s) manquant(s) : PEBBLE_SFTP_HOST, USERNAME, PASSWORD ou REMOTE_PATH."
             exit 1
           fi
-          lftp -c "
-          set sftp:auto-confirm yes
-          set net:timeout 60
-          set net:max-retries 3
-          open -u \"${SFTP_USER}\",\"${LFTP_PASSWORD}\" sftp://${SFTP_HOST}:${SFTP_PORT}
-          mirror -R --parallel=3 \"${GITHUB_WORKSPACE}/_deploy_out\" \"${REMOTE_PATH}\"
-          bye
-          "
-          echo "Déploiement SFTP terminé."
+          python3 -m pip install --user --quiet paramiko
+          export PATH="$HOME/.local/bin:$PATH"
+          python3 << 'PY'
+          import os
+          import sys
+
+          import paramiko
+
+          host = os.environ["SFTP_HOST"].strip()
+          port = int(os.environ["SFTP_PORT"].strip())
+          user = os.environ["SFTP_USER"].strip()
+          password = os.environ["SFTP_PASS"]
+          remote_base = os.environ["REMOTE_BASE"].strip().rstrip("/")
+          local_root = os.path.join(os.environ["GITHUB_WORKSPACE"], "_deploy_out")
+
+          if not os.path.isdir(local_root):
+              print("::_error::_deploy_out introuvable après rsync", file=sys.stderr)
+              sys.exit(1)
+
+          print(f"Connexion SFTP {user}@{host}:{port} → {remote_base} …")
+
+          client = paramiko.SSHClient()
+          client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+          try:
+              client.connect(
+                  hostname=host,
+                  port=port,
+                  username=user,
+                  password=password,
+                  timeout=90,
+                  allow_agent=False,
+                  look_for_keys=False,
+              )
+          except paramiko.AuthenticationException:
+              print("::_error::Authentification SFTP refusée (utilisateur ou mot de passe).", file=sys.stderr)
+              sys.exit(1)
+          except Exception as e:
+              print(f"::_error::Connexion impossible ({type(e).__name__}): {e}", file=sys.stderr)
+              sys.exit(1)
+
+          sftp = client.open_sftp()
+
+          try:
+              sftp.stat(remote_base)
+          except OSError as e:
+              print(f"::_error::Dossier distant introuvable : {remote_base!r} ({e})", file=sys.stderr)
+              print("::_error::Vérifie le secret PEBBLE_REMOTE_PATH (ex. /home/container).", file=sys.stderr)
+              sys.exit(1)
+
+          def upload_dir(local: str, remote: str) -> None:
+              for name in sorted(os.listdir(local)):
+                  lp = os.path.join(local, name)
+                  rp = f"{remote}/{name}".replace("//", "/")
+                  if os.path.isdir(lp):
+                      try:
+                          sftp.mkdir(rp)
+                      except OSError:
+                          pass
+                      upload_dir(lp, rp)
+                  else:
+                      sftp.put(lp, rp)
+
+          upload_dir(local_root, remote_base)
+          sftp.close()
+          client.close()
+          print("Déploiement SFTP terminé.")
+          PY

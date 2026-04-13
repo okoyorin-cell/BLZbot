@@ -32,7 +32,7 @@ Le dossier distant est en général **`/home/container`** (vérifie dans le pane
    |--------|-------------|
    | `PEBBLE_SFTP_PORT` | Port si différent de **22** (ex. **2222** sur Pebble) |
 
-Le workflow utilise **`lftp` en SFTP** (pas de commande `ssh` avant), ce qui convient à PebbleHost.
+Le workflow envoie les fichiers en **SFTP avec Python (paramiko)** : pas de shell SSH, adapté à PebbleHost (port 2222, etc.).
 
 ## 3. Flux quotidien dans Cursor
 
