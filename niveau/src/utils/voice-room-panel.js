@@ -37,10 +37,10 @@ function panelButton(customId, label, emoji, style = ButtonStyle.Secondary) {
 
 /**
  * @param {string} voiceChannelId
- * @param {'restricted' | 'public'} panelMode
+ * @param {'restricted' | 'public' | 'public_ephemeral'} panelMode — `public_ephemeral` : mêmes droits que public, IDs `e:` pour panneau ouvert en privé (éphémère).
  */
 function buildPrivateVoicePanelPayload(voiceChannelId, panelMode) {
-    const m = panelMode === 'restricted' ? 'r' : 'p';
+    const m = panelMode === 'restricted' ? 'r' : panelMode === 'public_ephemeral' ? 'e' : 'p';
     const cid = (action) => `${PREFIX_BTN}:${m}:${voiceChannelId}:${action}`;
     const color = getPanelEmbedColor();
 
@@ -55,7 +55,9 @@ function buildPrivateVoicePanelPayload(voiceChannelId, panelMode) {
             text:
                 panelMode === 'restricted'
                     ? 'Réservé au créateur et au staff'
-                    : 'Panneau public — tout le monde peut utiliser les boutons',
+                    : panelMode === 'public_ephemeral'
+                      ? 'Visible uniquement par toi — pas besoin d’être en vocal'
+                      : 'Panneau public — tout le monde peut utiliser les boutons',
         });
 
     const secondary = ButtonStyle.Secondary;
