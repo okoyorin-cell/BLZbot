@@ -1,54 +1,63 @@
-const db = require('../database/database');
+const dbm = require('../database/database');
 const logger = require('./logger');
 
-// Init table
-db.exec(`
+function forEachDb(fn) {
+    if (typeof dbm.forEachEconomyDatabase === 'function') {
+        dbm.forEachEconomyDatabase(fn);
+    } else {
+        fn(dbm);
+    }
+}
+
+forEachDb((db) => {
+    db.exec(`
     CREATE TABLE IF NOT EXISTS server_config (
         key TEXT PRIMARY KEY,
         value REAL
     );
 `);
+});
 
 function getServerConfig(key, defaultValue = 0) {
-    const row = db.prepare('SELECT value FROM server_config WHERE key = ?').get(key);
+    const row = dbm.prepare('SELECT value FROM server_config WHERE key = ?').get(key);
     return row ? row.value : defaultValue;
 }
 
 function setServerConfig(key, value) {
-    db.prepare('INSERT OR REPLACE INTO server_config (key, value) VALUES (?, ?)').run(key, value);
+    dbm.prepare('INSERT OR REPLACE INTO server_config (key, value) VALUES (?, ?)').run(key, value);
 }
 
 function initializeSharesSystem() {
-    try {
-        db.exec('ALTER TABLE users ADD COLUMN shares REAL DEFAULT 0');
-    } catch (e) {
-        // Ignorer si la colonne existe (déjà ajoutée)
-    }
-
-    // Vérifier si la migration a déjà eu lieu (total_shares_global défini)
-    const existingGlobal = db.prepare('SELECT value FROM server_config WHERE key = ?').get('total_shares_global');
-    if (existingGlobal !== undefined) return;
-
-    logger.info('Démarrage de la migration de la Ranked V2 (Parts)...');
-    
-    // Assigner 'shares' = 'points' pour chaque joueur et calculer le total
-    const users = db.prepare('SELECT id, points FROM users WHERE points > 0').all();
-    let totalPoints = 0;
-    
-    // Transaction pour la migration
-    const migrate = db.transaction(() => {
-        const updateSharesStmt = db.prepare('UPDATE users SET shares = ? WHERE id = ?');
-        for (const user of users) {
-             updateSharesStmt.run(user.points, user.id);
-             totalPoints += user.points;
+    forEachDb((db) => {
+        try {
+            db.exec('ALTER TABLE users ADD COLUMN shares REAL DEFAULT 0');
+        } catch (e) {
+            // Ignorer si la colonne existe (déjà ajoutée)
         }
-        
-        setServerConfig('total_shares_global', totalPoints);
-        setServerConfig('pool_rp_total', totalPoints);
+
+        const existingGlobal = db.prepare('SELECT value FROM server_config WHERE key = ?').get('total_shares_global');
+        if (existingGlobal !== undefined) return;
+
+        logger.info('Démarrage de la migration de la Ranked V2 (Parts) sur une base…');
+
+        const users = db.prepare('SELECT id, points FROM users WHERE points > 0').all();
+        let totalPoints = 0;
+
+        const setCfg = (k, v) => db.prepare('INSERT OR REPLACE INTO server_config (key, value) VALUES (?, ?)').run(k, v);
+
+        const migrate = db.transaction(() => {
+            const updateSharesStmt = db.prepare('UPDATE users SET shares = ? WHERE id = ?');
+            for (const user of users) {
+                updateSharesStmt.run(user.points, user.id);
+                totalPoints += user.points;
+            }
+            setCfg('total_shares_global', totalPoints);
+            setCfg('pool_rp_total', totalPoints);
+        });
+
+        migrate();
+        logger.info(`Migration terminée (${users.length} utilisateurs, total ${totalPoints}).`);
     });
-    
-    migrate();
-    logger.info(`Migration terminée. ${users.length} utilisateurs migrés. Total RP/Shares global initial = ${totalPoints}.`);
 }
 
 function getUserShares(userId) {
