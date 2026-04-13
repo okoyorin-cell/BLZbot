@@ -13,6 +13,8 @@ const PAGE_SIZE = 4;
  */
 function recordUserPlayedTrack(guildId, userId, title, url) {
     if (!guildId || !userId || !url) return;
+    const urlNorm = normalizeYoutubePlayUrl(url) || String(url).trim();
+    if (!urlNorm) return;
     const t = String(title || 'Sans titre').slice(0, 200);
     const now = Date.now();
     try {
@@ -22,7 +24,7 @@ function recordUserPlayedTrack(guildId, userId, title, url) {
              ON CONFLICT(guild_id, user_id, url) DO UPDATE SET
                title = excluded.title,
                added_at = excluded.added_at`
-        ).run(String(guildId), String(userId), t, String(url), now);
+        ).run(String(guildId), String(userId), t, urlNorm, now);
     } catch (e) {
         /* table absente ou erreur — ne pas bloquer la musique */
     }
