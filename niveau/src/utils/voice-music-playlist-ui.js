@@ -1,6 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const logger = require('./logger');
 const { getMusicSession } = require('./voice-music-manager');
+const { extractYoutubeVideoId, normalizeYoutubePlayUrl } = require('./youtube-html-search');
 const {
     PAGE_SIZE,
     countUserPlaylist,
