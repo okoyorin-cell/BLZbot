@@ -401,12 +401,26 @@ async function resolveYoutubeQueryToTracks(query, requestedBy) {
  * @param {string} requestedBy
  */
 async function searchYoutubeVideos(query, requestedBy) {
+    try {
+        const rows = await searchYoutubeViaHtml(query, 10);
+        return rows
+            .filter((r) => isYoutubeWatchUrl(r.url))
+            .map((r) => ({
+                title: r.title || 'Sans titre',
+                url: r.url,
+                requestedBy,
+                durationRaw: r.durationRaw || '',
+            }));
+    } catch (e) {
+        logger.warn('[MUSIC] recherche HTML YouTube:', e?.message || e);
+    }
+
     const results = await play.search(query, {
         limit: 10,
         source: { youtube: 'video' },
     });
     return results
-        .filter((r) => r.url && !r.live)
+        .filter((r) => r.url && !r.live && isYoutubeWatchUrl(r.url))
         .map((r) => ({
             title: r.title || 'Sans titre',
             url: r.url,
