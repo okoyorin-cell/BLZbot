@@ -29,16 +29,16 @@ initializeTutorialDatabase();
  */
 const TUTORIAL_CONTENT = {
     welcome: {
-        title: '🎉 Bienvenue sur le serveur !',
-        description: `Salut <user> ! Bienvenue sur notre serveur Discord !
+        /** Texte intégralement affiché dans le footer de l’embed (pas de titre / description). */
+        footerText: `<user> — Salut ! Bienvenue sur notre serveur Discord !
 
 Avant de pouvoir accéder à l'entièreté du serveur, tu vas devoir passer par un petit tutoriel pour découvrir toutes les fonctionnalités incroyables que nous proposons.
 
-**📋 Première étape : Accepter le règlement**
+📋 Première étape : Accepter le règlement
 
-Pour continuer, tu dois d'abord accepter le règlement du serveur. Rends-toi dans le salon <#1454477663703011439> et clique sur le bouton **"Accepter le règlement"**.
+Pour continuer, tu dois d'abord accepter le règlement du serveur. Rends-toi dans le salon <#1454477663703011439> et clique sur le bouton "Accepter le règlement".
 
-Une fois fait, clique sur le bouton **"Fait !"** ci-dessous pour continuer ! ✨`,
+Une fois fait, clique sur le bouton "Fait !" ci-dessous pour continuer ! ✨`,
         color: 'Blue'
     },
 
