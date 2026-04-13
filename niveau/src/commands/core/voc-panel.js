@@ -64,10 +64,7 @@ module.exports = {
         await interaction.deferReply({ flags: 64 });
 
         try {
-            await postChannel.send({
-                content: `Panneau vocal — ${voiceCh}`,
-                ...buildVocPanelOpenerPayload(voiceCh.id),
-            });
+            await postChannel.send(buildVocPanelOpenerPayload(voiceCh.id));
         } catch (e) {
             return interaction.editReply({
                 content: `Impossible d’envoyer le message : ${e?.message || 'erreur'}. Vérifie les permissions du bot dans ce salon.`,
