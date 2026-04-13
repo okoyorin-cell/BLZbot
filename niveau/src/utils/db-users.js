@@ -6,6 +6,8 @@ const logger = require('../utils/logger');
 const { updateLevelRoles } = require('./level-roles');
 const { calculateGuildBoosts } = require('./guild/guild-boosters');
 const { collectBlzGuildIds, forEachMemberInBlzGuilds } = require('./blz-multi-guild');
+const { economyGuildId } = require('./economy-scope');
+const { resolveLevelUpChannelId } = require('./blz-guild-channels');
 
 const BOOSTED_ROLE_IDS = ['1170361439345704962', '1323305704932507648'];
 
