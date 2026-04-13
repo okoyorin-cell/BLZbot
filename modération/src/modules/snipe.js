@@ -69,6 +69,7 @@ class SnipeManager {
      * Vérifie si le snipe est autorisé dans le salon
      */
     isAllowedInChannel(message) {
+        if (isTestBotProfile()) return true;
         return message.channel.parentId !== this.excludedCategoryId;
     }
 

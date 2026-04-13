@@ -105,53 +105,77 @@ async function deployModerationSlashCommands(client, config, opts = {}) {
         }
     }
 
-    const existingCommands = await guild.commands.fetch();
-    const existingMap = new Map();
-    existingCommands.forEach((cmd) => existingMap.set(cmd.name, cmd));
-
     let createdCount = 0;
     let updatedCount = 0;
     let skippedCount = 0;
     let errorCount = 0;
+    let anyGuildOk = false;
 
-    for (const commandData of commands) {
-        let cmdJson;
-        try {
-            cmdJson = toCmdJson(commandData);
-            const existing = existingMap.get(cmdJson.name);
-
-            if (existing) {
-                const remoteOpts = JSON.stringify(existing.options?.map((o) => (o.toJSON ? o.toJSON() : o)) || []);
-                const localOpts = JSON.stringify(cmdJson.options || []);
-                const permsOk =
-                    permsComparable(existing.defaultMemberPermissions) === permsComparable(cmdJson.default_member_permissions);
-                if (existing.description === cmdJson.description && remoteOpts === localOpts && permsOk) {
-                    skippedCount++;
-                    continue;
-                }
-            }
-
-            if (existing) {
-                await guild.commands.edit(existing.id, cmdJson);
+    for (const gid of mainGuildIds) {
+        const guild = await client.guilds.fetch(gid).catch((e) => {
+            if (e.code === 10004) {
+                console.error(`❌ Modération — guilde ${gid} inconnue ou bot non membre.`);
             } else {
-                await guild.commands.create(cmdJson);
+                console.error(`❌ Modération — guilde ${gid}:`, e.message || e);
             }
-            if (!compact) {
-                const action = existing ? '🔄' : '✨';
-                console.log(`${action} Commande ${existing ? 'mise à jour' : 'créée'}: ${cmdJson.name}`);
+            return null;
+        });
+        if (!guild) continue;
+        anyGuildOk = true;
+
+        if (!compact) console.log(`[modération/deploy] — ${guild.name} (${guild.id})`);
+
+        const existingCommands = await guild.commands.fetch();
+        const existingMap = new Map();
+        existingCommands.forEach((cmd) => existingMap.set(cmd.name, cmd));
+
+        for (const commandData of commands) {
+            let cmdJson;
+            try {
+                cmdJson = toCmdJson(commandData);
+                const existing = existingMap.get(cmdJson.name);
+
+                if (existing) {
+                    const remoteOpts = JSON.stringify(existing.options?.map((o) => (o.toJSON ? o.toJSON() : o)) || []);
+                    const localOpts = JSON.stringify(cmdJson.options || []);
+                    const permsOk =
+                        permsComparable(existing.defaultMemberPermissions) ===
+                        permsComparable(cmdJson.default_member_permissions);
+                    if (existing.description === cmdJson.description && remoteOpts === localOpts && permsOk) {
+                        skippedCount++;
+                        continue;
+                    }
+                }
+
+                if (existing) {
+                    await guild.commands.edit(existing.id, cmdJson);
+                } else {
+                    await guild.commands.create(cmdJson);
+                }
+                if (!compact) {
+                    const action = existing ? '🔄' : '✨';
+                    console.log(`${action} [${guild.name}] ${existing ? 'mise à jour' : 'créée'}: ${cmdJson.name}`);
+                }
+                if (existing) updatedCount++;
+                else createdCount++;
+            } catch (cmdError) {
+                const errMsg = cmdError?.message || String(cmdError);
+                const name = cmdJson?.name || (typeof commandData?.name === 'string' ? commandData.name : '?');
+                console.error(`❌ Modération [${guild.id}] /${name}: ${errMsg}`);
+                errorCount++;
             }
-            if (existing) updatedCount++;
-            else createdCount++;
-        } catch (cmdError) {
-            const errMsg = cmdError?.message || String(cmdError);
-            const name = cmdJson?.name || (typeof commandData?.name === 'string' ? commandData.name : '?');
-            console.error(`❌ Modération /${name}: ${errMsg}`);
-            errorCount++;
         }
     }
 
+    if (!anyGuildOk) {
+        console.error('❌ Modération — aucune guilde accessible pour enregistrer les commandes.');
+        return;
+    }
+
     if (compact) {
-        console.log(`[modération] Slash : +${createdCount} maj ${updatedCount} skip ${skippedCount} err ${errorCount}`);
+        console.log(
+            `[modération] Slash : +${createdCount} maj ${updatedCount} skip ${skippedCount} err ${errorCount} · guildes ${mainGuildIds.join(',')}`
+        );
     } else {
         console.log(`✓ Modération: ${createdCount} new, ${updatedCount} updated, ${skippedCount} skipped, ${errorCount} errors`);
     }
