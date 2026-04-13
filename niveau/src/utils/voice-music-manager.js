@@ -182,12 +182,13 @@ class GuildMusicSession {
         this.current = null;
         while (this.queue.length) {
             const track = this.queue.shift();
-            if (!isYoutubeWatchUrl(track.url)) {
-                logger.error('[MUSIC] Stream error: Invalid URL', track?.url);
+            const playUrl = normalizeYoutubePlayUrl(track.url);
+            if (!playUrl) {
+                logger.error('[MUSIC] Stream error: URL YouTube invalide ou non reconnue —', track?.url ?? '(absent)');
                 continue;
             }
             try {
-                const src = await play.stream(track.url, { discordPlayerCompatibility: true });
+                const src = await play.stream(playUrl, { discordPlayerCompatibility: true });
                 const resource = createAudioResource(src.stream, {
                     inputType: src.type,
                     inlineVolume: true,
