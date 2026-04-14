@@ -425,6 +425,17 @@ async function handleVocPanelOpenButton(interaction) {
         });
     }
 
+    const prvCfg = await resolvePrivateRoomConfig(interaction.client, interaction.guild, { requireLobby: false });
+    if (
+        prvCfg.enabled &&
+        String(ch.parentId || '') !== String(prvCfg.voiceCategoryId)
+    ) {
+        return interaction.reply({
+            content: 'Ce salon n’est plus dans la catégorie des vocaux privés du bot.',
+            flags: 64,
+        });
+    }
+
     return interaction.reply({
         flags: 64,
         ...buildPrivateVoicePanelPayload(voiceChannelId, 'restricted'),
