@@ -158,4 +158,5 @@ module.exports = {
     getPenalizedStarsMultiplier,
     setDelai,
     setSanctions,
+    applyRuntimePatch,
 };
