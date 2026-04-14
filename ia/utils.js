@@ -1963,12 +1963,6 @@ async function handleSettingsButton(interaction) {
       // If we want to stay in the flow, we might want to update?
       // But sendListDeletePanel logic might need adjustment.
       break;
-    case 'toggle_gemini':
-      const settings = getUserSetting(userId);
-      settings.enableGemini = settings.enableGemini !== false ? false : true;
-      saveUserSettings();
-      await interaction.update(generateSettingsPayload(userId));
-      break;
     case 'toggle_sources':
       const settingsSrc = getUserSetting(userId);
       settingsSrc.includeSources = !settingsSrc.includeSources;
