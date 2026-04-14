@@ -72,9 +72,9 @@ module.exports = {
                 }
             );
 
-            await interaction.reply({ 
-                content: `✅ ${utilisateur.tag} a été démute.`, 
-                ephemeral: true 
+            await interaction.reply({
+                content: `✅ ${utilisateur.tag} a été démute.`,
+                flags: MessageFlags.Ephemeral,
             });
 
             const canalLog = interaction.guild.channels.cache.get(CONFIG.STAFF_WARN_CHANNEL_ID);
