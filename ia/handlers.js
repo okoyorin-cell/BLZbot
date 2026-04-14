@@ -402,8 +402,7 @@ async function handleMessageCreate(message, client, activeThreads) {
             { role: "user", content: userPrompt }
         ];
 
-        // Vérifier si Richard demande des infos sur le modèle (pour injection dans le contexte)
-        const richardAskedForModel = message.author.id === "1222548578539536405" && /mod[eè]le/i.test(userPrompt);
+        const koyorinAskedForModel = message.author.id === config.KOYORIN_USER_ID && /mod[eè]le/i.test(userPrompt);
 
         const userId = message.author.id;
 
