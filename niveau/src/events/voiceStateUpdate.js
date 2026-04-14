@@ -12,10 +12,21 @@ module.exports = {
             logger.error('[PRIVATE_ROOM] handleLobbyJoin:', e?.message || e)
         );
 
+        if (oldState.channelId) {
+            const ch =
+                oldState.channel ||
+                (await oldState.guild.channels.fetch(oldState.channelId).catch(() => null));
+            if (ch?.isVoiceBased?.()) {
+                await deleteIfOwnerEmpty(client, ch).catch((e) =>
+                    logger.debug('[PRIVATE_ROOM] deleteIfOwnerEmpty:', e?.message || e)
+                );
+            }
+        }
+
         const member = newState.member;
 
         if (member?.user.bot) {
-            return; // Ignorer les bots
+            return; // Ignorer les bots pour quêtes / récompenses vocales
         }
 
         const userId = newState.id;

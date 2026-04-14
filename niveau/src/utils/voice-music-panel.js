@@ -30,7 +30,7 @@ function buildMusicPanelPayload(guildId, session) {
 
     const embed = new EmbedBuilder()
         .setColor(0x5865f2)
-        .setTitle('Lecteur — YouTube')
+        .setTitle('Musique 🎵')
         .setDescription(body)
         .setFooter({
             text: 'Transport : Précédent · Pause / Play · Suivant · File · Stop · Ajouter · Vider file · Playlist',
