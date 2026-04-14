@@ -679,11 +679,6 @@ async function handleMessageCreate(message, client, activeThreads) {
             await utils.checkDuplicateOutput(client, usedModelName, responseContent, requestContextForDM);
         }
 
-        // AJOUT DU FOOTER GEMINI 3 FLASH
-        if (gemini3QuotaMessage) {
-            responseContent += gemini3QuotaMessage;
-        }
-
         responseContent = utils.addDotAfterAt(responseContent);
 
         // Signaler le contenu dangereux
