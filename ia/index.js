@@ -9,9 +9,9 @@ require('dotenv').config({
     quiet: true,
 });
 
-if (!process.env.GEMINI_API_KEY) {
+if (!process.env.GROQ_API_KEY) {
     console.log(
-        '[ia] Pas de GEMINI_API_KEY — module IA non démarré (obligatoire : l’IA utilise Gemini ; GROQ_API_KEY reste optionnel pour les modèles Groq du panneau).'
+        '[ia] Pas de GROQ_API_KEY — module IA non démarré (l’IA utilise uniquement Groq ; voir https://console.groq.com/keys — ne pas confondre avec Grok/xAI).'
     );
     process.exit(0);
 }

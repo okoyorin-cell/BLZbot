@@ -10,13 +10,13 @@ require('dotenv').config({
 
 const Groq = require('groq-sdk');
 const { InferenceClient } = require('@huggingface/inference');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const API_KEY = process.env.OPENROUTER_API_KEY;
 const AIMAPI_KEY = process.env.AIMAPI_KEY;
 const HF_API_KEY = process.env.HF_API_KEY;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GROQ_DEFAULT_MODEL = (process.env.GROQ_MODEL || 'llama-3.1-8b-instant').trim();
+const GROQ_COOLDOWN_MS = Math.max(0, parseInt(process.env.GROQ_COOLDOWN_MS || '0', 10));
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const SAMBANOVA_API_KEY = process.env.SAMBANOVA_API_KEY;
 const CEREBRAS_API_KEY = process.env.CEREBRAS_API_KEY;
