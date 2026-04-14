@@ -551,10 +551,11 @@ async function handleMessageCreate(message, client, activeThreads) {
                     }
                 }
 
-                // Maintenant traiter la réponse parsée
-                if (typeof parsedResponse === 'object' && parsedResponse !== null && parsedResponse.text) {
+                // Maintenant traiter la réponse parsée (text peut être "" : il faut quand même entrer dans la branche)
+                if (typeof parsedResponse === 'object' && parsedResponse !== null && typeof parsedResponse.text === 'string') {
                     // La réponse est du JSON structuré
-                    responseContent = parsedResponse.text || "Une erreur est survenue lors de la requête API.";
+                    responseContent =
+                        parsedResponse.text.trim() || "Une erreur est survenue lors de la requête API.";
                     shouldGenerateImage = parsedResponse.generateImage === true;
                     imagePrompt = parsedResponse.imagePrompt || "";
                     isDangerousContent = parsedResponse.dangerousContent === true;
