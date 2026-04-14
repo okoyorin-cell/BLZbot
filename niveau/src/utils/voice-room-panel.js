@@ -146,11 +146,16 @@ function parseVoicePanelModalId(customId) {
     return { restricted: mode === 'r', voiceChannelId, kind, mode };
 }
 
-/** @param {string} customId */
+/**
+ * @param {string} customId
+ * @returns {{ kind: 'self' } | { kind: 'channel', channelId: string } | null}
+ */
 function parseVocPanelOpenId(customId) {
     if (!customId.startsWith(`${PREFIX_OPEN}:`)) return null;
-    const id = customId.slice(PREFIX_OPEN.length + 1);
-    return /^\d{17,22}$/.test(id) ? id : null;
+    const rest = customId.slice(PREFIX_OPEN.length + 1);
+    if (rest === 'self') return { kind: 'self' };
+    if (/^\d{17,22}$/.test(rest)) return { kind: 'channel', channelId: rest };
+    return null;
 }
 
 module.exports = {
