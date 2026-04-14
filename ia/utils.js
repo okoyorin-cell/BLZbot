@@ -230,6 +230,11 @@ async function generateEmbedding(text) {
 }
 
 async function loadAndGenerateKnowledgeBaseEmbeddings() {
+  if (!config.embeddingModel) {
+    log('Embeddings non configurés — RAG par similarité désactivé (Groq seul, sans modèle d’embedding).');
+    return;
+  }
+
   if (fs.existsSync(config.KNOWLEDGE_BASE_EMBEDDINGS_FILE)) {
     fs.unlinkSync(config.KNOWLEDGE_BASE_EMBEDDINGS_FILE);
     log("Ancien fichier d'embeddings supprimé.");
