@@ -1307,13 +1307,17 @@ function extractTextFromPartialJson(raw) {
     return result;
 }
 
+/** Placeholder invisible pour le premier message (Discord exige du contenu). */
+const STREAM_REPLY_PLACEHOLDER = '\u200B';
+
 /**
  * Gère le cycle de vie complet d'une réponse en streaming sur Discord
  */
 async function handleStreamingResponse(message, modelName, queryFunction, existingMessage = null) {
     let streamReplyMessage = existingMessage;
     if (!streamReplyMessage) {
-        streamReplyMessage = await message.reply('⏳ Génération en cours...');
+        await message.channel.sendTyping().catch(() => {});
+        streamReplyMessage = await message.reply({ content: STREAM_REPLY_PLACEHOLDER });
     }
     const streamMsgId = streamReplyMessage.id;
 
