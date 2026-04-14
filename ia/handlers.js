@@ -1321,8 +1321,7 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
     let lastEditContent = '';
     let responseText = null;
 
-    // Intervalle d'édition pour éviter le rate-limit (1.5s)
-    const editInterval = setInterval(async () => {
+    const tickStreamEdit = async () => {
         // Si terminé, on arrête d'éditer via l'intervalle
         if (streamState.done) return;
 
