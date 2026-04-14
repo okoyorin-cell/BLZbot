@@ -66,8 +66,12 @@ module.exports = {
             }
 
             if (i.customId === 'confirm_reset_daily_membres') {
-                await i.deferUpdate();
                 try {
+                    await i.update({
+                        content: '⏳ Réinitialisation du /daily pour les membres…',
+                        components: [],
+                    });
+
                     const guild = interaction.guild;
                     await guild.members.fetch().catch(() => null);
 
@@ -80,8 +84,8 @@ module.exports = {
                     await i.editReply({
                         content:
                             `✅ **Daily réinitialisé.**\n\n` +
-                            `• Membres humains dans le cache : **${userIds.length}**\n` +
-                            `• Profils \`users\` mis à jour (\`daily_last_claimed = 0\`) : **${updatedRows}**`,
+                            `• Membres humains (cache) : **${userIds.length}**\n` +
+                            `• Lignes \`users\` mises à jour (\`daily_last_claimed = 0\`) : **${updatedRows}**`,
                         components: [],
                     });
                     logger.warn(
