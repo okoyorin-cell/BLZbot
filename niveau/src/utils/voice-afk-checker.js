@@ -187,7 +187,7 @@ async function triggerAfkEvent(channel, targetMember) {
                 logger.error('[VOICE-AFK] Erreur lors du rappel TTS:', err);
             }
 
-            timeLeft -= CONFIG.REMINDER_INTERVAL;
+            timeLeft -= STATIC_CONFIG.REMINDER_INTERVAL;
             if (timeLeft <= 0 && reminderIntervalId) {
                 clearInterval(reminderIntervalId);
             }
