@@ -208,7 +208,7 @@ async function renderDailyCard({
 
     // Grand emoji
     ctx.font = '140px Arial';
-    ctx.fillText(rewardEmoji, W / 2, 360);
+    ctx.fillText(THEME.gold, rewardEmoji, W / 2, 360);
 
     // Nom de la récompense
     ctx.font = `700 48px ${titleFace}, Arial`;
