@@ -223,7 +223,14 @@ async function updateUserRank(client, userId) {
                 logger.warn('RANK_UP_CHANNEL (ou TEST_RANK_UP_CHANNEL sur le serveur test) non défini. Notification annulée.');
             } else {
                 const rankUpChannel = await client.channels.fetch(rankUpChannelId).catch((e) => {
-                    logger.error(`Impossible de trouver le salon de montée de rang (ID: ${rankUpChannelId}). Erreur: ${e.message}`);
+                    const code = e?.code;
+                    const hint =
+                        code === 50001 || /missing access/i.test(e?.message || '')
+                            ? ' Vérifiez que le bot voit ce salon, ou en mode test définissez TEST_RANK_UP_CHANNEL pour la guilde d’économie.'
+                            : '';
+                    logger.warn(
+                        `Salon de montée de rang inaccessible (ID: ${rankUpChannelId}). ${e?.message || e}.${hint}`
+                    );
                     return null;
                 });
 

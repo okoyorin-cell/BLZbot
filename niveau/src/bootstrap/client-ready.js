@@ -34,6 +34,29 @@ function scheduleStartupTask(label, delayMs, fn) {
     }, delayMs);
 }
 
+/** Ms jusqu’au prochain minuit (Europe/Paris), horloge murale — évite `new Date(localeString)` qui peut donner un délai négatif. */
+function msUntilNextMidnightParis() {
+    try {
+        const parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Europe/Paris',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+        }).formatToParts(new Date());
+        const n = (t) => parseInt(parts.find((p) => p.type === t)?.value || '0', 10);
+        const h = n('hour');
+        const m = n('minute');
+        const s = n('second');
+        const elapsedMs = ((h * 60 + m) * 60 + s) * 1000;
+        const approxLeft = 86400000 - elapsedMs;
+        return Math.max(1000, approxLeft);
+    } catch (e) {
+        logger.warn('[schedule] msUntilNextMidnightParis repli 1h:', e?.message || e);
+        return 3600000;
+    }
+}
+
 /**
  * Tâches planifiées et logique au démarrage (extrait de index.js).
  * @param {import('discord.js').Client} client
