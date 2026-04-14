@@ -472,24 +472,26 @@ async function handleMessageCreate(message, client, activeThreads) {
             // Utiliser la nouvelle fonction de filtrage d'historique
             const rawMessages = await utils.getRelevantHistoryForUser(message.channel, 10, userId);
 
-            // Résumer la conversation avec Gemma pour mieux comprendre le contexte
             if (rawMessages.length > 0) {
                 const messagesText = rawMessages.map(msg => msg.parts[0].text).join('\n');
-                const summary = await utils.summarizeConversation([messagesText]);
-
-                if (summary) {
-                    // Ajouter le résumé au contexte
-                    threadHistory = [{
-                        role: "user",
-                        parts: [{ text: `[CONTEXTE DE LA CONVERSATION]\n${summary}\n\n[MESSAGES RÉCENTS]\n${messagesText}` }]
-                    }];
-                    utils.log(`📊 Résumé de conversation généré avec succès`);
+                if (config.IA_SUMMARY_PUBLIC_MENTION) {
+                    const summary = await utils.summarizeConversation([messagesText]);
+                    if (summary) {
+                        threadHistory = [{
+                            role: "user",
+                            parts: [{ text: `[CONTEXTE DE LA CONVERSATION]\n${summary}\n\n[MESSAGES RÉCENTS]\n${messagesText}` }]
+                        }];
+                        utils.log(`📊 Résumé de conversation (salon public) généré`);
+                    } else {
+                        threadHistory = rawMessages;
+                    }
                 } else {
                     threadHistory = rawMessages;
+                    utils.log(`📢 Salon public — historique brut (pas de résumé Groq, plus rapide)`);
                 }
             }
 
-            utils.log(`📢 Salon public mentionné - Contexte: résumé + 5 messages`);
+            utils.log(`📢 Salon public mentionné — contexte chargé`);
         }
 
         // NOUVELLE LOGIQUE DE SÉLECTION DE MODÈLE STRICTE (Basée sur le tableau MODELS)
