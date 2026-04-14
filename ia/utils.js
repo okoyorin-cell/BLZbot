@@ -1283,6 +1283,7 @@ RAPPEL: Tu es BLZbot, pas ChatGPT. Suis les instructions ci-dessus.`;
       if (onProgress) {
         requestConfig.stream = true;
         try {
+          await applyGroqCooldown();
           const stream = await config.groq.chat.completions.create(requestConfig);
 
           let fullContent = '';
