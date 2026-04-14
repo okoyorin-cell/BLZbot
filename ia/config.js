@@ -100,6 +100,8 @@ IMPORTANT : Si la demande de l'utilisateur ou la réponse que tu pourrais géné
     GROQ_API_KEY: GROQ_API_KEY,
     GROQ_DEFAULT_MODEL,
     GROQ_COOLDOWN_MS,
+    IA_STREAM_EDIT_INTERVAL_MS,
+    IA_SUMMARY_PUBLIC_MENTION,
 
     // GitHub Token
     GITHUB_TOKEN: GITHUB_TOKEN,
