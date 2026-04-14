@@ -112,26 +112,8 @@ async function handleMessageCreate(message, client, activeThreads) {
         _iaGuildMentionLast.set(uid, now);
     }
 
-    // Ne pas appliquer processingThreads au salon public / mention globale / hard (plusieurs pings simultanés)
-    if (!isPublicChannelMention && !isHardModeChannelMention && processingThreads.has(message.channel.id)) {
-        return;
-    }
-
     const userSetting = utils.getUserSetting(message.author.id);
     if (userSetting.banned) return;
-
-    // Appliquer un cooldown de 30 secondes dans le salon "1388970340440473650"
-    if (message.channel.id === "1388970340440473650") {
-        const now = Date.now();
-        if (utils.channelCooldowns.has(message.channel.id)) {
-            const lastTime = utils.channelCooldowns.get(message.channel.id);
-            if ((now - lastTime) < 30000) {
-                utils.log("Cooldown actif dans le salon 1388970340440473650. Demande ignorée.");
-                return;
-            }
-        }
-        utils.channelCooldowns.set(message.channel.id, now);
-    }
 
     activeThreads.set(message.channel.id, { ...activeThreads.get(message.channel.id), lastActivity: Date.now() });
     await message.channel.sendTyping();
