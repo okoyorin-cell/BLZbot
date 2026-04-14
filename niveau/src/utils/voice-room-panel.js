@@ -96,21 +96,25 @@ function buildPrivateVoicePanelPayload(voiceChannelId, panelMode) {
 const PREFIX_OPEN = 'pvropen';
 
 /**
- * Message court + bouton : seul le clic ouvre le vrai panneau en éphémère (rien de sensible dans le salon).
- * @param {string} voiceChannelId
+ * Message court + bouton : le clic ouvre le panneau en éphémère.
+ * @param {string | null | undefined} voiceChannelId — si omis, chaque membre gère **son** salon (`pvropen:self`).
  */
 function buildVocPanelOpenerPayload(voiceChannelId) {
+    const selfMode = !voiceChannelId;
     const embed = new EmbedBuilder()
         .setColor(getPanelEmbedColor())
         .setTitle('Panneau vocal privé')
         .setDescription(
-            'Clique sur **Ouvrir le panneau** pour gérer ce salon (renommer, limite, etc.).\n' +
-                'L’interface ne s’affichera **que pour toi**, tu n’as pas besoin d’être connecté au vocal.'
+            selfMode
+                ? 'Clique sur **Ouvrir mon panneau** pour gérer **ton** salon vocal privé (nom, limite, etc.), **depuis n’importe quel salon texte**, sans être connecté au vocal.\n\n' +
+                      'Si tu n’as pas encore de salon, rejoins d’abord le lobby **Crée ton vocal**.'
+                : 'Clique sur **Ouvrir le panneau** pour gérer **ce** salon vocal (réservé au créateur et au staff).\n' +
+                      'L’interface ne s’affichera **que pour toi**.'
         );
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-            .setCustomId(`${PREFIX_OPEN}:${voiceChannelId}`)
-            .setLabel('Ouvrir le panneau')
+            .setCustomId(selfMode ? `${PREFIX_OPEN}:self` : `${PREFIX_OPEN}:${voiceChannelId}`)
+            .setLabel(selfMode ? 'Ouvrir mon panneau' : 'Ouvrir le panneau')
             .setStyle(ButtonStyle.Primary)
             .setEmoji('🎛️')
     );

@@ -457,26 +457,39 @@ async function createPrivateVoice(client, member, cfg) {
 
 /**
  * Supprime le vocal privé du bot quand plus aucun humain dedans.
+ * S’appuie sur l’enregistrement `privateRoomByVoiceId` (pas seulement la map session).
  */
 async function deleteIfOwnerEmpty(client, channel) {
+    if (!channel?.isVoiceBased?.()) return;
+
+    const meta = getPrivateRoomVoiceMeta(client, channel.id);
+    if (!meta || meta.guildId !== channel.guild.id) return;
+
     const cfg = await resolvePrivateRoomConfig(client, channel.guild, { requireLobby: false });
-    if (!cfg.enabled || !channel?.isVoiceBased?.()) return;
+    if (!cfg.enabled) return;
     if (String(channel.parentId || '') !== String(cfg.voiceCategoryId)) return;
-
-    const sessions = client.privateRoomSessions;
-    if (!sessions) return;
-
-    const entry = [...sessions.entries()].find(([, v]) => v.voiceChannelId === channel.id);
-    if (!entry) return;
 
     const humans = channel.members.filter((m) => !m.user.bot).size;
     if (humans > 0) return;
+
+    try {
+        const { getMusicSession } = require('./voice-music-manager');
+        await getMusicSession(channel.guild.id).removePanelsInChannel(client, channel.id);
+    } catch (_) {
+        /* ignore */
+    }
 
     await channel.delete(`Salon privé vide — ${channel.name}`).catch((e) => {
         logger.debug(`[PRIVATE_ROOM] Suppression: ${e.message}`);
     });
     unregisterPrivateRoomVoice(client, channel.id);
-    sessions.delete(entry[0]);
+
+    const sessions = ensureSessions(client);
+    for (const [k, v] of [...sessions.entries()]) {
+        if (v.voiceChannelId === channel.id) {
+            sessions.delete(k);
+        }
+    }
 }
 
 async function handleLobbyJoin(client, oldState, newState) {
