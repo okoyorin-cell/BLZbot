@@ -443,19 +443,7 @@ async function handleMessageCreate(message, client, activeThreads) {
         // Vérifier si Richard demande des infos sur le modèle (pour injection dans le contexte)
         const richardAskedForModel = message.author.id === "1222548578539536405" && /mod[eè]le/i.test(userPrompt);
 
-        const getGeminiPrompt = (model) => {
-            const modelsNativeJson = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash-exp', 'gemini-3-flash-preview'];
-            const geminiSpecificRules = "\n\nNote importante: Tes connaissances s'arrêtent en janvier 2025. Tu n'as PAS accès à l'outil 'use_advanced_tools' (ou tout autre outil de recherche externe), ne tente JAMAIS de l'utiliser. Utilise tes outils natifs (Google Search, etc.) si disponible.";
-            const modelInfo = richardAskedForModel ? `\n\n[INFO DEBUG] Tu es actuellement le modèle "${model}" (fournisseur: Google Gemini). L'utilisateur Richard (ton créateur) te demande quel modèle tu es. Tu DOIS lui répondre précisément "${model} (Google Gemini)".` : '';
-
-            if (modelsNativeJson.includes(model)) {
-                return baseSystemPrompt + geminiSpecificRules + modelInfo + "\n" + userPrompt;
-            }
-            return fullSystemPrompt + geminiSpecificRules + modelInfo + "\n" + userPrompt;
-        };
-
         const userId = message.author.id;
-        const { enableGemini, includeSources } = utils.getUserSetting(userId);
 
         // Vérifier si c'est un fil privé et récupérer le modèle sélectionné
         let threadHistory = [];
