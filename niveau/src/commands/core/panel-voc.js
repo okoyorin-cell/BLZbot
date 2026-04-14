@@ -42,11 +42,17 @@ module.exports = {
                 voiceCh = await interaction.guild.channels.fetch(mid).catch(() => null);
             }
         }
+        if (!voiceCh?.isVoiceBased?.()) {
+            const sess = ensureSessions(interaction.client).get(`${interaction.guild.id}:${interaction.user.id}`);
+            if (sess?.voiceChannelId) {
+                voiceCh = await interaction.guild.channels.fetch(sess.voiceChannelId).catch(() => null);
+            }
+        }
 
         if (!voiceCh?.isVoiceBased?.()) {
             return interaction.reply({
                 content:
-                    'Indique le salon **vocal** à contrôler, ou connecte-toi d’abord à ton salon vocal privé.',
+                    'Indique un salon **vocal**, connecte-toi à ton privé, ou crée d’abord un salon via le lobby **Crée ton vocal**.',
                 flags: 64,
             });
         }

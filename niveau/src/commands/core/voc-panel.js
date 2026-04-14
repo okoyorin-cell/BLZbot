@@ -74,8 +74,9 @@ module.exports = {
         }
 
         return interaction.editReply({
-            content:
-                'Message publié. Les membres cliquent sur **Ouvrir le panneau** : le panneau complet leur est montré **en privé** (éphémère), sans encombrer le salon.',
+            content: voiceOpt
+                ? 'Message publié. **Créateur / staff** : panneau pour ce salon vocal, en éphémère au clic.'
+                : 'Message publié. Chaque membre clique sur **Ouvrir mon panneau** : son propre salon vocal, en éphémère (pas besoin d’être dans le vocal).',
         });
     },
 };
