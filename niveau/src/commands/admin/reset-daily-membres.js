@@ -13,9 +13,7 @@ const { resetDailyLastClaimedForUserIds } = require('../../utils/db-users');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('reset-daily-membres')
-        .setDescription(
-            'Remet le cooldown /daily à zéro pour tous les membres humains du serveur (peuvent réclamer à nouveau).'
-        )
+        .setDescription('Reset le cooldown /daily pour tous les humains du serveur (profils en base).')
         .setDMPermission(false)
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
