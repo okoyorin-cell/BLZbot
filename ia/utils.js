@@ -1838,6 +1838,12 @@ async function setupPanelIfNeeded(client) {
     await channel.messages.fetch(config.PANEL_MESSAGE_ID);
     log('Panneau de contrôle existant trouvé.');
   } catch (error) {
+    if (error.code === 10003) {
+      log(
+        `Salon panneau IA inconnu (10003) — ID ${config.IA_PANEL_CHANNEL_ID}. Sur une guilde de test, mets IA_PANEL_CHANNEL_ID dans .env vers un salon texte où le bot peut écrire, ou crée ce salon.`
+      );
+      return;
+    }
     if (error.code === 10008) { // Unknown Message
       log('Panneau introuvable. Création...');
       const channel = await client.channels.fetch(config.IA_PANEL_CHANNEL_ID).catch(() => null);
