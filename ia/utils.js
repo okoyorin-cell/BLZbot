@@ -1588,6 +1588,7 @@ async function handleToolCall(toolCall, originalMessages, modelName, originalToo
     ];
 
     try {
+      await applyGroqCooldown();
       const finalResult = await config.groq.chat.completions.create({
         messages: messagesWithTool,
         model: modelName
