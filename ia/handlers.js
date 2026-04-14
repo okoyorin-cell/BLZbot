@@ -903,10 +903,7 @@ async function handleMessageCreate(message, client, activeThreads) {
         utils.log(`Erreur messageCreate: ${error.message}`);
         await message.reply({ content: 'Désolé, une erreur est survenue.' }).catch(() => { });
     } finally {
-        // Ne pas supprimer pour le salon public et hard
-        if (!isPublicChannelMention && !isHardModeChannelMention) {
-            processingThreads.delete(message.channel.id);
-        }
+        /* plus de verrou processingThreads : réponses parallèles autorisées */
     }
 }
 
