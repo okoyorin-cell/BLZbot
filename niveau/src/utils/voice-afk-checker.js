@@ -92,7 +92,7 @@ async function triggerAfkEvent(channel, targetMember) {
     isEventRunning = true;
     logger.info(`[VOICE-AFK] Déclenchement du captcha dans "${channel.name}" pour ${targetMember.user.username}`);
 
-    const code = generateRandomCode(CONFIG.CODE_LENGTH);
+    const code = generateRandomCode(STATIC_CONFIG.CODE_LENGTH);
     const codeSpaced = code.split('').join(' '); // Pour le TTS
 
     // Assurer que le dossier TTS existe
