@@ -82,6 +82,10 @@ function getRandomInterval() {
  * @returns {Promise<boolean>} Succès de l'opération
  */
 async function triggerAfkEvent(channel, targetMember) {
+    if (globallyDisabled) {
+        logger.debug('[VOICE-AFK] Événement ignoré (anti-AFK désactivé).');
+        return false;
+    }
     if (isEventRunning) {
         logger.warn('[VOICE-AFK] Tentative de déclenchement alors qu\'un autre événement est en cours.');
         return false;
