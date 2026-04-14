@@ -693,342 +693,10 @@ async function getRelevantHistoryForUser(channel, limit = 10, targetUserId) {
   }
 }
 
-async function queryGemini(prompt, modelName, attachments = [], includeSources, threadHistory = [], thinkingBudget = 0) {
-  const tools = [];
-
-  try {
-    // Modèles qui ne supportent pas les tools avec JSON response schema
-    const modelsWithoutToolSupport = ['gemini-2.0-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash-lite'];
-    const supportsTools = !modelsWithoutToolSupport.includes(modelName);
-
-    // Activation des outils pour les modèles compatibles
-    if (supportsTools) {
-      // 1. Google Search (si demandé par l'utilisateur)
-      if (includeSources) {
-        tools.push({ googleSearch: {} });
-      }
-
-      // 2. Outils toujours actifs pour les modèles compatibles
-      tools.push({ urlContext: {} });
-      tools.push({ codeExecution: {} });
-
-      log(`🛠️ Outils activés pour ${modelName}: urlContext, codeExecution${includeSources ? ', googleSearch' : ''}`);
-    } else {
-      log(`ℹ️ Modèle ${modelName} ne supporte pas les outils avancés.`);
-    }
-
-    // Configuration du modèle
-    const modelConfig = {
-      model: modelName,
-      safetySettings: [
-        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-      ],
-    };
-
-    const model = config.genAI.getGenerativeModel(modelConfig);
-
-    const contentParts = [
-      { text: prompt }
-    ];
-
-    for (const attachment of attachments) {
-      contentParts.push(attachment);
-    }
-
-    // Construire l'historique complet de la conversation
-    let contents = [];
-
-    if (threadHistory.length > 0) {
-      log(`📜 Historique du fil: ${threadHistory.length} message(s) chargé(s)`);
-      contents = [...threadHistory];
-      contents.push({ role: "user", parts: contentParts });
-    } else {
-      contents = [{ role: "user", parts: contentParts }];
-    }
-
-    // Schéma JSON structuré pour permettre au modèle de décider de générer une image
-    const responseSchema = {
-      type: SchemaType.OBJECT,
-      properties: {
-        text: {
-          type: SchemaType.STRING,
-          description: "Réponse textuelle du bot"
-        },
-        generateImage: {
-          type: SchemaType.BOOLEAN,
-          description: "Indique si une image doit être générée"
-        },
-        imagePrompt: {
-          type: SchemaType.STRING,
-          description: "Le prompt pour générer l'image (requis si generateImage est true)"
-        },
-        dangerousContent: {
-          type: SchemaType.BOOLEAN,
-          description: "Indique si le contenu de la demande ou de la réponse est dangereux/inapproprié"
-        }
-      },
-      required: ["text", "generateImage", "dangerousContent"],
-      propertyOrdering: ["text", "generateImage", "imagePrompt", "dangerousContent"]
-    };
-
-    const config_gen = {};
-
-    // IMPORTANT: Les modèles Thinking (Gemini 2.0 Thinking / Gemini 3) ne supportent PAS 
-    // le responseMimeType: "application/json" en même temps que le raisonnement.
-    const isThinkingModel = modelName.includes('gemini-3');
-
-    if (!isThinkingModel) {
-      config_gen.responseMimeType = "application/json";
-      config_gen.responseSchema = responseSchema;
-    }
-
-    const requestConfig = {
-      contents: contents,
-      generationConfig: config_gen,
-    };
-
-    // Gestion des options de pensée (Thinking)
-    if (modelName.includes('gemini-3')) {
-      // Pour Gemini 3 (Thinking Level)
-      // "gemini-3-flash" demande un thinking level high
-      requestConfig.generationConfig.thinkingConfig = {
-        thinkingLevel: "high"
-      };
-      log(`🧠 Activation Thinking Level HIGH pour ${modelName}`);
-    } else if (modelName.includes('gemini-2.5')) {
-      // Pour Gemini 2.5 (Thinking Budget) - TOUJOURS ACTIVÉ AU MAXIMUM
-      // Max budget pour 2.5 Flash est 24576
-      // Max budget pour 2.5 Pro est 32768
-      let budget = 0;
-      if (modelName.includes('pro')) {
-        budget = 32768; // Max pour 2.5 Pro
-      } else if (modelName.includes('flash') && !modelName.includes('lite')) {
-        budget = 24576; // Max pour 2.5 Flash (non-lite)
-      }
-
-      if (budget > 0) {
-        requestConfig.generationConfig.thinkingConfig = {
-          includeThoughts: true,
-          thinkingBudget: budget
-        };
-        log(`🧠 Activation Thinking Budget MAX (${budget}) pour ${modelName}`);
-      }
-    }
-
-    if (tools.length > 0) {
-      requestConfig.tools = tools;
-    }
-
-    const result = await model.generateContent(requestConfig);
-
-    const response = await result.response;
-
-    // Extraction manuelle du texte pour éviter d'inclure les pensées dans responseText si l'API le fait
-    let responseText = "";
-    let thoughts = "";
-
-    if (response.candidates && response.candidates[0] && response.candidates[0].content && response.candidates[0].content.parts) {
-      const parts = response.candidates[0].content.parts;
-      for (const part of parts) {
-        // Vérifier si c'est une pensée
-        if (part.thought) {
-          if (typeof part.thought === 'string') {
-            thoughts += part.thought + "\n";
-          } else if (part.text) {
-            thoughts += part.text + "\n";
-          }
-        } else if (part.text) {
-          // C'est du texte normal (réponse)
-          responseText += part.text;
-        }
-      }
-    } else {
-      // Fallback si pas de parts (rare)
-      responseText = response.text();
-    }
-
-    // Log les résultats de recherche Google (grounding metadata)
-    if (response.candidates && response.candidates[0] && response.candidates[0].groundingMetadata) {
-      const groundingMetadata = response.candidates[0].groundingMetadata;
-
-      // Requêtes de recherche effectuées
-      if (groundingMetadata.webSearchQueries && groundingMetadata.webSearchQueries.length > 0) {
-        log(`🔍 Requêtes de recherche Google exécutées:`);
-        groundingMetadata.webSearchQueries.forEach((query, index) => {
-          log(`   ${index + 1}. "${query}"`);
-        });
-      }
-
-      // Sources web trouvées
-      if (groundingMetadata.groundingChunks && groundingMetadata.groundingChunks.length > 0) {
-        log(`📚 Sources web utilisées: ${groundingMetadata.groundingChunks.length} source(s)`);
-        groundingMetadata.groundingChunks.forEach((chunk, index) => {
-          if (chunk.web) {
-            log(`   [${index + 1}] ${chunk.web.title || 'Sans titre'}`);
-            log(`       ${chunk.web.uri}`);
-          }
-        });
-      }
-    }
-
-    // Log les URLs récupérées via le contexte URL
-    if (response.candidates && response.candidates[0] && response.candidates[0].urlContextMetadata) {
-      const urlMetadata = response.candidates[0].urlContextMetadata.url_metadata || [];
-      if (urlMetadata.length > 0) {
-        log(`✅ Contexte URL récupéré: ${urlMetadata.length} URL(s) traitée(s)`);
-        urlMetadata.forEach(meta => {
-          log(`   - ${meta.retrieved_url}: ${meta.url_retrieval_status}`);
-        });
-      }
-    }
-
-    // Log les résultats d'exécution de code Python (Pensées déjà extraites plus haut)
-    if (response.candidates && response.candidates[0] && response.candidates[0].content && response.candidates[0].content.parts) {
-      const parts = response.candidates[0].content.parts;
-      for (const part of parts) {
-        if (part.executableCode) {
-          log(`🐍 Code Python généré:\n${part.executableCode.code}`);
-        }
-        if (part.codeExecutionResult) {
-          log(`✅ Résultat d'exécution:\n${part.codeExecutionResult.output}`);
-        }
-      }
-    }
-
-    // Incrémenter le quota si des pensées ont été générées
-    if (thoughts.length > 0 && modelName === 'gemini-2.5-flash') {
-      deepThinkUsage['gemini-2.5-flash-auto']++;
-      log(`📊 Usage Deep Think Auto mis à jour: ${deepThinkUsage['gemini-2.5-flash-auto']}`);
-    }
-
-    // Parser et retourner la réponse JSON
-    try {
-      const parsedResponse = JSON.parse(responseText);
-      // Ajouter l'info sur l'exécution de code
-      parsedResponse.codeExecution = needsCodeExecution;
-
-      // Ajouter les pensées si présentes
-      if (thoughts.length > 0) {
-        parsedResponse.thoughts = thoughts;
-      }
-
-      // Extraire les sources Google Search si présentes
-      if (response.candidates && response.candidates[0] && response.candidates[0].groundingMetadata) {
-        const groundingMetadata = response.candidates[0].groundingMetadata;
-        if (groundingMetadata.groundingChunks && groundingMetadata.groundingChunks.length > 0) {
-          const sources = groundingMetadata.groundingChunks
-            .map((chunk, index) => {
-              if (chunk.web) {
-                return `[${index + 1}] ${chunk.web.title || 'Source'}: ${chunk.web.uri}`;
-              }
-              return null;
-            })
-            .filter(Boolean);
-
-          if (sources.length > 0) {
-            parsedResponse.searchSources = sources;
-            log(`📎 ${sources.length} source(s) attachée(s) à la réponse`);
-          }
-        }
-      }
-
-      // Ajouter l'info sur les outils désactivés
-      if (!supportsTools && (urlsInPrompt.length > 0 || includeSources)) {
-        const disabledTools = [];
-        if (urlsInPrompt.length > 0) disabledTools.push("contexte URL");
-        if (includeSources) disabledTools.push("recherche Google");
-        parsedResponse.disabledToolsMessage = `⚠️ Les outils suivants ne sont pas supportés par ${modelName}: ${disabledTools.join(", ")}.`;
-      }
-
-      return parsedResponse;
-    } catch (parseError) {
-      log(`Erreur parsing JSON: ${parseError}`);
-
-      // Tentative de récupération du JSON via Regex (si le modèle a bavardé autour du JSON)
-      let recoveredJson = null;
-      try {
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          recoveredJson = JSON.parse(jsonMatch[0]);
-          log(`✅ JSON récupéré via Regex après erreur de parsing initial.`);
-        }
-      } catch (e) {
-        log(`❌ Echec récupération JSON via Regex.`);
-      }
-
-      let responseObj;
-      if (recoveredJson) {
-        responseObj = recoveredJson;
-      } else {
-        responseObj = { text: responseText, generateImage: false, codeExecution: needsCodeExecution, dangerousContent: false };
-      }
-
-      if (thoughts.length > 0) {
-        responseObj.thoughts = thoughts;
-      }
-
-      // Extraire les sources Google Search si présentes (copié du bloc try)
-      if (result.response && result.response.candidates && result.response.candidates[0] && result.response.candidates[0].groundingMetadata) {
-        const groundingMetadata = result.response.candidates[0].groundingMetadata;
-        if (groundingMetadata.groundingChunks && groundingMetadata.groundingChunks.length > 0) {
-          const sources = groundingMetadata.groundingChunks
-            .map((chunk, index) => {
-              if (chunk.web) {
-                return `[${index + 1}] ${chunk.web.title || 'Source'}: ${chunk.web.uri}`;
-              }
-              return null;
-            })
-            .filter(Boolean);
-
-          if (sources.length > 0) {
-            responseObj.searchSources = sources;
-          }
-        }
-      }
-
-      // Ajouter l'info sur les outils désactivés
-      if (!supportsTools && (urlsInPrompt.length > 0 || includeSources)) {
-        const disabledTools = [];
-        if (urlsInPrompt.length > 0) disabledTools.push("contexte URL");
-        if (includeSources) disabledTools.push("recherche Google");
-        responseObj.disabledToolsMessage = `⚠️ Les outils suivants ne sont pas supportés par ${modelName}: ${disabledTools.join(", ")}.`;
-      }
-
-      return responseObj;
-    }
-  } catch (error) {
-    // Log détaillé pour diagnostic
-    const errStatus = error.status || error.code || 'N/A';
-    const errHttpCode = error.httpCode || error.response?.status || 'N/A';
-    log(`❌ Erreur Gemini (${modelName}) — status: ${errStatus}, httpCode: ${errHttpCode}, message: ${error.message || error}`);
-
-    // Blacklister ce modèle Gemini sur rate limit
-    // Google SDK: error.status = 'RESOURCE_EXHAUSTED' (string) ou error.code = 429 (number)
-    const isRateLimit = (
-      error.status === 429 ||
-      error.status === 'RESOURCE_EXHAUSTED' ||
-      error.code === 429 ||
-      error.httpCode === 429 ||
-      error.message?.includes('RESOURCE_EXHAUSTED') ||
-      error.message?.includes('429') ||
-      error.message?.includes('quota')
-    );
-
-    if (isRateLimit) {
-      blacklistedModels.add(modelName);
-      log(`🚫 Modèle ${modelName} blacklisté (rate limit Gemini — ne sera plus appelé jusqu'au reset).`);
-    }
-
-    if (error.message && error.message.includes('SAFETY')) {
-      return { text: "Je ne peux pas répondre à cette demande car elle enfreint les politiques de sécurité.", generateImage: false, codeExecution: false, dangerousContent: true };
-    }
-    return null;
-  }
+async function queryGemini(_prompt, _modelName, _attachments = [], _includeSources, _threadHistory = [], _thinkingBudget = 0) {
+  log('queryGemini: désactivé (IA Groq uniquement).');
+  return null;
 }
-
 
 async function queryGeminiImage(prompt, attachmentsParts = []) {
   // Gemini image generation removed. Falling back to alternatives directly.
@@ -1281,54 +949,30 @@ async function queryHuggingFace(prompt, systemPrompt) {
 }
 
 async function queryGemma(prompt, attachments = []) {
-  const modelName = "gemma-3n-e2b-it";
+  if (attachments && attachments.length > 0) {
+    log('queryGemma: pièces jointes ignorées (Groq texte uniquement pour ce helper).');
+  }
   try {
-    log(`Appel à Gemma avec le modèle ${modelName}`);
+    log(`Appel Groq (ex-Gemma) pour tâche auxiliaire — ${config.GROQ_DEFAULT_MODEL}`);
+    const text = await groqSimpleText(prompt, { max_tokens: 1500 });
+    if (!text) return null;
 
-    const model = config.genAI.getGenerativeModel({
-      model: modelName,
-      safetySettings: [
-        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-      ],
-    });
-
-    const contentParts = [{ text: prompt }];
-
-    for (const attachment of attachments) {
-      contentParts.push(attachment);
-    }
-
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: contentParts }],
-    });
-
-    const response = await result.response;
-    const text = response.text();
-
-    // Détector et extraire le JSON même s'il y a du texte autour
-    if (text) {
-      try {
-        // Chercher la première accolade ouvrante et la dernière accolade fermante
-        const firstBrace = text.indexOf('{');
-        const lastBrace = text.lastIndexOf('}');
-
-        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-          const jsonString = text.substring(firstBrace, lastBrace + 1);
-          const parsedJson = JSON.parse(jsonString);
-          log(`✅ JSON détecté et extrait de la réponse Gemma`);
-          return parsedJson;
-        }
-      } catch (parseError) {
-        log(`⚠️ Tentative d'extraction du JSON échouée: ${parseError.message}`);
+    try {
+      const firstBrace = text.indexOf('{');
+      const lastBrace = text.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        const jsonString = text.substring(firstBrace, lastBrace + 1);
+        const parsedJson = JSON.parse(jsonString);
+        log('✅ JSON détecté et extrait de la réponse Groq (queryGemma)');
+        return parsedJson;
       }
+    } catch (parseError) {
+      log(`⚠️ Extraction JSON échouée: ${parseError.message}`);
     }
 
-    return text || null;
+    return text;
   } catch (error) {
-    log(`Erreur lors de l'appel à Gemma: ${error.message || error}`);
+    log(`Erreur queryGemma (Groq): ${error.message || error}`);
     return null;
   }
 }
