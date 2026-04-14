@@ -413,8 +413,10 @@ async function handleMessageCreate(message, client, activeThreads) {
         const userSettingsForContext = utils.getUserSetting(message.author.id);
         const includeGlobalContext = userSettingsForContext.globalContext;
 
-        const channelContext = await utils.updateAndGenerateChannelContext(message, includeGlobalContext);
-        const relevantKnowledge = await utils.getRelevantKnowledge(userPrompt);
+        const [channelContext, relevantKnowledge] = await Promise.all([
+            utils.updateAndGenerateChannelContext(message, includeGlobalContext),
+            utils.getRelevantKnowledge(userPrompt),
+        ]);
 
         const imageGenerationGuide = "\n\n🔴 RÈGLES ABSOLUES - Format de réponse JSON (À RESPECTER STRICTEMENT):\nTu dois répondre UNIQUEMENT avec un objet JSON valide. RIEN D'AUTRE. PAS DE TEXTE AVANT OU APRÈS LE JSON.\n\nLe JSON doit contenir exactement ces 4 champs:\n{\n  \"text\": \"Ta réponse conversationnelle pour l'utilisateur (sans mention des autres champs)\",\n  \"generateImage\": true/false (true UNIQUEMENT si l'utilisateur demande explicitement une image),\n  \"imagePrompt\": \"Un prompt détaillé en français pour générer l'image (null si generateImage est false)\",\n  \"dangerousContent\": true/false (true si contenu dangereux/inapproprié/offensant/illégal)\n}\n\n⚠️ RAPPELS CRITIQUES:\n1. Retourne UNIQUEMENT du JSON valide. Rien avant, rien après.\n2. Le champ 'text' ne doit JAMAIS mentionner generateImage, imagePrompt ou dangerousContent.\n3. N'écris JAMAIS de texte explicatif, d'introduction ou de conclusion en dehors du JSON.\n4. Si l'utilisateur ne demande PAS une image, generateImage DOIT être false et imagePrompt doit être null.\n5. Vérifie que ton JSON est valide avant de l'envoyer.";
 
