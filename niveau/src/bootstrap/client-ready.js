@@ -427,7 +427,10 @@ function registerClientReady(client, { isHalloweenActive }) {
                         // MAJ Mars 2026: Accorder des PT pour le Puits de Combat (20 PT/min vocal)
                         grantTiragePoints(userId, PT_PER_VOICE_MINUTE);
 
-                        logger.info(`Récompense vocale pour ${user.username}: +${xpGain} XP, +${pointsGain} RP${rpMultiplier < 1 ? ' (PÉNALISÉ)' : ''} +${PT_PER_VOICE_MINUTE} PT (Daily XP tot: ${dailyVoiceXP + xpGain}, Daily RP tot: ${dailyVoicePoints + pointsGain})`);
+                        const penalizedVoice = rpM < 1 || xpM < 1 || stM < 1;
+                        logger.info(
+                            `Récompense vocale pour ${user.username}: +${xpGain} XP, +${pointsGain} RP${penalizedVoice ? ' (PÉNALISÉ)' : ''} +${PT_PER_VOICE_MINUTE} PT (Daily XP tot: ${dailyVoiceXP + xpGain}, Daily RP tot: ${dailyVoicePoints + pointsGain})`
+                        );
 
                         const questUser = { ...user, ...dbUser }; // Merge pour avoir les infos nécessaires
                         checkQuestProgress(client, 'VOICE_MINUTE', questUser);
