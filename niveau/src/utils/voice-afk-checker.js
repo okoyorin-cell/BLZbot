@@ -21,13 +21,10 @@ function envDisablesVoiceAfk(v) {
 /** Désactivé au boot si `VOICE_AFK_DISABLED=1` (ou true/yes/on), ou via `/anti-afk`. */
 let globallyDisabled = envDisablesVoiceAfk(process.env.VOICE_AFK_DISABLED);
 
-// Configuration
-const CONFIG = {
-    MIN_INTERVAL: 15 * 60 * 1000, // 15 minutes minimum
-    MAX_INTERVAL: 30 * 60 * 1000, // 30 minutes maximum
-    EVENT_CHANCE: 0.5, // 50% de chance de se déclencher
-    TOTAL_CAPTCHA_TIME: 90 * 1000, // 90 secondes au total
-    REMINDER_INTERVAL: 30 * 1000, // Rappel toutes les 30 secondes
+// Constantes UI captcha (non exposées dans /anti-afk)
+const STATIC_CONFIG = {
+    TOTAL_CAPTCHA_TIME: 90 * 1000,
+    REMINDER_INTERVAL: 30 * 1000,
     CODE_LENGTH: 5,
     TTS_DIR: path.join(__dirname, '../../tts-temp')
 };
