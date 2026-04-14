@@ -1143,16 +1143,19 @@ async function handleInteractionCreate(interaction, client, activeThreads) {
                 if (isPrivateThread) {
                     threadHistory = await utils.getLastMessagesFromThread(interaction.channel, 10, user.id);
                 } else if (isPublicChannelMention) {
-                    // Same logic as handleMessageCreate for public channel
                     const rawMessages = await utils.getRelevantHistoryForUser(interaction.channel, 10, user.id);
                     if (rawMessages.length > 0) {
                         const messagesText = rawMessages.map(msg => msg.parts[0].text).join('\n');
-                        const summary = await utils.summarizeConversation([messagesText]);
-                        if (summary) {
-                            threadHistory = [{
-                                role: "user",
-                                parts: [{ text: `[CONTEXTE DE LA CONVERSATION]\n${summary}\n\n[MESSAGES RÉCENTS]\n${messagesText}` }]
-                            }];
+                        if (config.IA_SUMMARY_PUBLIC_MENTION) {
+                            const summary = await utils.summarizeConversation([messagesText]);
+                            if (summary) {
+                                threadHistory = [{
+                                    role: "user",
+                                    parts: [{ text: `[CONTEXTE DE LA CONVERSATION]\n${summary}\n\n[MESSAGES RÉCENTS]\n${messagesText}` }]
+                                }];
+                            } else {
+                                threadHistory = rawMessages;
+                            }
                         } else {
                             threadHistory = rawMessages;
                         }
