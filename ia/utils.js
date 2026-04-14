@@ -343,9 +343,16 @@ async function updateAndGenerateChannelContext(message, includeGlobalContext = f
 
   if (history.length > 3) {
     const messagesToSummarize = history.splice(0, 4);
-    const newSummary = await summarizeHistory(messagesToSummarize, channelData.summary);
-    channelData.summary = newSummary;
-    log(`[Résumé pour le salon ${channelId}]:\n${newSummary}\n--------------------`);
+    const previousSummary = channelData.summary;
+    summarizeHistory(messagesToSummarize, previousSummary)
+      .then((newSummary) => {
+        if (newSummary) {
+          channelData.summary = newSummary;
+          log(`[Résumé async salon ${channelId}]:\n${newSummary}\n--------------------`);
+          saveHistory(channelHistories);
+        }
+      })
+      .catch((err) => log(`Erreur résumé async salon: ${err.message || err}`));
   }
 
   saveHistory(channelHistories);
