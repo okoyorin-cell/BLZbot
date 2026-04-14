@@ -374,6 +374,9 @@ function stop() {
  * @returns {Promise<{success: boolean, message: string}>}
  */
 async function triggerManualAfk(client, userId) {
+    if (globallyDisabled) {
+        return { success: false, message: "L'anti-AFK vocal est désactivé." };
+    }
     // Trouver l'utilisateur dans un vocal
     for (const guild of client.guilds.cache.values()) {
         const member = await guild.members.fetch(userId).catch(() => null);
