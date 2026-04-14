@@ -72,7 +72,7 @@ function parseAntiAfkModalText(raw) {
 
         const field = keyMap.get(rawKey);
         if (!field) {
-            errors.push(`Clé inconnue : ${eq[1].trim()}`);
+            errors.push(`(avertissement) Clé inconnue, ignorée : ${eq[1].trim()}`);
             continue;
         }
 
