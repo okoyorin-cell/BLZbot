@@ -217,6 +217,9 @@ function loadHistory() { if (fs.existsSync(HISTORY_FILE)) { try { return JSON.pa
 function saveHistory(data) { try { fs.writeFileSync(HISTORY_FILE, JSON.stringify(data, null, 2), 'utf8'); } catch (e) { log(`Erreur sauvegarde history.json: ${e}`); } }
 
 async function generateEmbedding(text) {
+  if (!config.embeddingModel) {
+    return null;
+  }
   try {
     const result = await config.embeddingModel.embedContent(text);
     return result.embedding.values;
