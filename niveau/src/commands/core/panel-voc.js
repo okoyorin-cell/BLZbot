@@ -73,9 +73,17 @@ module.exports = {
             });
         }
 
+        if (!canUseVoicePanel(interaction, voiceCh.id, true)) {
+            return interaction.reply({
+                content:
+                    'Tu n’es pas le **créateur** de ce salon (ni staff). Pour ton salon depuis un autre salon texte, demande un message **/voc-panel** (sans vocal) ou utilise le bouton du panneau.',
+                flags: 64,
+            });
+        }
+
         await interaction.reply({
             content: `Panneau pour ${voiceCh}`,
-            ...buildPrivateVoicePanelPayload(voiceCh.id, 'public'),
+            ...buildPrivateVoicePanelPayload(voiceCh.id, 'restricted'),
         });
     },
 };
