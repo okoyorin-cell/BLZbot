@@ -19,7 +19,7 @@ function requireVoice(interaction) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('musique')
-        .setDescription('Lecteur YouTube : file d’attente, recherche et lecture dans ton vocal')
+        .setDescription('Musique 🎵 : file, recherche YouTube et lecture dans ton vocal')
         .addSubcommand((s) =>
             s
                 .setName('play')
