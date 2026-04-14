@@ -136,7 +136,7 @@ async function handleAntiAfkModalSubmit(interaction) {
     const body = interaction.fields.getTextInputValue(TEXT_INPUT_ID);
     const { errors, actif, patch } = parseAntiAfkModalText(body);
 
-    const blocking = errors.filter((e) => !e.startsWith('Ligne ignorée') && !e.includes('min doit être'));
+    const blocking = errors.filter((e) => !e.startsWith('(avertissement)'));
     if (blocking.length > 0) {
         await interaction.reply({
             content: `**Impossible d’enregistrer.**\n${blocking.slice(0, 8).map((e) => `• ${e}`).join('\n')}`,
