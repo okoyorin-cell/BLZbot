@@ -498,7 +498,6 @@ async function handleMessageCreate(message, client, activeThreads) {
         let isDangerousContent = false;
         let hasThoughts = false;
         let thoughtsContent = "";
-        let gemini3QuotaMessage = "";
         let usedModelName = null;
         let processedWithModel = false;
         let streamReplyMessage = null;
