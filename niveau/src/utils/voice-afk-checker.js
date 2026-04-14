@@ -10,8 +10,9 @@ const gtts = require('gtts');
 const fs = require('fs');
 const path = require('path');
 const logger = require('./logger');
-const { penalizeUser, DEFAULT_PENALTY_DURATION } = require('./ranked-state');
+const { penalizeUser } = require('./ranked-state');
 const { runWithEconomyGuild } = require('./economy-scope');
+const voiceAfkRuntime = require('./voice-afk-runtime');
 
 function envDisablesVoiceAfk(v) {
     return ['1', 'true', 'yes', 'on'].includes(String(v ?? '').trim().toLowerCase());
