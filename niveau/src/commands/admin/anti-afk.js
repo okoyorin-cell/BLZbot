@@ -85,12 +85,6 @@ function parseAntiAfkModalText(raw) {
         patch[field] = Math.round(num);
     }
 
-    if (patch.minIntervalMinutes !== undefined && patch.maxIntervalMinutes !== undefined) {
-        if (patch.minIntervalMinutes > patch.maxIntervalMinutes) {
-            errors.push('min doit être ≤ max (les valeurs seront quand même normalisées si une seule est changée).');
-        }
-    }
-
     return { errors, actif, patch };
 }
 
