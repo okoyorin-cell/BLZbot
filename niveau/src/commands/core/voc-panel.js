@@ -43,30 +43,30 @@ module.exports = {
             });
         }
 
-        const voiceCh = interaction.options.getChannel('vocal');
-        if (!voiceCh?.isVoiceBased?.()) {
-            return interaction.reply({ content: 'Choisis un salon **vocal** valide.', flags: 64 });
-        }
-
-        if (String(voiceCh.parentId || '') !== String(cfg.voiceCategoryId)) {
-            return interaction.reply({
-                content: 'Ce salon n’est pas un vocal privé géré par le bot (mauvaise catégorie).',
-                flags: 64,
-            });
-        }
-
-        const meta = getPrivateRoomVoiceMeta(interaction.client, voiceCh.id);
-        if (!meta || meta.guildId !== interaction.guild.id) {
-            return interaction.reply({
-                content: 'Ce salon n’est pas un vocal privé enregistré par le bot (créé via le lobby).',
-                flags: 64,
-            });
+        const voiceOpt = interaction.options.getChannel('vocal');
+        if (voiceOpt) {
+            if (!voiceOpt.isVoiceBased?.()) {
+                return interaction.reply({ content: 'Choisis un salon **vocal** valide.', flags: 64 });
+            }
+            if (String(voiceOpt.parentId || '') !== String(cfg.voiceCategoryId)) {
+                return interaction.reply({
+                    content: 'Ce salon n’est pas un vocal privé géré par le bot (mauvaise catégorie).',
+                    flags: 64,
+                });
+            }
+            const meta = getPrivateRoomVoiceMeta(interaction.client, voiceOpt.id);
+            if (!meta || meta.guildId !== interaction.guild.id) {
+                return interaction.reply({
+                    content: 'Ce salon n’est pas un vocal privé enregistré par le bot (créé via le lobby).',
+                    flags: 64,
+                });
+            }
         }
 
         await interaction.deferReply({ flags: 64 });
 
         try {
-            await postChannel.send(buildVocPanelOpenerPayload(voiceCh.id));
+            await postChannel.send(buildVocPanelOpenerPayload(voiceOpt?.id ?? null));
         } catch (e) {
             return interaction.editReply({
                 content: `Impossible d’envoyer le message : ${e?.message || 'erreur'}. Vérifie les permissions du bot dans ce salon.`,
