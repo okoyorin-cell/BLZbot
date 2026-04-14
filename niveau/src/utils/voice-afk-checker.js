@@ -96,10 +96,10 @@ async function triggerAfkEvent(channel, targetMember) {
     const codeSpaced = code.split('').join(' '); // Pour le TTS
 
     // Assurer que le dossier TTS existe
-    if (!fs.existsSync(CONFIG.TTS_DIR)) {
-        fs.mkdirSync(CONFIG.TTS_DIR, { recursive: true });
+    if (!fs.existsSync(STATIC_CONFIG.TTS_DIR)) {
+        fs.mkdirSync(STATIC_CONFIG.TTS_DIR, { recursive: true });
     }
-    const ttsFilePath = path.join(CONFIG.TTS_DIR, `afk-captcha-${Date.now()}.mp3`);
+    const ttsFilePath = path.join(STATIC_CONFIG.TTS_DIR, `afk-captcha-${Date.now()}.mp3`);
 
     let connection = null;
     let hasResponded = false;
