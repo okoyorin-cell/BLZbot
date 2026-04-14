@@ -6,8 +6,6 @@ const imageGenerator = require('./imageGenerator.js');
 const { handleAdminRequest } = require('./admin_agent/agent.js');
 const { handleAdminAction } = require('./admin_agent/actions.js');
 
-const processingThreads = new Set();
-
 const IA_EXTRA_PUBLIC_CHANNEL_IDS = new Set(
     String(process.env.IA_EXTRA_PUBLIC_CHANNEL_IDS || '')
         .split(/[,;\s]+/)
