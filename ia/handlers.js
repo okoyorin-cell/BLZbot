@@ -528,7 +528,8 @@ async function handleMessageCreate(message, client, activeThreads) {
         // Parser la réponse AI - elle peut être JSON structuré ou texte simple
         try {
             if (!aiResponse) {
-                responseContent = "Désolé, je suis actuellement incapable de répondre à cause d'une saturation des services d'IA. Veuillez réessayer dans quelques instants.";
+                responseContent =
+                    "Désolé, aucun modèle Groq n'a répondu. Si les logs montrent **401 Invalid API Key**, corrige `GROQ_API_KEY` (https://console.groq.com/keys) puis redémarre le process ia. Sinon réessaie plus tard (saturation / rate limit).";
                 utils.log(`⚠️ Aucun modèle n'a pu répondre.`);
             } else {
                 if (typeof aiResponse === 'object' && aiResponse !== null && typeof aiResponse.content === 'string') {
