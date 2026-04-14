@@ -62,7 +62,7 @@ function parseAntiAfkModalText(raw) {
         if (rawKey === 'actif' || rawKey === 'active' || rawKey === 'onoff') {
             if (['on', '1', 'true', 'oui', 'yes', 'actif', 'active'].includes(rawVal)) {
                 actif = true;
-            } else if (['off', '0', 'false', 'non', 'no', 'inactif', 'desactive', 'désactivé', 'desactive'].includes(rawVal)) {
+            } else if (['off', '0', 'false', 'non', 'no', 'inactif', 'desactive', 'désactivé'].includes(rawVal)) {
                 actif = false;
             } else {
                 errors.push(`Valeur actif invalide : ${eq[2].trim()} (utilise on ou off).`);
