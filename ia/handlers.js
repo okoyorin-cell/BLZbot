@@ -1362,7 +1362,7 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
                     const finalThinking = (streamState.thinking || '') + (streamState.thinking ? '\n' : '') + thinkMatch[1].trim();
                     utils.deepThinkCache.set(streamMsgId, finalThinking);
                 }
-                responseText = responseText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+                responseText = responseText.replace(/<redacted_thinking>[\s\S]*?<\/redacted_thinking>/gi, '').trim();
             } else if (streamState.thinking) {
                 utils.deepThinkCache.set(streamMsgId, streamState.thinking);
             }
