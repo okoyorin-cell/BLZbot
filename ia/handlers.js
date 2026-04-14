@@ -646,6 +646,20 @@ async function handleMessageCreate(message, client, activeThreads) {
             responseContent = "Désolé, une erreur technique est survenue en traitant mon cerveau.";
         }
 
+        if (!isDangerousContent && aiResponse) {
+            const inferred = inferReasonableImageRequest(userPrompt);
+            if (inferred) {
+                if (!shouldGenerateImage) {
+                    shouldGenerateImage = true;
+                    imagePrompt = inferred;
+                    utils.log('📷 Demande image déduite (modérée) depuis le message utilisateur.');
+                } else if (!String(imagePrompt || '').trim()) {
+                    imagePrompt = inferred;
+                    utils.log('📷 Prompt image complété depuis le message utilisateur.');
+                }
+            }
+        }
+
         // Vérification de doublon après parsing de la réponse
         if (usedModelName && responseContent) {
             // Le contexte de requête pour le MP de notification
