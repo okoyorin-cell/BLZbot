@@ -569,6 +569,9 @@ async function handleMessageCreate(message, client, activeThreads) {
                 responseContent = "Désolé, je suis actuellement incapable de répondre à cause d'une saturation des services d'IA. Veuillez réessayer dans quelques instants.";
                 utils.log(`⚠️ Aucun modèle n'a pu répondre.`);
             } else {
+                if (typeof aiResponse === 'object' && aiResponse !== null && typeof aiResponse.content === 'string') {
+                    aiResponse = aiResponse.content;
+                }
                 let parsedResponse = aiResponse;
 
                 // Si c'est une chaîne, essayer de la parser comme JSON

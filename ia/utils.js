@@ -2293,11 +2293,17 @@ async function archiveOldThreads(client) {
  * Supporte le format <function=name>args</function> et le JSON brut.
  */
 function extractRawToolCall(content) {
-  if (!content) return null;
+  if (content == null) return null;
+  const text =
+    typeof content === 'string'
+      ? content
+      : typeof content === 'object'
+        ? JSON.stringify(content)
+        : String(content);
 
   // 1. Format Tag: <function=use_advanced_tools>{"reason": "..."}</function>
   const tagRegex = /<function=([^>]+)>([\s\S]*?)<\/function>/i;
-  const tagMatch = content.match(tagRegex);
+  const tagMatch = text.match(tagRegex);
   if (tagMatch) {
     const name = tagMatch[1].trim();
     const argsStr = tagMatch[2].trim();

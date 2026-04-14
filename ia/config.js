@@ -57,6 +57,10 @@ module.exports = {
     PANEL_MESSAGE_ID: '1415380912815865996',
     FLAG_CHANNEL_ID: '1343196193421000704',
     RICHARD_USER_ID: '1222548578539536405',
+    /** MP à Richard en cas de doublon de réponse : désactivé par défaut (sinon erreur sans serveur commun + spam). Activer : IA_DUPLICATE_NOTIFY_RICHARD=1 */
+    DUPLICATE_OUTPUT_NOTIFY_DM: ['1', 'true', 'yes', 'on'].includes(
+        String(process.env.IA_DUPLICATE_NOTIFY_RICHARD || '').trim().toLowerCase()
+    ),
     CREATE_THREAD_CUSTOM_ID: 'create_private_thread_with_bot',
     CLOSE_THREAD_CUSTOM_ID: 'close_private_thread',
     DELETE_THREAD_CUSTOM_ID: 'delete_private_thread',
