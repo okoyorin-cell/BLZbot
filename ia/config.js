@@ -11,18 +11,11 @@ require('dotenv').config({
 const Groq = require('groq-sdk');
 const { InferenceClient } = require('@huggingface/inference');
 
+const { normalizeGroqApiKey } = require('./normalize-groq-key.js');
+
 const API_KEY = process.env.OPENROUTER_API_KEY;
 const AIMAPI_KEY = process.env.AIMAPI_KEY;
 const HF_API_KEY = process.env.HF_API_KEY;
-/** Trim + retire guillemets englobants (erreur fréquente dans .env). */
-function normalizeGroqApiKey(raw) {
-    if (raw == null || raw === undefined) return '';
-    let s = String(raw).trim();
-    if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
-        s = s.slice(1, -1).trim();
-    }
-    return s;
-}
 const GROQ_API_KEY = normalizeGroqApiKey(process.env.GROQ_API_KEY);
 if (GROQ_API_KEY) {
     process.env.GROQ_API_KEY = GROQ_API_KEY;

@@ -1,4 +1,5 @@
 const path = require('path');
+const { normalizeGroqApiKey } = require('./normalize-groq-key.js');
 const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH } = require(path.join(__dirname, '..', 'blzbot-env.js'));
 require('dotenv').config({
     path: resolveDotenvPath(
@@ -9,15 +10,13 @@ require('dotenv').config({
     quiet: true,
 });
 
-// Même normalisation que config.js (trim, guillemets) pour le test avant require config
-let _gq = String(process.env.GROQ_API_KEY || '').trim();
-if (
-    (_gq.startsWith('"') && _gq.endsWith('"')) ||
-    (_gq.startsWith("'") && _gq.endsWith("'"))
-) {
-    _gq = _gq.slice(1, -1).trim();
+const _gqRaw = process.env.GROQ_API_KEY;
+process.env.GROQ_API_KEY = normalizeGroqApiKey(_gqRaw);
+if (_gqRaw != null && String(_gqRaw) !== process.env.GROQ_API_KEY) {
+    console.warn(
+        '[ia] GROQ_API_KEY a été nettoyée (espace fin de ligne, guillemets ou caractère invisible). Mets une seule ligne sans rien après la clé.'
+    );
 }
-process.env.GROQ_API_KEY = _gq;
 
 if (!process.env.GROQ_API_KEY) {
     console.log(
