@@ -1344,6 +1344,18 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
 
         clearInterval(editInterval);
 
+        if (responseText && typeof responseText === 'object' && responseText.groqAuthError) {
+            try {
+                await streamReplyMessage.edit({ content: GROQ_401_USER_MESSAGE, components: [] });
+            } catch { /* ignore */ }
+            return {
+                responseText: null,
+                streamReplyMessage,
+                success: false,
+                skipReplyPipeline: true,
+            };
+        }
+
         // queryGroq renvoie { content, modelUsed } en succès — extraire la chaîne pour la suite
         if (responseText && typeof responseText === 'object' && typeof responseText.content === 'string') {
             responseText = responseText.content;
