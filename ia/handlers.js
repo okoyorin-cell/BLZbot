@@ -505,7 +505,7 @@ async function handleMessageCreate(message, client, activeThreads) {
 
             try {
                 const result = await handleStreamingResponse(message, modelName, async (onProgress) => {
-                    return await utils.queryGroq(standardConversation, attachments, richardAskedForModel, modelName, onProgress);
+                    return await utils.queryGroq(standardConversation, attachments, koyorinAskedForModel, modelName, onProgress);
                 }, streamReplyMessage);
 
                 streamReplyMessage = result.streamReplyMessage;
