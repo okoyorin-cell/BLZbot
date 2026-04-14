@@ -655,6 +655,14 @@ async function handleMessageCreate(message, client, activeThreads) {
                     }
 
                     utils.log(`📝 Réponse texte simple`);
+                } else if (
+                    typeof parsedResponse === 'object' &&
+                    parsedResponse !== null &&
+                    typeof parsedResponse.content === 'string' &&
+                    !parsedResponse.text
+                ) {
+                    responseContent = parsedResponse.content;
+                    utils.log(`📝 Réponse extraite du champ content (JSON / objet API)`);
                 } else {
                     // Vérifier si c'est un appel d'outil brut (non parsé comme JSON structuré)
                     const rawToolCall = utils.extractRawToolCall(aiResponse);
