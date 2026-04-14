@@ -15,7 +15,7 @@ const IA_EXTRA_PUBLIC_CHANNEL_IDS = new Set(
 
 const IA_GUILD_MENTION_COOLDOWN_MS = Math.max(
     0,
-    parseInt(process.env.IA_GUILD_MENTION_COOLDOWN_MS || '5000', 10)
+    parseInt(process.env.IA_GUILD_MENTION_COOLDOWN_MS || '0', 10)
 );
 const _iaGuildMentionLast = new Map();
 
