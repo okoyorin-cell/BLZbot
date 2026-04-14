@@ -370,9 +370,24 @@ async function handleVoiceRoomPanelModal(interaction) {
  * @param {import('discord.js').ButtonInteraction} interaction
  */
 async function handleVocPanelOpenButton(interaction) {
-    const voiceChannelId = parseVocPanelOpenId(interaction.customId);
-    if (!voiceChannelId || !interaction.guild) {
+    const parsed = parseVocPanelOpenId(interaction.customId);
+    if (!parsed || !interaction.guild) {
         return interaction.reply({ content: 'Interaction invalide.', flags: 64 });
+    }
+
+    let voiceChannelId;
+    if (parsed.kind === 'self') {
+        const sess = ensureSessions(interaction.client).get(sessionKey(interaction.guild.id, interaction.user.id));
+        if (!sess?.voiceChannelId) {
+            return interaction.reply({
+                content:
+                    'Tu n’as pas de salon vocal privé actif. Rejoins le lobby **Crée ton vocal** pour en créer un.',
+                flags: 64,
+            });
+        }
+        voiceChannelId = sess.voiceChannelId;
+    } else {
+        voiceChannelId = parsed.channelId;
     }
 
     const meta = getPrivateRoomVoiceMeta(interaction.client, voiceChannelId);
@@ -383,18 +398,31 @@ async function handleVocPanelOpenButton(interaction) {
         });
     }
 
-    if (!canUseVoicePanel(interaction, voiceChannelId, false)) {
-        return interaction.reply({ content: 'Tu n’as pas accès à ce panneau.', flags: 64 });
+    if (parsed.kind === 'self') {
+        if (meta.ownerId !== interaction.user.id) {
+            return interaction.reply({
+                content: 'Ce salon ne t’appartient pas. Utilise le lobby pour créer ton propre salon.',
+                flags: 64,
+            });
+        }
+    } else if (!canUseVoicePanel(interaction, voiceChannelId, true)) {
+        return interaction.reply({
+            content: 'Ce panneau est réservé au **créateur** du salon ou au **staff**.',
+            flags: 64,
+        });
     }
 
     const ch = await interaction.guild.channels.fetch(voiceChannelId).catch(() => null);
     if (!ch?.isVoiceBased?.()) {
-        return interaction.reply({ content: 'Salon vocal introuvable.', flags: 64 });
+        return interaction.reply({
+            content: 'Salon vocal introuvable. Recrée-en un via le lobby.',
+            flags: 64,
+        });
     }
 
     return interaction.reply({
         flags: 64,
-        ...buildPrivateVoicePanelPayload(voiceChannelId, 'public_ephemeral'),
+        ...buildPrivateVoicePanelPayload(voiceChannelId, 'restricted'),
     });
 }
 

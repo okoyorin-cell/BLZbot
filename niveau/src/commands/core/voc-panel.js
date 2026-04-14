@@ -28,9 +28,9 @@ module.exports = {
         }
 
         const postChannel = interaction.channel;
-        if (!postChannel?.isTextBased?.() || typeof postChannel.send !== 'function') {
+        if (!postChannel || typeof postChannel.send !== 'function') {
             return interaction.reply({
-                content: 'Utilise cette commande dans un **salon texte** (ou un fil) où le bot peut écrire.',
+                content: 'Utilise cette commande dans un salon où le bot peut **envoyer des messages**.',
                 flags: 64,
             });
         }
