@@ -1306,7 +1306,7 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
         }
     };
 
-    const editMs = config.IA_STREAM_EDIT_INTERVAL_MS || 300;
+    const editMs = config.IA_STREAM_EDIT_INTERVAL_MS || 200;
     let primedFirstEdit = false;
     const editInterval = setInterval(tickStreamEdit, editMs);
 
