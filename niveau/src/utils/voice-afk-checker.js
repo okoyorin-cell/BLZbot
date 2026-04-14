@@ -229,12 +229,16 @@ async function triggerAfkEvent(channel, targetMember) {
 
                     // Appliquer la pénalité
                     try {
+                        const penaltyMs = voiceAfkRuntime.getPenaltyDurationMs();
+                        const s = voiceAfkRuntime.getSnapshot();
                         runWithEconomyGuild(targetMember.guild.id, () =>
-                            penalizeUser(targetMember.id, DEFAULT_PENALTY_DURATION, 'Échec du captcha AFK vocal')
+                            penalizeUser(targetMember.id, penaltyMs, 'Échec du captcha AFK vocal')
                         );
 
                         if (textChannel) {
-                            await textChannel.send(`❌ ${targetMember.user}, vous n'avez pas répondu à temps. Pénalité appliquée : **gains RP réduits de 50% pendant 15 minutes**.`);
+                            await textChannel.send(
+                                `❌ ${targetMember.user}, vous n'avez pas répondu à temps. Pénalité **${s.penaltyDurationMinutes} min** : gains vocal **RP ${s.penalizedRpPercent} %**, **XP ${s.penalizedXpPercent} %**, **Stars ${s.penalizedStarsPercent} %** (par rapport au gain normal).`
+                            );
                         }
 
                         // Kick du vocal
