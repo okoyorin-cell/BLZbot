@@ -14,7 +14,19 @@ const { InferenceClient } = require('@huggingface/inference');
 const API_KEY = process.env.OPENROUTER_API_KEY;
 const AIMAPI_KEY = process.env.AIMAPI_KEY;
 const HF_API_KEY = process.env.HF_API_KEY;
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
+/** Trim + retire guillemets englobants (erreur fréquente dans .env). */
+function normalizeGroqApiKey(raw) {
+    if (raw == null || raw === undefined) return '';
+    let s = String(raw).trim();
+    if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+        s = s.slice(1, -1).trim();
+    }
+    return s;
+}
+const GROQ_API_KEY = normalizeGroqApiKey(process.env.GROQ_API_KEY);
+if (GROQ_API_KEY) {
+    process.env.GROQ_API_KEY = GROQ_API_KEY;
+}
 const GROQ_DEFAULT_MODEL = (process.env.GROQ_MODEL || 'llama-3.1-8b-instant').trim();
 const GROQ_COOLDOWN_MS = Math.max(0, parseInt(process.env.GROQ_COOLDOWN_MS || '0', 10));
 /** Intervalle entre deux éditions du message Discord pendant le stream (ms). Plus bas = plus réactif (risque rate-limit Discord si trop agressif). */

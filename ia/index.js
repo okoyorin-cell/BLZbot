@@ -9,11 +9,27 @@ require('dotenv').config({
     quiet: true,
 });
 
+// Même normalisation que config.js (trim, guillemets) pour le test avant require config
+let _gq = String(process.env.GROQ_API_KEY || '').trim();
+if (
+    (_gq.startsWith('"') && _gq.endsWith('"')) ||
+    (_gq.startsWith("'") && _gq.endsWith("'"))
+) {
+    _gq = _gq.slice(1, -1).trim();
+}
+process.env.GROQ_API_KEY = _gq;
+
 if (!process.env.GROQ_API_KEY) {
     console.log(
         '[ia] Pas de GROQ_API_KEY — module IA non démarré (l’IA utilise uniquement Groq ; voir https://console.groq.com/keys — ne pas confondre avec Grok/xAI).'
     );
     process.exit(0);
+}
+
+if (!process.env.GROQ_API_KEY.startsWith('gsk_')) {
+    console.warn(
+        '[ia] GROQ_API_KEY ne commence pas par gsk_ — souvent les clés Groq ont ce préfixe. Si l’API renvoie 401, régénère une clé sur https://console.groq.com/keys (pas OpenAI / OpenRouter).'
+    );
 }
 
 const { Client, GatewayIntentBits, Partials } = require('discord.js');

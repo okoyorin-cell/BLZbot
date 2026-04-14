@@ -1097,6 +1097,7 @@ async function queryGroq(messages, attachments = [], injectModelInfo = false, sp
   }
 
   let multimodalFailed = false;
+  let groqAuthRejected = false;
 
   for (let i = 0; i < modelsToTry.length; i++) {
     const modelInfo = modelsToTry[i];
