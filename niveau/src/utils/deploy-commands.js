@@ -101,8 +101,11 @@ module.exports = async function deployCommands(client) {
 
     if (!compact) console.log(`[DEPLOY] Loaded ${localCommands.size} local commands`);
     const hasPanelVoc = localCommands.has('panel-voc');
+    const hasStatsVocDeploy = localCommands.has('stats-voc-deploy');
     console.log(
-        `[niveau/deploy] /panel-voc présent dans le code : ${hasPanelVoc ? 'OUI ✓' : 'NON ✗ (fichier panel-voc.js manquant sur ce serveur ?)'}`
+        `[niveau/deploy] /panel-voc code : ${hasPanelVoc ? 'OUI ✓' : 'NON ✗'} · /stats-voc-deploy code : ${
+            hasStatsVocDeploy ? 'OUI ✓' : 'NON ✗'
+        }`
     );
 
     if (!client.isReady()) {

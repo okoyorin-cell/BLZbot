@@ -24,14 +24,23 @@ module.exports = {
                 .setName('recreate')
                 .setDescription('Supprime les 3 salons suivis puis les recrée (destructif).')
                 .setRequired(false)
-        )
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        ),
+    // Pas de setDefaultMemberPermissions : sinon Discord masque / aux non-Administrateurs
+    // (un rôle « Staff » sans le bit Administrateur ne voit pas la commande du tout).
 
     async execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
 
         if (!interaction.guild) {
             return interaction.editReply({ content: '❌ Utilisable seulement sur un serveur.' });
+        }
+
+        const member = interaction.member;
+        if (!member?.permissions?.has(PermissionFlagsBits.Administrator)) {
+            return interaction.editReply({
+                content:
+                    '❌ Réservé aux membres avec la permission **Administrateur** Discord (bit Administrateur sur un rôle).',
+            });
         }
 
         const guild = interaction.guild;
