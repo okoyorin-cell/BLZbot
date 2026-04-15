@@ -146,7 +146,7 @@ function drawMemberLine(ctx, member, guild, x, y, nameMax, titleFace, textFace, 
 
 /**
  * @param {object} opts
- * @param {'citadelle'|'brasier'|'etendard'} variant
+ * @param {'citadelle'|'rempart'|'brasier'|'etendard'} variant
  */
 async function renderGuildProfilePreviewVariant(opts, variant) {
     const { guild, members, owner, warInfo, totalMembers } = opts;
