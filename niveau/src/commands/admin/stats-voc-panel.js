@@ -51,11 +51,19 @@ module.exports = {
         }
 
         const rawCat = String(interaction.options.getString('categorie_id') || '').trim();
-        const categoryId = /^\d{17,22}$/.test(rawCat) ? rawCat : defaultCategoryId();
+        const categoryId = /^\d{17,22}$/.test(rawCat)
+            ? rawCat
+            : defaultCategoryId(guild.id);
 
         const recreate = interaction.options.getBoolean('recreate') === true;
 
         try {
+            if (!categoryId || !/^\d{17,22}$/.test(String(categoryId))) {
+                return interaction.editReply({
+                    content:
+                        '❌ Aucune catégorie par défaut pour ce serveur. Renseigne `categorie_id` ou la variable `.env` **MEMBER_STATS_CATEGORY_IDS** (guilde:catégorie).',
+                });
+            }
             await deployMemberStatsVoice(guild, categoryId, { recreate });
             startScheduler(interaction.client);
             return interaction.editReply({

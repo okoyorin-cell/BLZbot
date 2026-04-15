@@ -248,7 +248,10 @@ async function countBotsInGuild(guild) {
 async function deployMemberStatsVoice(guild, categoryId, opts = {}) {
     const raw = await guild.channels.fetch(categoryId).catch(() => null);
     if (!raw || raw.type !== ChannelType.GuildCategory) {
-        throw new Error('Catégorie introuvable ou ID invalide (attendu : ID de catégorie).');
+        throw new Error(
+            'Catégorie introuvable sur **ce** serveur (un ID de catégorie ne marche que dans la guilde où il existe). ' +
+                'Passe `categorie_id` dans la commande ou configure `MEMBER_STATS_CATEGORY_IDS` (voir .env.example).'
+        );
     }
 
     await guild.roles.fetch().catch(() => {});
