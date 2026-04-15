@@ -22,9 +22,9 @@ const W = 1200;
 const H = 800;
 
 const GUILD_PREVIEW_VARIANTS = [
-    { id: 'citadelle', label: 'Citadelle', hint: '3 blocs + membres + stats (comme Bastion, couleurs BLZ)' },
-    { id: 'brasier', label: 'Brasier', hint: 'Stats à gauche, membres à droite — contrasté' },
-    { id: 'etendard', label: 'Étendard', hint: 'Bandeau cramoisi + cartes or + liste' },
+    { id: 'citadelle', label: 'Citadelle', hint: '3 cartes haut + colonne membres + trésor / guerre / infos' },
+    { id: 'brasier', label: 'Brasier', hint: 'Bandeau large + tableau membres + 3 blocs bas' },
+    { id: 'etendard', label: 'Étendard', hint: 'Colonne stats gauche + guerre + roster à droite' },
 ];
 
 /** Panneaux semi-transparents (comme canvas-guild-profile-v2 /profil-guilde). */
