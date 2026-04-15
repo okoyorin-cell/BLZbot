@@ -314,7 +314,7 @@ async function renderDailyCard({
     ctx.fillStyle = 'rgba(255,255,255,0.45)';
     if (isSuccess) {
         ctx.textAlign = 'right';
-        ctx.fillText('Daily — BLZbot', boxRight, footY + footerH / 2);
+        ctx.fillText(`BLZbot · ${DAILY_CARD_BUILD}`, boxRight, footY + footerH / 2);
     } else {
         ctx.textAlign = 'left';
         const hint =
