@@ -286,41 +286,44 @@ async function renderDailyCard({
     const boxMidY = y + contentH / 2;
 
     if (isSuccess) {
-        const rowY = boxMidY;
-        ctx.textBaseline = 'middle';
-        ctx.textAlign = 'left';
-        ctx.font = '26px Arial';
-        ctx.fillText(rewardEmoji, boxLeft, rowY);
-
-        ctx.font = `700 17px ${titleFace}, Arial`;
-        ctx.fillStyle = THEME.accent;
-        const rewardTrunc = truncateText(ctx, rewardName, boxRight - boxLeft - 100);
-        ctx.fillText(rewardTrunc, boxLeft + 40, rowY);
-
-        if (rewardAmount !== null && rewardType !== 'item') {
-            ctx.font = `600 15px ${titleFace}, Arial`;
-            ctx.fillStyle = THEME.gold;
-            let amountText = '';
+        let mainLine;
+        if (rewardType === 'item') {
+            mainLine = `${rewardEmoji} ${rewardName}`;
+        } else if (rewardAmount !== null && rewardType !== 'item') {
             switch (rewardType) {
                 case 'stars':
-                    amountText = `+${rewardAmount.toLocaleString('fr-FR')} ⭐`;
+                    mainLine = `+${rewardAmount.toLocaleString('fr-FR')} ⭐`;
                     break;
                 case 'xp':
-                    amountText = `+${rewardAmount.toLocaleString('fr-FR')} XP`;
+                    mainLine = `+${rewardAmount.toLocaleString('fr-FR')} XP`;
                     break;
                 case 'points':
-                    amountText = `+${rewardAmount.toLocaleString('fr-FR')} RP`;
+                    mainLine = `+${rewardAmount.toLocaleString('fr-FR')} RP`;
                     break;
+                default:
+                    mainLine = rewardName;
             }
-            ctx.textAlign = 'right';
-            ctx.fillText(amountText, boxRight, rowY);
-            ctx.textAlign = 'left';
+        } else {
+            mainLine = rewardName;
         }
 
-        ctx.font = `600 11px ${titleFace}, Arial`;
+        const rewardY = y + Math.max(52, contentH * 0.34);
+        const usedSize = drawLargeCenteredText(
+            ctx,
+            mainLine,
+            boxMidX,
+            rewardY,
+            innerW - 28,
+            titleFace,
+            THEME.gold
+        );
+
+        ctx.textAlign = 'center';
+        ctx.font = `600 12px ${titleFace}, Arial`;
         ctx.fillStyle = THEME.success;
-        ctx.textBaseline = 'alphabetic';
-        ctx.fillText('Récompense journalière réclamée', boxLeft, y + contentH - 12);
+        ctx.textBaseline = 'top';
+        ctx.fillText('Récompense journalière réclamée', boxMidX, rewardY + usedSize * 0.52 + 12);
+        ctx.textAlign = 'left';
     } else {
         const subFull = 'Temps restant avant la prochaine récompense (minuit)';
         const timerY = y + Math.max(52, contentH * 0.34);
