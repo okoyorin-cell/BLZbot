@@ -14,7 +14,7 @@ console.error('[testprofilguilde] module chargé — styles: citadelle, rempart,
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('testprofilguilde')
-        .setDescription('Aperçu canvas : Citadelle, Brasier, Étendard (thème BLZ saturé, hors /profil-guilde).')
+        .setDescription('Aperçu canvas : Citadelle, Bastion (1-3-2), Brasier, Étendard — thème BLZ vitré.')
         .addStringOption((opt) =>
             opt
                 .setName('style')
@@ -22,8 +22,9 @@ module.exports = {
                 .setRequired(true)
                 .addChoices(
                     { name: 'Citadelle — 3 blocs + roster', value: 'citadelle' },
+                    { name: 'Bastion — grille 1-3-2 (vitré)', value: 'rempart' },
                     { name: 'Brasier — stats / membres', value: 'brasier' },
-                    { name: 'Étendard — bandeau + cartes or', value: 'etendard' }
+                    { name: 'Étendard — colonne + roster', value: 'etendard' }
                 )
         )
         .addStringOption((opt) =>

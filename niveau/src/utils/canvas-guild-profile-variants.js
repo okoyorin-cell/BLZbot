@@ -659,7 +659,7 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
 
 /** Anciens IDs (Bastion / Orbit / Registre) → nouveaux aperçus BLZ (même si Discord envoie encore l’ancienne valeur). */
 const LEGACY_GUILD_VARIANT = Object.freeze({
-    bastion: 'citadelle',
+    bastion: 'rempart',
     orbit: 'brasier',
     ledger: 'etendard',
 });
