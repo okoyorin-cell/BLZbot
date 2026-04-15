@@ -134,7 +134,7 @@ module.exports = {
             return interaction.editReply({
                 content:
                     `🧪 Prévisualisation **${variant}** (${hint})\n` +
-                    `La commande \`/profile\` officielle est inchangée. Choix : \`aurora\` · \`nocturne\` · \`parchment\`.`,
+                    `La commande \`/profile\` officielle est inchangée. Ouvre le menu **style** pour les 10 variantes.`,
                 files: [file],
             });
         } catch (error) {
