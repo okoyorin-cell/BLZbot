@@ -705,7 +705,7 @@ async function renderProfilePreviewVariant(data, variant) {
         return canvas.toBuffer('image/png');
     }
 
-    /* parchment */
+    if (variant === 'parchment') {
     const canvas = createCanvas(W, H);
     const ctx = canvas.getContext('2d');
     const pg = ctx.createLinearGradient(0, 0, W, H);
