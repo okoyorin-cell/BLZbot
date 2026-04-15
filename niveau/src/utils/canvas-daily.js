@@ -132,7 +132,7 @@ async function renderDailyCard({
     ctx.fillStyle = THEME.overlay;
     ctx.fill();
 
-    const inset = 10;
+    const inset = 8;
     rr(ctx, inset, inset, W - inset * 2, H - inset * 2, 12);
     ctx.fillStyle = THEME.panel;
     ctx.fill();
