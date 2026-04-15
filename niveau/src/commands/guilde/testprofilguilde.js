@@ -9,7 +9,7 @@ const {
 const { handleCommandError } = require('../../utils/error-handler');
 
 // Visible dans les logs enfant même avec LOG_LEVEL=ERROR (maintemp) : confirme quelle copie du dépôt est chargée.
-console.error('[testprofilguilde] module chargé — styles: citadelle, brasier, etendard');
+console.error('[testprofilguilde] module chargé — styles: citadelle, rempart, brasier, etendard');
 
 module.exports = {
     data: new SlashCommandBuilder()
