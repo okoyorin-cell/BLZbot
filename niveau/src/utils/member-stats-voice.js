@@ -43,7 +43,37 @@ function saveState(data) {
     fs.writeFileSync(STATE_PATH, JSON.stringify(data, null, 2), 'utf8');
 }
 
-function defaultCategoryId() {
+/**
+ * Carte guilde → ID catégorie (un salon/catégorie n’appartient qu’à une seule guilde Discord).
+ * Format .env : MEMBER_STATS_CATEGORY_IDS=guildId:catId,guildId2:catId2
+ * @returns {Map<string, string>}
+ */
+function parseMemberStatsCategoryIdsByGuild() {
+    const raw = String(process.env.MEMBER_STATS_CATEGORY_IDS || '').trim();
+    const map = new Map();
+    if (!raw) return map;
+    for (const part of raw.split(/[,;\n]+/)) {
+        const seg = part.trim();
+        const i = seg.indexOf(':');
+        if (i === -1) continue;
+        const g = seg.slice(0, i).trim();
+        const c = seg.slice(i + 1).trim();
+        if (/^\d{17,22}$/.test(g) && /^\d{17,22}$/.test(c)) map.set(g, c);
+    }
+    return map;
+}
+
+/**
+ * Catégorie par défaut pour une guilde (double serveur test + prod).
+ * @param {string} [guildId]
+ * @returns {string | null} null si aucune config — l’appelant doit exiger categorie_id ou .env
+ */
+function defaultCategoryId(guildId) {
+    const gid = String(guildId || '').trim();
+    if (gid) {
+        const mapped = parseMemberStatsCategoryIdsByGuild().get(gid);
+        if (mapped) return mapped;
+    }
     const fromEnv = String(process.env.MEMBER_STATS_CATEGORY_ID || '').trim();
     if (/^\d{17,22}$/.test(fromEnv)) return fromEnv;
     return '1257363671185621216';

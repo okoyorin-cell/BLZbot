@@ -15,7 +15,7 @@ module.exports = {
             opt
                 .setName('categorie_id')
                 .setDescription(
-                    'ID catégorie parent. Sinon MEMBER_STATS_CATEGORY_ID ou ID défaut du bot.'
+                    'ID catégorie sur ce serveur. Sinon MEMBER_STATS_CATEGORY_IDS / MEMBER_STATS_CATEGORY_ID (.env).'
                 )
                 .setRequired(false)
         )
