@@ -32,7 +32,7 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            await interaction.deferReply({ flags: 64 });
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
             const variant = normalizeGuildVariant(interaction.options.getString('style', true));
             const guildName = interaction.options.getString('nom');

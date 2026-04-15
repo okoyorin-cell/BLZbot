@@ -33,7 +33,7 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            await interaction.deferReply({ flags: 64 });
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
             const variant = normalizeProfileVariant(interaction.options.getString('style', true));
             const targetUser = interaction.options.getUser('membre') || interaction.user;
