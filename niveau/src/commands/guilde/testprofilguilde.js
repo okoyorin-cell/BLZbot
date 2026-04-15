@@ -8,6 +8,9 @@ const {
 } = require('../../utils/canvas-guild-profile-variants');
 const { handleCommandError } = require('../../utils/error-handler');
 
+// Visible dans les logs enfant même avec LOG_LEVEL=ERROR (maintemp) : confirme quelle copie du dépôt est chargée.
+console.error('[testprofilguilde] module chargé — styles: citadelle, brasier, etendard');
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('testprofilguilde')

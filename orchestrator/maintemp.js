@@ -201,6 +201,7 @@ function runScript(scriptObj) {
   }
 
   const proc = fork(path.join(REPO_ROOT, scriptName), [], {
+    cwd: REPO_ROOT,
     stdio: ['inherit', 'pipe', 'pipe', 'ipc'],
     env,
   });
