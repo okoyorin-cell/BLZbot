@@ -14,9 +14,9 @@ try {
     console.error('Could not register fonts', e);
 }
 
-/** Carte large type niveau (~3,4:1) — compacte dans le fil Discord */
-const W = 920;
-const H = 272;
+/** Carte plus étroite qu’une bannière — mieux lisible dans le fil Discord */
+const W = 680;
+const H = 300;
 
 const THEME = {
     overlay: 'rgba(12, 8, 10, 0.55)',
