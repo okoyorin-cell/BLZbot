@@ -2,62 +2,70 @@ const db = require('../database/database');
 const { ITEMS } = require('./items');
 const logger = require('./logger');
 
-function initializeShopTables() {
+/**
+ * Crée les tables boutique sur une connexion SQLite concrète.
+ * Important : avec `database.js` en mode double fichier (test + principal), le proxy `db`
+ * pointe vers la bonne base seulement pendant une interaction ; au chargement du module
+ * il pointait toujours vers la base principale — les tables manquaient sur blzbot.test.sqlite.
+ */
+function initializeShopTablesOnDatabase(d) {
+    // Nouvelle table pour les boutiques individuelles
+    d.exec(`
+        CREATE TABLE IF NOT EXISTS user_daily_shop (
+            user_id TEXT NOT NULL,
+            date TEXT NOT NULL,
+            slot INTEGER NOT NULL,
+            item_id TEXT NOT NULL,
+            PRIMARY KEY (user_id, date, slot)
+        );
+    `);
+
+    d.exec(`
+        CREATE TABLE IF NOT EXISTS user_shop_state (
+            user_id TEXT NOT NULL PRIMARY KEY,
+            last_generated TEXT,
+            last_legendary_chest_check INTEGER DEFAULT 0,
+            legendary_chest_available INTEGER DEFAULT 0,
+            last_shop_reset INTEGER DEFAULT 0
+        );
+    `);
+
+    d.exec(`
+        CREATE TABLE IF NOT EXISTS shop_purchases (
+            user_id TEXT NOT NULL,
+            item_id TEXT NOT NULL,
+            purchase_date TEXT NOT NULL,
+            quantity INTEGER DEFAULT 1,
+            PRIMARY KEY (user_id, item_id, purchase_date)
+        );
+    `);
+
     try {
-        // Nouvelle table pour les boutiques individuelles
-        db.exec(`
-            CREATE TABLE IF NOT EXISTS user_daily_shop (
-                user_id TEXT NOT NULL,
-                date TEXT NOT NULL,
-                slot INTEGER NOT NULL,
-                item_id TEXT NOT NULL,
-                PRIMARY KEY (user_id, date, slot)
-            );
-        `);
-
-        // On garde shop_info pour le coffre légendaire GLOBAL (ou on le migre en local ?)
-        // Pour l'instant, rendons le coffre légendaire local aussi, c'est plus cohérent avec une boutique perso
-
-        db.exec(`
-            CREATE TABLE IF NOT EXISTS user_shop_state (
-                user_id TEXT NOT NULL PRIMARY KEY,
-                last_generated TEXT,
-                last_legendary_chest_check INTEGER DEFAULT 0,
-                legendary_chest_available INTEGER DEFAULT 0,
-                last_shop_reset INTEGER DEFAULT 0
-            );
-        `);
-
-        db.exec(`
-            CREATE TABLE IF NOT EXISTS shop_purchases (
-                user_id TEXT NOT NULL,
-                item_id TEXT NOT NULL,
-                purchase_date TEXT NOT NULL,
-                quantity INTEGER DEFAULT 1,
-                PRIMARY KEY (user_id, item_id, purchase_date)
-            );
-        `);
-
-        // Migration: Ajouter la colonne last_shop_reset si elle n'existe pas
-        try {
-            const tableInfo = db.prepare("PRAGMA table_info(user_shop_state)").all();
-            const hasLastShopReset = tableInfo.some(col => col.name === 'last_shop_reset');
-            if (!hasLastShopReset) {
-                db.exec(`ALTER TABLE user_shop_state ADD COLUMN last_shop_reset INTEGER DEFAULT 0`);
-                logger.info('Colonne last_shop_reset ajoutée à user_shop_state');
-            }
-        } catch (migrationError) {
-            logger.warn('Migration last_shop_reset non nécessaire ou déjà existante');
+        const tableInfo = d.prepare('PRAGMA table_info(user_shop_state)').all();
+        const hasLastShopReset = tableInfo.some((col) => col.name === 'last_shop_reset');
+        if (!hasLastShopReset) {
+            d.exec('ALTER TABLE user_shop_state ADD COLUMN last_shop_reset INTEGER DEFAULT 0');
+            logger.info('Colonne last_shop_reset ajoutée à user_shop_state');
         }
+    } catch (migrationError) {
+        logger.warn('Migration last_shop_reset non nécessaire ou déjà existante');
+    }
+}
 
-        logger.info('Tables de la boutique personnelle vérifiées/créées.');
+function ensureShopTablesOnAllEconomyDatabases() {
+    try {
+        if (typeof db.forEachEconomyDatabase === 'function') {
+            db.forEachEconomyDatabase((d) => initializeShopTablesOnDatabase(d));
+        } else {
+            initializeShopTablesOnDatabase(db.getMainDb ? db.getMainDb() : db);
+        }
+        logger.info('Tables de la boutique personnelle vérifiées/créées (toutes les bases économie).');
     } catch (error) {
         logger.error('Erreur lors de l\'initialisation des tables de la boutique:', error);
     }
 }
 
-// Initialiser les tables au chargement du module
-initializeShopTables();
+ensureShopTablesOnAllEconomyDatabases();
 
 const RARITY_PROBABILITIES = [
     { rarity: 'Commun', weight: 50 },
