@@ -160,7 +160,7 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
         };
         const up = guild.upgrade_level === 10 ? 'X' : String(guild.upgrade_level);
         drawChip(0, 'VALEUR', `💎 ${formatValue(guild.total_value || 0)}`, 'Puissance guilde');
-        drawChip(1, 'UPGRADE', `U${up}`, `${members.length}/${guild.member_slots} membres`);
+        drawChip(1, 'UPGRADE', `U${up}`, `${totalMembers}/${guild.member_slots} membres`);
         drawChip(2, 'CHEF', truncateText(ctx, ownerName, chipW - 36), 'Salle des chefs');
 
         const leftW = 520;
