@@ -128,7 +128,7 @@ async function loadBgImage() {
     const p = path.join(assetsPath, 'blz_bg.png');
     if (!fs.existsSync(p)) return null;
     try {
-        return await loadImageSafe(p);
+        return await loadImage(fs.readFileSync(p));
     } catch {
         return null;
     }
