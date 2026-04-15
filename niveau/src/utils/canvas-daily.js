@@ -229,10 +229,10 @@ async function renderDailyCard({
         ctx.textBaseline = 'top';
     }
 
-    const contentTop = user && typeof user.xp === 'number' ? 98 : 78;
+    const contentTop = user && typeof user.xp === 'number' ? 104 : 84;
 
     if (isSuccess) {
-        const rowY = contentTop + 18;
+        const rowY = contentTop + 20;
         ctx.font = '28px Arial';
         ctx.textBaseline = 'middle';
         ctx.fillText(rewardEmoji, textX + 12, rowY);
