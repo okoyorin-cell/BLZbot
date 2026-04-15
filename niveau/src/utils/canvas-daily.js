@@ -2,13 +2,6 @@ const { createCanvas, loadImage, registerFont } = require('canvas');
 const fs = require('node:fs');
 const path = require('node:path');
 
-let sharpMod = null;
-try {
-    sharpMod = require('sharp');
-} catch {
-    /* optionnel */
-}
-
 try {
     const assetsPath = path.join(__dirname, '..', 'assets');
     if (fs.existsSync(path.join(assetsPath, 'Inter-Bold.ttf'))) {
