@@ -23,6 +23,7 @@ const H = 800;
 
 const GUILD_PREVIEW_VARIANTS = [
     { id: 'citadelle', label: 'Citadelle', hint: '3 cartes haut + colonne membres + trésor / guerre / infos' },
+    { id: 'rempart', label: 'Bastion (BLZ)', hint: 'Grille 1-3-2 : bannière, stats, membres | trésor & guerre — vitré' },
     { id: 'brasier', label: 'Brasier', hint: 'Bandeau large + tableau membres + 3 blocs bas' },
     { id: 'etendard', label: 'Étendard', hint: 'Colonne stats gauche + guerre + roster à droite' },
 ];
