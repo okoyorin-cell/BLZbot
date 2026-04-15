@@ -74,18 +74,17 @@ function applyTestGuildOverride() {
 }
 
 /**
- * Guildes sur lesquelles enregistrer les slash (niveau + modération) : GUILD_ID courant,
- * et en mode TEST aussi BLZ_MAIN_GUILD_ID (prod) si différent.
+ * Guildes sur lesquelles enregistrer les slash (niveau + modération) :
+ * toujours `GUILD_ID`, et en plus `BLZ_MAIN_GUILD_ID` s’il est défini (même hors mode test),
+ * pour pouvoir déployer sur le serveur principal tout en gardant GUILD_ID sur un autre serveur.
  * @returns {string[]}
  */
 function getSlashDeployGuildIds() {
     const ids = new Set();
     const primary = String(process.env.GUILD_ID || '').trim();
     if (/^\d{17,22}$/.test(primary)) ids.add(primary);
-    if (isTestBotProfile()) {
-        const main = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
-        if (/^\d{17,22}$/.test(main)) ids.add(main);
-    }
+    const main = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
+    if (/^\d{17,22}$/.test(main)) ids.add(main);
     return [...ids];
 }
 
