@@ -103,6 +103,7 @@ module.exports = {
                     try {
                         png = await Promise.race([
                             renderDailyCard({
+                                user,
                                 username: interaction.user.username,
                                 displayName: displayName,
                                 highestRoleName: highestRoleName,
@@ -204,6 +205,7 @@ module.exports = {
                     try {
                         png = await Promise.race([
                             renderDailyCard({
+                                user,
                                 username: interaction.user.username,
                                 displayName: displayName,
                                 highestRoleName: highestRoleName,

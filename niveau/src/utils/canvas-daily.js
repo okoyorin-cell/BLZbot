@@ -126,7 +126,21 @@ async function loadAssets() {
   return { bg };
 }
 
+function drawNeonBorder(ctx, x, y, w, h, r, color = '#ffd166') {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 15;
+
+  rr(ctx, x, y, w, h, r);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 async function renderDailyCard({
+  user,
   username = 'Utilisateur',
   displayName = 'Utilisateur',
   highestRoleName = 'Membre',
@@ -151,54 +165,100 @@ async function renderDailyCard({
   const textFace = 'Inter';
 
   // ============================================
-  // HEADER PANEL (style profile)
+  // HEADER PANEL (NEON STYLE LIKE ////////)
   // ============================================
   panel(ctx, 24, 24, W - 48, 160, 36, THEME.header);
+  drawNeonBorder(ctx, 24, 24, W - 48, 160, 36);
 
   // Avatar
   let avImg = null;
   if (avatarURL) {
     try {
       avImg = await loadImage(avatarURL);
-    } catch {
-      /* ignore */
-    }
+    } catch {}
   }
 
   const avX = 50, avY = 44, avS = 96;
+
   ctx.save();
   rr(ctx, avX, avY, avS, avS, avS / 2);
   ctx.clip();
+
   if (avImg) {
     ctx.drawImage(avImg, avX, avY, avS, avS);
   } else {
-    ctx.fillStyle = THEME.accent;
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
     ctx.fillRect(avX, avY, avS, avS);
-    ctx.font = '50px Arial';
-    ctx.fillStyle = THEME.header;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('👤', avX + avS / 2, avY + avS / 2);
   }
+
   ctx.restore();
 
-  // Display name
-  ctx.fillStyle = THEME.text;
-  ctx.font = `700 42px ${titleFace}, Arial`;
+  // Name
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  const displayNameTrunc = truncateText(ctx, displayName, 600);
-  ctx.fillText(displayNameTrunc, 170, 92);
 
-  // Rôle
+  ctx.fillStyle = THEME.text;
+  ctx.font = `700 42px InterBold, Arial`;
+  ctx.fillText(displayName, 170, 86);
+
+  // Role
   ctx.fillStyle = THEME.sub;
-  ctx.font = `400 22px ${textFace}, Arial`;
-  ctx.fillText(highestRoleName, 170, 128);
+  ctx.font = `400 22px Inter, Arial`;
+  ctx.fillText(highestRoleName, 170, 114);
+
+  // ============================================
+  // RIGHT SIDE STATS (Stars like your snippet)
+  // ============================================
+  const starsY = 94;
+  const starsText = `${(user?.stars ?? 0).toLocaleString('fr-FR')} ⭐`;
+  const rightX = W - 50;
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = THEME.text;
+  ctx.font = `700 30px InterBold, Arial`;
+  ctx.fillText(starsText, rightX, starsY);
+
+  // optional icon (si tu as une fonction)
+  const textWidth = ctx.measureText(starsText).width;
+  const iconX = rightX - textWidth - 38;
+
+  // drawDollarWhite(ctx, dollar, iconX, starsY - 22, 28);
+
+  // ============================================
+  // XP BAR (style second snippet)
+  // ============================================
+  const progressRatio = Math.max(
+    0,
+    Math.min(1, (user?.xp ?? 0) / Math.max(1, user?.xp_needed ?? 1))
+  );
+
+  const x0 = 50, y0 = 198, w = W - 100, h = 32;
+
+  rr(ctx, x0, y0, w, h, 16);
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.fill();
+
+  rr(ctx, x0, y0, Math.max(16, Math.round(w * progressRatio)), h, 16);
+  ctx.fillStyle = THEME.accent;
+  ctx.fill();
+
+  // Level text
+  ctx.fillStyle = THEME.text;
+  ctx.font = `700 20px InterBold, Arial`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`Niveau ${user?.level ?? 1}`, x0 + 20, y0 + h / 2);
+
+  // XP text
+  const xpText = `${(user?.xp ?? 0).toLocaleString('fr-FR')} / ${(user?.xp_needed ?? 0).toLocaleString('fr-FR')}`;
+
+  ctx.textAlign = 'center';
+  ctx.fillText(xpText, x0 + w / 2, y0 + h / 2);
 
   // ============================================
   // MAIN CONTENT PANEL
   // ============================================
-  panel(ctx, 50, 220, W - 100, 550, 36, THEME.panel);
+  panel(ctx, 50, 260, W - 100, 510, 36, THEME.panel);
 
   if (isSuccess) {
     // SUCCESS CONTENT
@@ -208,7 +268,7 @@ async function renderDailyCard({
 
     // Grand emoji
     ctx.font = '140px Arial';
-    ctx.fillText(THEME.gold, rewardEmoji, W / 2, 360);
+    ctx.fillText(rewardEmoji, THEME.gold, W / 2, 360);
 
     // Nom de la récompense
     ctx.font = `700 48px ${titleFace}, Arial`;
