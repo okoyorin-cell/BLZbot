@@ -27,18 +27,20 @@ const GUILD_PREVIEW_VARIANTS = [
     { id: 'etendard', label: 'Étendard', hint: 'Bandeau cramoisi + cartes or + liste' },
 ];
 
+/** Panneaux semi-transparents (comme canvas-guild-profile-v2 /profil-guilde). */
 const C = {
-    overlay: 'rgba(22, 6, 10, 0.62)',
-    panel: 'rgba(5, 1, 3, 0.94)',
-    panelHi: 'rgba(48, 12, 18, 0.95)',
+    overlay: 'rgba(18, 4, 8, 0.58)',
+    panel: 'rgba(6, 2, 4, 0.66)',
+    panelHi: 'rgba(32, 10, 16, 0.76)',
+    panelRed: 'rgba(40, 8, 14, 0.62)',
     text: '#fff8f0',
-    sub: '#f0b0a8',
+    sub: '#f0b8b0',
     gold: '#ffc928',
     yellow: '#ffd166',
     red: '#ff2d2d',
     crimson: '#7f1020',
-    strokeGold: 'rgba(255, 200, 70, 0.75)',
-    strokeHot: 'rgba(255, 80, 60, 0.35)',
+    strokeGold: 'rgba(255, 200, 70, 0.65)',
+    strokeHot: 'rgba(255, 80, 60, 0.32)',
     peace: '#86efac',
 };
 
