@@ -239,7 +239,7 @@ async function renderDailyCard({
 
         ctx.font = `700 18px ${titleFace}, Arial`;
         ctx.fillStyle = THEME.accent;
-        const rewardTrunc = truncateText(ctx, rewardName, textRight - textX - 130);
+        const rewardTrunc = truncateText(ctx, rewardName, textRight - textX - 110);
         ctx.fillText(rewardTrunc, textX + 44, rowY);
 
         if (rewardAmount !== null && rewardType !== 'item') {
