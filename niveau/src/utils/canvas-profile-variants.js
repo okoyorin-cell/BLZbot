@@ -25,6 +25,13 @@ const PROFILE_PREVIEW_VARIANTS = [
     { id: 'aurora', label: 'Aurora', hint: 'Glacier, verre, dégradé froid' },
     { id: 'nocturne', label: 'Nocturne', hint: 'Grille cyber, néons cyan / magenta' },
     { id: 'parchment', label: 'Parchemin', hint: 'Ton chaud, contraste type carte RPG' },
+    { id: 'rubis', label: 'Rubis', hint: 'BLZ + halo rubis, cartes bordeaux-or' },
+    { id: 'carmin', label: 'Carmin', hint: 'Vignette cramoisie, contraste fort' },
+    { id: 'forge', label: 'Forge', hint: 'Fond sombre + traits dorés subtils' },
+    { id: 'banniere', label: 'Bannière', hint: 'Bandeaux horizontaux type étendard' },
+    { id: 'monolithe', label: 'Monolithe', hint: 'Centre lumineux, bords sombres' },
+    { id: 'vitres', label: 'Vitres', hint: 'Panneaux très transparents, BLZ visible' },
+    { id: 'braise', label: 'Braise', hint: 'Sous-couche ambrée / feu doux' },
 ];
 
 function rr(ctx, x, y, w, h, r) {
