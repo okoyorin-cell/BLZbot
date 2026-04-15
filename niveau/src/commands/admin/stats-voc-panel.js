@@ -58,12 +58,6 @@ module.exports = {
         const recreate = interaction.options.getBoolean('recreate') === true;
 
         try {
-            if (!categoryId || !/^\d{17,22}$/.test(String(categoryId))) {
-                return interaction.editReply({
-                    content:
-                        '❌ Aucune catégorie par défaut pour ce serveur. Renseigne `categorie_id` ou la variable `.env` **MEMBER_STATS_CATEGORY_IDS** (guilde:catégorie).',
-                });
-            }
             await deployMemberStatsVoice(guild, categoryId, { recreate });
             startScheduler(interaction.client);
             return interaction.editReply({
