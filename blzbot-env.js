@@ -72,7 +72,21 @@ function applyTestGuildOverride() {
     if (!keepPanel) {
         process.env.PANEL_GUILD_ID = id;
     }
-    const mainRef = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
+    let mainRef = String(process.env.BLZ_MAIN_GUILD_ID || '').trim();
+    if (mainRef === id) {
+        delete process.env.BLZ_MAIN_GUILD_ID;
+        mainRef = '';
+        console.warn(
+            '[BLZ] BLZ_MAIN_GUILD_ID ne peut pas être la même guilde que le test — ignoré. ' +
+                'Pour enregistrer les slash sur le serveur principal, mets BLZ_MAIN_GUILD_ID=<id du main> dans le .env.'
+        );
+    }
+    if (!mainRef) {
+        console.warn(
+            '[BLZ] Slash + runtime ne ciblent que la guilde de test. Pour déployer aussi les slash sur le **serveur principal**, ' +
+                'définis BLZ_MAIN_GUILD_ID (ex. 1097110036192448656) — obligatoire si ton GUILD_ID dans le .env est déjà l’ID de test.'
+        );
+    }
     console.warn(
         `[BLZ] ——— Mode TEST ———  GUILD_ID=${id} (runtime + slash) · serveur principal slash aussi : BLZ_MAIN_GUILD_ID=${mainRef || '—'}`
     );
