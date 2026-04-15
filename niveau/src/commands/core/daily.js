@@ -1,4 +1,11 @@
-const { SlashCommandBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, ContainerBuilder, MediaGalleryBuilder, MessageFlags, TextDisplayBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    AttachmentBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    ActionRowBuilder,
+    ComponentType,
+} = require('discord.js');
 const { getOrCreateUser, grantResources, updateDailyClaim, addItemToInventory, getUserInventory } = require('../../utils/db-users');
 const { msToTime } = require('../../utils/time');
 const { checkQuestProgress } = require('../../utils/quests');
@@ -7,10 +14,10 @@ const { renderDailyCard } = require('../../utils/canvas-daily');
 const { handleCommandError } = require('../../utils/error-handler');
 
 const rewards = [
-    { name: '10 000 Starss', chance: 0.30, type: 'stars', amount: 10000 },
-    { name: '500 EXP', chance: 0.30, type: 'xp', amount: 500 },
-    { name: '500 RP', chance: 0.20, type: 'points', amount: 500 },
-    { name: '25 000 Starss', chance: 0.10, type: 'stars', amount: 25000 },
+    { name: '10 000 Starss', chance: 0.3, type: 'stars', amount: 10000 },
+    { name: '500 EXP', chance: 0.3, type: 'xp', amount: 500 },
+    { name: '500 RP', chance: 0.2, type: 'points', amount: 500 },
+    { name: '25 000 Starss', chance: 0.1, type: 'stars', amount: 25000 },
     { name: 'Coffre au trésor', chance: 0.09, type: 'item', itemId: 'coffre_normal' },
     { name: 'Méga coffre au trésor', chance: 0.01, type: 'item', itemId: 'coffre_mega' },
 ];
@@ -27,6 +34,39 @@ function getRandomReward() {
     return rewards[0];
 }
 
+function buildCloseRow() {
+    return new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('daily_close').setLabel('Fermer').setStyle(ButtonStyle.Secondary)
+    );
+}
+
+async function sendDailyCanvasReply(interaction, pngBuffer) {
+    const file = new AttachmentBuilder(pngBuffer, { name: 'daily.png' });
+    const message = await interaction.editReply({
+        files: [file],
+        components: [buildCloseRow()],
+    });
+
+    const collector = message.createMessageComponentCollector({
+        componentType: ComponentType.Button,
+        time: 5 * 60 * 1000,
+    });
+
+    collector.on('collect', async (i) => {
+        if (i.user.id !== interaction.user.id) {
+            return i.reply({ content: "Seul l'auteur de la commande peut utiliser ce bouton.", ephemeral: true });
+        }
+        if (i.customId === 'daily_close') {
+            try {
+                await i.update({ components: [] });
+            } catch (e) {
+                logger.warn('Erreur fermeture daily:', e.message);
+            }
+            collector.stop();
+        }
+    });
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('daily')
@@ -37,7 +77,7 @@ module.exports = {
             await interaction.deferReply();
 
             const userId = interaction.user.id;
-            const user = getOrCreateUser(userId, interaction.user.username);
+            let user = getOrCreateUser(userId, interaction.user.username);
 
             const now = new Date();
             const midnightLocal = new Date(now);
@@ -53,9 +93,6 @@ module.exports = {
             }
 
             if (canClaim || lastClaimedMidnight < midnightLocal) {
-                // ============================================
-                // CLAIM SUCCESS
-                // ============================================
                 try {
                     const reward = getRandomReward();
                     let rewardType = '';
@@ -91,205 +128,101 @@ module.exports = {
 
                     updateDailyClaim(userId);
                     checkQuestProgress(interaction.client, 'DAILY_CLAIM', interaction.user);
+                    user = getOrCreateUser(userId, interaction.user.username);
 
-                    // Récupérer les infos du membre
                     const member = await interaction.guild.members.fetch(userId).catch(() => null);
                     const displayName = member?.displayName || interaction.user.username;
-                    const highestRoleName = member?.roles.highest?.name !== '@everyone' ? member?.roles.highest?.name : 'Membre';
+                    const highestRoleName =
+                        member?.roles.highest?.name !== '@everyone' ? member?.roles.highest?.name : 'Membre';
                     const avatarURL = member?.displayAvatarURL({ extension: 'png', size: 256 });
 
-                    // Rendu avec timeout
                     let png;
                     try {
                         png = await Promise.race([
                             renderDailyCard({
                                 user,
                                 username: interaction.user.username,
-                                displayName: displayName,
-                                highestRoleName: highestRoleName,
-                                avatarURL: avatarURL,
+                                displayName,
+                                highestRoleName,
+                                avatarURL,
                                 rewardName: reward.name,
-                                rewardType: rewardType,
+                                rewardType,
                                 rewardAmount: reward.type === 'item' ? null : reward.amount,
-                                rewardEmoji: rewardEmoji,
-                                isSuccess: true
+                                rewardEmoji,
+                                isSuccess: true,
                             }),
-                            new Promise((_, reject) => 
-                                setTimeout(() => reject(new Error('Timeout')), 15000)
-                            )
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000)),
                         ]);
-                    } catch(renderError) {
+                    } catch (renderError) {
                         logger.error('Erreur rendu canvas daily:', renderError);
-                        return interaction.editReply({ 
-                            content: `✅ Récompense obtenue: **${reward.name}** !` 
+                        return interaction.editReply({
+                            content: `✅ Récompense obtenue: **${reward.name}** !`,
                         });
                     }
 
-                    const file = new AttachmentBuilder(png, { name: 'daily.png' });
-                    const mediaGallery = new MediaGalleryBuilder()
-                        .addItems({ media: { url: 'attachment://daily.png' } });
-
-                    const actionRow = new ActionRowBuilder().addComponents(
-                        new ButtonBuilder()
-                            .setCustomId('daily_close')
-                            .setLabel('Fermer')
-                            .setStyle(ButtonStyle.Secondary)
-                    );
-
-                    const container = new ContainerBuilder()
-                        .addMediaGalleryComponents(mediaGallery)
-                        .addActionRowComponents(actionRow);
-
-                    const message = await interaction.editReply({
-                        content: null,
-                        files: [file],
-                        components: [container],
-                        flags: MessageFlags.IsComponentsV2
-                    });
-
-                    // Collector
-                    const collector = message.createMessageComponentCollector({
-                        componentType: ComponentType.Button,
-                        time: 5 * 60 * 1000
-                    });
-
-                    collector.on('collect', async i => {
-                        if (i.user.id !== interaction.user.id) {
-                            const errorText = new TextDisplayBuilder().setContent("Seul l'auteur de la commande peut interagir.");
-                            const errorContainer = new ContainerBuilder().addTextDisplayComponents(errorText);
-                            return i.reply({
-                                components: [errorContainer],
-                                flags: MessageFlags.IsComponentsV2,
-                                ephemeral: true
-                            });
-                        }
-
-                        if (i.customId === 'daily_close') {
-                            try {
-                                await i.update({ components: [] });
-                            } catch(e) {
-                                logger.warn('Erreur fermeture daily:', e.message);
-                            }
-                            collector.stop();
-                        }
-                    });
-
-                } catch(claimError) {
+                    await sendDailyCanvasReply(interaction, png);
+                } catch (claimError) {
                     logger.error('Erreur claim daily:', claimError);
-                    await interaction.editReply({ 
-                        content: '❌ Une erreur est survenue.' 
+                    await interaction.editReply({
+                        content: '❌ Une erreur est survenue.',
                     });
                 }
-
             } else {
-                // ============================================
-                // COOLDOWN
-                // ============================================
                 try {
                     const tomorrowMidnight = new Date(midnightLocal);
                     tomorrowMidnight.setDate(tomorrowMidnight.getDate() + 1);
                     const remainingTime = tomorrowMidnight.getTime() - now.getTime();
 
                     const inventory = getUserInventory(userId);
-                    const doubleDailyItem = inventory.find(item => item.item_id === 'double_daily');
+                    const doubleDailyItem = inventory.find((item) => item.item_id === 'double_daily');
                     const hasDoubleDailyCount = doubleDailyItem ? doubleDailyItem.quantity : 0;
 
-                    // Récupérer les infos du membre
+                    user = getOrCreateUser(userId, interaction.user.username);
+
                     const member = await interaction.guild.members.fetch(userId).catch(() => null);
                     const displayName = member?.displayName || interaction.user.username;
-                    const highestRoleName = member?.roles.highest?.name !== '@everyone' ? member?.roles.highest?.name : 'Membre';
+                    const highestRoleName =
+                        member?.roles.highest?.name !== '@everyone' ? member?.roles.highest?.name : 'Membre';
                     const avatarURL = member?.displayAvatarURL({ extension: 'png', size: 256 });
 
-                    // Rendu avec timeout
                     let png;
                     try {
                         png = await Promise.race([
                             renderDailyCard({
                                 user,
                                 username: interaction.user.username,
-                                displayName: displayName,
-                                highestRoleName: highestRoleName,
-                                avatarURL: avatarURL,
+                                displayName,
+                                highestRoleName,
+                                avatarURL,
                                 remainingTime: msToTime(remainingTime),
                                 doubleDailyCount: hasDoubleDailyCount,
-                                isSuccess: false
+                                isSuccess: false,
                             }),
-                            new Promise((_, reject) => 
-                                setTimeout(() => reject(new Error('Timeout')), 15000)
-                            )
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000)),
                         ]);
-                    } catch(renderError) {
+                    } catch (renderError) {
                         logger.error('Erreur rendu canvas daily (cooldown):', renderError);
-                        return interaction.editReply({ 
-                            content: `⏳ Réessayez dans **${msToTime(remainingTime)}**.` 
+                        return interaction.editReply({
+                            content: `⏳ Réessayez dans **${msToTime(remainingTime)}**.`,
                         });
                     }
 
-                    const file = new AttachmentBuilder(png, { name: 'daily.png' });
-                    const mediaGallery = new MediaGalleryBuilder()
-                        .addItems({ media: { url: 'attachment://daily.png' } });
-
-                    const actionRow = new ActionRowBuilder().addComponents(
-                        new ButtonBuilder()
-                            .setCustomId('daily_close')
-                            .setLabel('Fermer')
-                            .setStyle(ButtonStyle.Secondary)
-                    );
-
-                    const container = new ContainerBuilder()
-                        .addMediaGalleryComponents(mediaGallery)
-                        .addActionRowComponents(actionRow);
-
-                    const message = await interaction.editReply({
-                        content: null,
-                        files: [file],
-                        components: [container],
-                        flags: MessageFlags.IsComponentsV2
-                    });
-
-                    // Collector
-                    const collector = message.createMessageComponentCollector({
-                        componentType: ComponentType.Button,
-                        time: 5 * 60 * 1000
-                    });
-
-                    collector.on('collect', async i => {
-                        if (i.user.id !== interaction.user.id) {
-                            const errorText = new TextDisplayBuilder().setContent("Seul l'auteur de la commande peut interagir.");
-                            const errorContainer = new ContainerBuilder().addTextDisplayComponents(errorText);
-                            return i.reply({
-                                components: [errorContainer],
-                                flags: MessageFlags.IsComponentsV2,
-                                ephemeral: true
-                            });
-                        }
-
-                        if (i.customId === 'daily_close') {
-                            try {
-                                await i.update({ components: [] });
-                            } catch(e) {
-                                logger.warn('Erreur fermeture daily:', e.message);
-                            }
-                            collector.stop();
-                        }
-                    });
-
-                } catch(cooldownError) {
+                    await sendDailyCanvasReply(interaction, png);
+                } catch (cooldownError) {
                     logger.error('Erreur cooldown daily:', cooldownError);
-                    await interaction.editReply({ 
-                        content: '❌ Une erreur est survenue.' 
+                    await interaction.editReply({
+                        content: '❌ Une erreur est survenue.',
                     });
                 }
             }
-
         } catch (error) {
             logger.error('Erreur /daily:', error);
             try {
                 await handleCommandError(interaction, error, interaction.client);
-            } catch(handlerError) {
+            } catch (handlerError) {
                 logger.error('Erreur handler:', handlerError);
-                await interaction.editReply({ 
-                    content: '❌ Erreur critique.' 
+                await interaction.editReply({
+                    content: '❌ Erreur critique.',
                 }).catch(() => {});
             }
         }
