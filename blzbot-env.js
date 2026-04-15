@@ -81,10 +81,10 @@ function applyTestGuildOverride() {
                 'Pour enregistrer les slash sur le serveur principal, mets BLZ_MAIN_GUILD_ID=<id du main> dans le .env.'
         );
     }
-    if (!mainRef) {
+    if (!mainRef && fromEnvGuild === id) {
         console.warn(
-            '[BLZ] Slash + runtime ne ciblent que la guilde de test. Pour déployer aussi les slash sur le **serveur principal**, ' +
-                'définis BLZ_MAIN_GUILD_ID (ex. 1097110036192448656) — obligatoire si ton GUILD_ID dans le .env est déjà l’ID de test.'
+            '[BLZ] Ton GUILD_ID dans le .env est déjà la guilde de test : les slash ne partiront pas sur le main tant que tu ne définis pas ' +
+                'BLZ_MAIN_GUILD_ID=<id du serveur principal> (invite le bot sur ce serveur aussi).'
         );
     }
     console.warn(
