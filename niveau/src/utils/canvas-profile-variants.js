@@ -92,7 +92,7 @@ async function loadAvatar(member) {
 
 /**
  * @param {object} data — même forme que les champs utiles de renderProfileCard
- * @param {'aurora'|'nocturne'|'parchment'} variant
+ * @param {string} variant — id parmi PROFILE_PREVIEW_VARIANTS
  */
 async function renderProfilePreviewVariant(data, variant) {
     const {
