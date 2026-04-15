@@ -813,6 +813,13 @@ async function renderProfilePreviewVariant(data, variant) {
     ctx.fillText('Aperçu Parchemin — /testprofil', W - 48, H - 40);
     ctx.textAlign = 'left';
     return canvas.toBuffer('image/png');
+    }
+
+    if (BLZ_TEST_IDS.has(variant)) {
+        return renderBlzTestProfileVariant(data, variant, titleFace, textFace);
+    }
+
+    return renderProfilePreviewVariant(data, 'aurora');
 }
 
 function normalizeProfileVariant(v) {
