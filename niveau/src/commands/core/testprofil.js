@@ -15,7 +15,7 @@ const { getOngoingWar } = require('../../utils/guild/guild-wars');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('testprofil')
-        .setDescription('Aperçu canvas : variantes visuelles du profil (ne remplace pas /profile).')
+        .setDescription('Aperçu canvas : 10 variantes (3 originales + 7 BLZ). Ne remplace pas /profile.')
         .addStringOption((opt) =>
             opt
                 .setName('style')
@@ -24,7 +24,14 @@ module.exports = {
                 .addChoices(
                     { name: 'Aurora — glacier & verre', value: 'aurora' },
                     { name: 'Nocturne — grille cyber', value: 'nocturne' },
-                    { name: 'Parchemin — chaleureux', value: 'parchment' }
+                    { name: 'Parchemin — chaleureux', value: 'parchment' },
+                    { name: 'Rubis — halo rouge BLZ', value: 'rubis' },
+                    { name: 'Carmin — vignette cramoisie', value: 'carmin' },
+                    { name: 'Forge — diagonales dorées', value: 'forge' },
+                    { name: 'Bannière — bandeaux horizontaux', value: 'banniere' },
+                    { name: 'Monolithe — centre lumineux', value: 'monolithe' },
+                    { name: 'Vitres — panneaux très transparents', value: 'vitres' },
+                    { name: 'Braise — lueur ambrée', value: 'braise' }
                 )
         )
         .addUserOption((opt) =>
