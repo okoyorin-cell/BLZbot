@@ -186,10 +186,10 @@ async function renderDailyCard({
     ctx.textBaseline = 'top';
     ctx.fillStyle = THEME.text;
     ctx.font = `700 20px ${titleFace}, Arial`;
-    ctx.fillText(truncateText(ctx, displayName, textRight - textX - 140), textX, 24);
+    ctx.fillText(truncateText(ctx, displayName, textRight - textX - 120), textX, 26);
     ctx.fillStyle = THEME.sub;
-    ctx.font = `400 13px ${textFace}, Arial`;
-    ctx.fillText(highestRoleName, textX, 46);
+    ctx.font = `400 12px ${textFace}, Arial`;
+    ctx.fillText(highestRoleName, textX, 48);
 
     if (user && typeof user.stars === 'number') {
         ctx.textAlign = 'right';
