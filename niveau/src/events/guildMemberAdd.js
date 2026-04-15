@@ -1,5 +1,6 @@
 const { Events } = require('discord.js');
 const logger = require('../utils/logger');
+const { onMemberJoined } = require('../utils/member-stats-voice');
 const { runWithEconomyGuild } = require('../utils/economy-scope');
 const { resolveTutorialChannelId } = require('../utils/blz-guild-channels');
 

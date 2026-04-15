@@ -59,7 +59,7 @@ function buildVoiceStatOverwrites(guild) {
         {
             id: guild.id,
             type: OverwriteType.Role,
-            allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory],
+            allow: [PermissionFlagsBits.ViewChannel],
             deny: [
                 PermissionFlagsBits.Connect,
                 PermissionFlagsBits.Speak,

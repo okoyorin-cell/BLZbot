@@ -22,6 +22,7 @@ const { getEventState } = require('./utils/db-halloween');
 const { initializeSharesSystem } = require('./utils/ranked-shares');
 const { loadTopLevelCommands, loadSeasonalCommands } = require('./utils/command-loader');
 const { registerClientReady } = require('./bootstrap/client-ready');
+const { startScheduler: startMemberStatsVoiceScheduler, loadState: loadMemberStatsVoiceState } = require('./utils/member-stats-voice');
 
 initializeSharesSystem();
 
