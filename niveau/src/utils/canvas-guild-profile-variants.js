@@ -394,7 +394,7 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
     ctx.fillStyle = '#fff';
     ctx.fillText(truncateText(ctx, guild.name, 700), pad + 100, 82);
     ctx.font = `600 16px ${textFace}, Arial`;
-    ctx.fillStyle = 'rgba(255,230,200,0.95)');
+    ctx.fillStyle = 'rgba(255,230,200,0.95)';
     ctx.fillText(`Chef : ${ownerName} · ${totalMembers}/${guild.member_slots} membres`, pad + 100, 108);
 
     const yCards = 16 + bandH + 14;
