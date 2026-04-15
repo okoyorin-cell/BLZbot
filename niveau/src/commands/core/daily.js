@@ -12,6 +12,9 @@ const { checkQuestProgress } = require('../../utils/quests');
 const logger = require('../../utils/logger');
 const { renderDailyCard } = require('../../utils/canvas-daily');
 const { handleCommandError } = require('../../utils/error-handler');
+const path = require('node:path');
+
+logger.info(`[daily] module canvas: ${path.normalize(require.resolve('../../utils/canvas-daily'))}`);
 
 const rewards = [
     { name: '10 000 Starss', chance: 0.3, type: 'stars', amount: 10000 },
