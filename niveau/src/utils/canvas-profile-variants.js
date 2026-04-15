@@ -196,7 +196,7 @@ async function renderProfilePreviewVariant(data, variant) {
         ctx.fillStyle = '#e2e8f0';
         ctx.font = `500 15px ${textFace}, Arial`;
         if (nextRank) {
-            const need = Math.max(0, nextRank.minPoints - (user.points ?? 0));
+            const need = Math.max(0, (nextRank.points ?? 0) - (user.points ?? 0));
             ctx.fillText(`${nextRank.name} — encore ${need.toLocaleString('fr-FR')} RP`, gx + 24, p3 + 62);
         } else {
             ctx.fillText('Rang maximal atteint', gx + 24, p3 + 62);
@@ -304,7 +304,7 @@ async function renderProfilePreviewVariant(data, variant) {
         if (nextRank) {
             ctx.fillStyle = 'rgba(226,232,240,0.8)';
             ctx.font = `500 14px ${textFace}, Arial`;
-            const need = Math.max(0, nextRank.minPoints - (user.points ?? 0));
+            const need = Math.max(0, (nextRank.points ?? 0) - (user.points ?? 0));
             ctx.fillText(`→ ${nextRank.name} (${need.toLocaleString('fr-FR')} RP)`, bx + 20, by + 372);
         }
 
