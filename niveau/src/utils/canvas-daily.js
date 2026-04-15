@@ -53,18 +53,17 @@ function drawBox(ctx, x, y, w, h, r = 10) {
     ctx.stroke();
 }
 
-/** Rouge clair uni pour le timer cooldown (sans dégradé ni halo). */
-const COOLDOWN_TIMER_RED = '#fca5a5';
+/** Rouge clair uni (pas de dégradé, pas de halo). */
+const COOLDOWN_TIMER_RED = '#fecaca';
 
 /**
- * Compte à rebours — texte bien gros, couleur unie, léger contour pour la lisibilité.
+ * Compte à rebours — texte bien gros, rouge clair uni.
  * @returns {number} taille de police utilisée (pour placer la ligne sous le timer)
  */
 function drawCooldownTimer(ctx, text, cx, cy, maxWidth, titleFace) {
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.lineJoin = 'round';
 
     let size = 64;
     ctx.font = `800 ${size}px ${titleFace}, Arial`;
@@ -75,10 +74,6 @@ function drawCooldownTimer(ctx, text, cx, cy, maxWidth, titleFace) {
     }
 
     ctx.shadowBlur = 0;
-    ctx.lineWidth = Math.max(2, Math.round(size / 22));
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.strokeText(text, cx, cy);
-
     ctx.fillStyle = COOLDOWN_TIMER_RED;
     ctx.fillText(text, cx, cy);
 
