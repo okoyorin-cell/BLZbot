@@ -385,7 +385,7 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
     const boxY = tableTop + 22 + 10 * rowH + 20;
     ctx.strokeStyle = '#166534';
     ctx.strokeRect(28, boxY, W - 56, 120);
-    ctx.fillStyle = 'rgba(6,78,59,0.35)');
+    ctx.fillStyle = 'rgba(6,78,59,0.35)';
     ctx.fillRect(28, boxY, W - 56, 120);
     ctx.fillStyle = '#86efac';
     ctx.font = `600 14px ${textFace}, Arial`;
