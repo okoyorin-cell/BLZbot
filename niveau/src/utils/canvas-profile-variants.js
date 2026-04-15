@@ -419,7 +419,6 @@ async function renderBlzTestProfileVariant(data, variantId, titleFace, textFace)
     });
 
     drawCard(2, 'Rang suivant', (x, yy) => {
-        const cardLeft = pad + 2 * (cw + gap);
         ctx.fillStyle = theme.sub;
         ctx.font = `500 14px ${textFace}, Arial`;
         if (nextRank) {
@@ -429,15 +428,17 @@ async function renderBlzTestProfileVariant(data, variantId, titleFace, textFace)
         } else {
             ctx.fillText('Rang max atteint', x, yy);
         }
-        if (rankIconPath && fs.existsSync(rankIconPath)) {
-            try {
-                const ic = await loadImage(fs.readFileSync(rankIconPath));
-                ctx.drawImage(ic, cardLeft + cw - 68, yCards + 38, 52, 52);
-            } catch {
-                /* ignore */
-            }
-        }
     });
+
+    const card3Left = pad + 2 * (cw + gap);
+    if (rankIconPath && fs.existsSync(rankIconPath)) {
+        try {
+            const ic = await loadImage(fs.readFileSync(rankIconPath));
+            ctx.drawImage(ic, card3Left + cw - 68, yCards + 38, 52, 52);
+        } catch {
+            /* ignore */
+        }
+    }
 
     let footY = yCards + cardH - 8;
     if (totalDebt > 0) {
