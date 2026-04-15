@@ -286,6 +286,7 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
         ctx.strokeStyle = 'rgba(99,102,241,0.5)';
         ctx.stroke();
         ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
         drawMemberRows(ctx, members, guild, 64, midY + 28, lw - 48, titleFace, textFace, {
             accent: '#818cf8',
             text: '#e0e7ff',
