@@ -322,12 +322,7 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
             ctx.fillStyle = C.sub;
             ctx.fillText(subLine, x + 18, y1 + 96);
         };
-        drawStatCard(
-            0,
-            'VALEUR',
-            `${(guild.total_value || 0) >= 1000 ? `💎 ${formatValue(guild.total_value || 0)}` : `💎 ${(guild.total_value || 0).toLocaleString('fr-FR')}`}`,
-            'Puissance guilde'
-        );
+        drawStatCard(0, 'VALEUR', `💎 ${formatValue(guild.total_value || 0)}`, 'Puissance guilde');
         drawStatCard(1, 'UPGRADE', `U${up}`, `${totalMembers}/${guild.member_slots} membres`);
         drawStatCard(2, 'CHEF', truncateText(ctx, ownerName, cardW - 36), 'Salle des chefs');
 
