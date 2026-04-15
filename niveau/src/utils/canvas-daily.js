@@ -54,7 +54,7 @@ function drawBox(ctx, x, y, w, h, r = 10) {
 }
 
 /** Rouge clair uni (pas de dégradé, pas de halo). */
-const COOLDOWN_TIMER_RED = '#fecaca';
+const COOLDOWN_TIMER_RED = '#fca5a5';
 
 /**
  * Compte à rebours — texte bien gros, rouge clair uni.
