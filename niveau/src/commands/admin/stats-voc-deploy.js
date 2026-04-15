@@ -9,18 +9,20 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('stats-voc-deploy')
         .setDescription(
-            '[ADMIN] Déploie 3 salons vocaux sous la catégorie : total membres, humains, bots (non joignables sauf admins).'
+            '[ADMIN] 3 vocaux compteur (total / humains / bots), connexion réservée aux admins.'
         )
         .addStringOption((opt) =>
             opt
                 .setName('categorie_id')
-                .setDescription('ID de la catégorie Discord (sinon MEMBER_STATS_CATEGORY_ID ou défaut serveur)')
+                .setDescription(
+                    'ID catégorie parent. Sinon MEMBER_STATS_CATEGORY_ID ou ID défaut du bot.'
+                )
                 .setRequired(false)
         )
         .addBooleanOption((opt) =>
             opt
                 .setName('recreate')
-                .setDescription('Supprime les anciens salons enregistrés et les recrée (attention)')
+                .setDescription('Supprime les 3 salons suivis puis les recrée (destructif).')
                 .setRequired(false)
         )
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
