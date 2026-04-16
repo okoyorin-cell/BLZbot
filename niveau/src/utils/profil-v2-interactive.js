@@ -200,7 +200,7 @@ const GUILD = 'pv2_guild';
 
 /**
  * @param {import('discord.js').ChatInputCommandInteraction} interaction
- * @param {Awaited<ReturnType<import('./profil-v2-data')['loadFiche2ProfileData']>>} session
+ * @param {Awaited<ReturnType<typeof loadFiche2ProfileData>>} session
  * @param {{ headerText?: string }} [opts]
  */
 async function sendProfilV2WithButtons(interaction, session, opts = {}) {
