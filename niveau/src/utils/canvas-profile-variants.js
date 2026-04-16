@@ -512,15 +512,15 @@ async function renderFiche2(data) {
         const cx = mainX + col * (cellW + gGap);
         const cy = gridTop + row * (cellH + gGap);
         refStatCell(ctx, cx, cy, cellW, cellH, 12);
-        ctx.font = '600 11px Inter, Arial';
-        ctx.fillStyle = PROFILE_CARD_THEME.sub;
+        const statPx = PROFILE_CARD_THEME.statFontPx;
+        const labelY = cy + 4 + statPx;
+        const valueY = cy + 8 + statPx * 2;
         ctx.textBaseline = 'alphabetic';
-        ctx.fillText(cells[i].label, cx + 12, cy + 20);
-        ctx.font = '700 22px InterBold, Arial';
+        ctx.font = `700 ${statPx}px InterBold, Arial`;
+        ctx.fillStyle = PROFILE_CARD_THEME.labelYellow;
+        ctx.fillText(cells[i].label, cx + 12, labelY);
         ctx.fillStyle = PROFILE_CARD_THEME.text;
-        ctx.textBaseline = 'bottom';
-        ctx.fillText(truncateText(ctx, cells[i].value, cellW - 20), cx + 12, cy + cellH - 10);
-        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(truncateText(ctx, cells[i].value, cellW - 20), cx + 12, valueY);
     }
 
     const barY = y0 + innerH - 38;
