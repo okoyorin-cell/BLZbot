@@ -434,11 +434,11 @@ async function renderFiche2(data) {
     const mainX = x0 + leftW + gap;
     const mainW = innerW - leftW - gap;
 
-    /* Colonne avatar — même verre semi-transparent */
+    /* Colonne avatar — chocolat chaud semi-transparent */
     rr(ctx, x0, y0, leftW, innerH, 14);
-    ctx.fillStyle = 'rgba(38, 12, 14, 0.5)';
+    ctx.fillStyle = 'rgba(48, 26, 20, 0.6)';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(110, 42, 48, 0.72)';
+    ctx.strokeStyle = 'rgba(170, 100, 72, 0.42)';
     ctx.lineWidth = 1.25;
     ctx.stroke();
 
