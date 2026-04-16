@@ -190,30 +190,30 @@ async function renderStaffProfileCardV2(data) {
     ctx.stroke();
 
     const displayName = data.member?.displayName ?? 'Utilisateur';
-    ctx.font = '700 31px InterBold, Arial';
+    ctx.font = '700 36px InterBold, Arial';
     ctx.fillStyle = THEME.text;
     const nameMax = mainW - 200;
-    ctx.fillText(truncateText(ctx, displayName, nameMax), mainX + 12, y0 + 34);
+    ctx.fillText(truncateText(ctx, displayName, nameMax), mainX + 12, y0 + 38);
 
-    ctx.font = '600 18px Inter, Arial';
+    ctx.font = '600 21px Inter, Arial';
     ctx.fillStyle = THEME.roleLavender;
-    ctx.fillText(truncateText(ctx, data.staffRole || 'Staff', nameMax), mainX + 12, y0 + 56);
+    ctx.fillText(truncateText(ctx, data.staffRole || 'Staff', nameMax), mainX + 12, y0 + 68);
 
     ctx.textAlign = 'right';
-    ctx.font = '600 15px InterBold, Inter, Arial';
+    ctx.font = '600 17px InterBold, Inter, Arial';
     if (data.inSensitivity) {
         ctx.fillStyle = THEME.warn;
-        ctx.fillText('Sensibilité : OUI', mainX + mainW - 12, y0 + 28);
+        ctx.fillText('Sensibilité : OUI', mainX + mainW - 12, y0 + 32);
         ctx.fillStyle = THEME.sub;
-        ctx.font = '500 14px Inter, Arial';
+        ctx.font = '500 16px Inter, Arial';
         ctx.fillText(
             data.sensitivityEnd ? `Jusqu'au ${formatDate(data.sensitivityEnd)}` : '—',
             mainX + mainW - 12,
-            y0 + 48
+            y0 + 56
         );
     } else {
         ctx.fillStyle = THEME.sub;
-        ctx.fillText('Sensibilité : NON', mainX + mainW - 12, y0 + 34);
+        ctx.fillText('Sensibilité : NON', mainX + mainW - 12, y0 + 38);
     }
     ctx.textAlign = 'left';
 
