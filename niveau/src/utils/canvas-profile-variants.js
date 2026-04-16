@@ -405,10 +405,10 @@ async function renderFiche2(data) {
     const cardW = W2 - pad * 2;
     const cardH = H2 - pad * 2;
     rr(ctx, pad, pad, cardW, cardH, outerR);
-    ctx.fillStyle = 'rgba(52, 28, 22, 0.58)';
+    ctx.fillStyle = PROFILE_CARD_THEME.shell;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(160, 95, 70, 0.45)';
-    ctx.lineWidth = 1.25;
+    ctx.strokeStyle = PROFILE_CARD_THEME.outline;
+    ctx.lineWidth = 2;
     ctx.stroke();
 
     const innerPad = 10;
