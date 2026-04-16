@@ -417,13 +417,10 @@ async function renderFiche2(data) {
     const cardW = W2 - pad * 2;
     const cardH = H2 - pad * 2;
     rr(ctx, pad, pad, cardW, cardH, outerR);
-    ctx.fillStyle = 'rgba(30, 10, 12, 0.52)';
+    ctx.fillStyle = 'rgba(52, 28, 22, 0.58)';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(100, 40, 45, 0.75)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    rr(ctx, pad + 2, pad + 2, cardW - 4, cardH - 4, Math.max(6, outerR - 2));
-    ctx.strokeStyle = 'rgba(25, 8, 10, 0.55)';
+    ctx.strokeStyle = 'rgba(160, 95, 70, 0.45)';
+    ctx.lineWidth = 1.25;
     ctx.stroke();
 
     const innerPad = 10;
