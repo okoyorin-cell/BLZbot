@@ -309,14 +309,9 @@ async function renderFiche1(data) {
     ctx.fillText(truncateText(ctx, displayName, titleMax / 0.9), 0, 0);
     ctx.restore();
 
-    if (invokerStaffTitle) {
-        setCondensedBody(ctx, 13, 600);
-        ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
-        ctx.fillText(truncateText(ctx, invokerStaffTitle, titleMax), mainX, y0 + 54);
-    }
     setCondensedBody(ctx, 14, 500);
     ctx.fillStyle = 'rgba(255, 245, 240, 0.78)';
-    ctx.fillText(`Membre depuis : ${joined}`, mainX, invokerStaffTitle ? y0 + 76 : y0 + 58);
+    ctx.fillText(`Membre depuis : ${joined}`, mainX, y0 + 58);
 
     const thumb = 52;
     const thumbX = mainX + mainW - thumb - 4;
