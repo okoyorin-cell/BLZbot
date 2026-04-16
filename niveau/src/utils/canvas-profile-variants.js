@@ -544,8 +544,6 @@ async function renderFiche2(data) {
         totalDebt,
         vocalNerfStatus,
         invokerStaffTitle,
-        invokerMember,
-        invokerUser,
         previewHasGuild,
     } = data;
     const displayName = member?.displayName ?? 'Utilisateur';
