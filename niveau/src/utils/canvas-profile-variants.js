@@ -462,33 +462,29 @@ async function renderFiche2(data) {
     }
     ctx.restore();
     ctx.beginPath();
-    ctx.arc(avCx, avCy, avR + 1.5, 0, Math.PI * 2);
-    ctx.strokeStyle = '#b03030';
+    ctx.arc(avCx, avCy, avR + 2, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(245, 228, 210, 0.88)';
     ctx.lineWidth = 2;
     ctx.stroke();
 
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
-    setCondensedTitle(ctx, 28, 700);
+    setCondensedTitle(ctx, 34, 700);
     ctx.fillStyle = '#ffffff';
     const thumb = 48;
     const titleMax = mainW - thumb - 10;
-    ctx.save();
-    ctx.translate(mainX, y0 + 30);
-    ctx.scale(0.92, 1);
-    ctx.fillText(truncateText(ctx, displayName, titleMax / 0.92), 0, 0);
-    ctx.restore();
+    ctx.fillText(truncateText(ctx, displayName, titleMax), mainX, y0 + 32);
 
-    setCondensedBody(ctx, 12, 500);
-    ctx.fillStyle = '#b0a0a0';
-    ctx.fillText(`Membre depuis : ${joined}`, mainX, y0 + 50);
+    setCondensedBody(ctx, 14, 500);
+    ctx.fillStyle = 'rgba(200, 190, 190, 0.95)';
+    ctx.fillText(`Membre depuis : ${joined}`, mainX, y0 + 54);
 
     const thumbX = mainX + mainW - thumb;
     const thumbY = y0 + 4;
     rr(ctx, thumbX, thumbY, thumb, thumb, 10);
-    ctx.fillStyle = '#1a0505';
+    ctx.fillStyle = 'rgba(20, 8, 10, 0.55)';
     ctx.fill();
-    ctx.strokeStyle = '#7a3a3a';
+    ctx.strokeStyle = 'rgba(200, 60, 55, 0.85)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
     if (rankIconPath && fs.existsSync(rankIconPath)) {
