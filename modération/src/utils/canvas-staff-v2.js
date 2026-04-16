@@ -20,7 +20,7 @@ const THEME = {
     outline: 'rgba(255,255,255,0.38)',
 };
 
-const STAFF_CARD_BUILD = 'tp20260417';
+const CANVAS_CREDIT_LINE = 'Par Koyorin et Roxxor';
 
 try {
     const assetsPath = path.join(__dirname, '..', 'assets');
