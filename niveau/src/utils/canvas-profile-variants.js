@@ -42,8 +42,11 @@ const PROFILE_CARD_THEME = Object.freeze({
 /** Jaune (staff + libellés grille STARSS, POINTS RP, etc.) — un ton plus soutenu que `accent` (barre / déco). */
 const PREVIEW_STAFF_TITLE_COLOR = '#e8b83a';
 
-/** Bump manuel pour vérifier le déploiement (pied Fiche 2 + messages /profil et /testprofil). */
+/** Bump manuel pour le message texte de /testprofil (hors canvas). */
 const PROFILE_PREVIEW_BUILD = 'tp20260417';
+
+/** Crédit affiché en bas à droite sur les cartes profil (fiches 1 & 2). */
+const CANVAS_CREDIT_LINE = 'Par Koyorin et Roxxor';
 
 const PROFILE_PREVIEW_VARIANTS = [
     {
