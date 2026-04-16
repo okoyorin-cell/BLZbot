@@ -157,7 +157,7 @@ function drawFiche2LevelXpCell(ctx, cx, cy, cw, ch, user, xpCur, xpNeed) {
     ctx.textBaseline = 'alphabetic';
     ctx.font = `700 ${statPx}px InterBold, Arial`;
     ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
-    ctx.fillText('NIVEAU / XP', cx + padX, labelY);
+    ctx.fillText('LEVEL / XP', cx + padX, labelY);
 
     ctx.font = '800 24px InterBold, Arial';
     ctx.fillStyle = PROFILE_CARD_THEME.text;
