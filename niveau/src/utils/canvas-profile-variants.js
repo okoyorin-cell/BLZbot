@@ -514,9 +514,9 @@ async function renderFiche2(data) {
     const thumbX = mainX + mainW - thumb;
     const thumbY = y0 + 4;
     rr(ctx, thumbX, thumbY, thumb, thumb, 10);
-    ctx.fillStyle = '#2a1814';
+    ctx.fillStyle = '#241210';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.strokeStyle = 'rgba(255, 170, 130, 0.2)';
     ctx.stroke();
     if (rankIconPath && fs.existsSync(rankIconPath)) {
         try {
