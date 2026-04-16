@@ -419,15 +419,14 @@ async function renderFiche2(data) {
     const cardW = W2 - pad * 2;
     const cardH = H2 - pad * 2;
     rr(ctx, pad, pad, cardW, cardH, outerR);
-    ctx.fillStyle = '#2a0a0a';
+    ctx.fillStyle = 'rgba(30, 10, 12, 0.52)';
     ctx.fill();
-    ctx.shadowColor = 'rgba(200, 80, 80, 0.2)';
-    ctx.shadowBlur = 6;
-    ctx.strokeStyle = '#7a3a3a';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(100, 40, 45, 0.75)';
+    ctx.lineWidth = 1;
     ctx.stroke();
-    ctx.shadowBlur = 0;
-    ctx.shadowColor = 'transparent';
+    rr(ctx, pad + 2, pad + 2, cardW - 4, cardH - 4, Math.max(6, outerR - 2));
+    ctx.strokeStyle = 'rgba(25, 8, 10, 0.55)';
+    ctx.stroke();
 
     const innerPad = 10;
     const x0 = pad + innerPad;
