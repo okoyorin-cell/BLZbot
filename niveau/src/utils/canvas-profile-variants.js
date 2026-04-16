@@ -324,10 +324,7 @@ async function renderFicheBlz(data) {
 }
 
 async function renderProfilePreviewVariant(data, variant) {
-    const v = LEGACY_PROFILE_VARIANT[variant] || variant;
-    if (v === 'fiche_blz' || !PROFILE_PREVIEW_VARIANTS.some((x) => x.id === v)) {
-        return renderFicheBlz(data);
-    }
+    void variant;
     return renderFicheBlz(data);
 }
 
