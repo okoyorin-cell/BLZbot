@@ -33,7 +33,7 @@ const GUILD = 'pv2_guild';
  * @param {{ headerText?: string }} [opts]
  */
 async function sendProfilV2WithButtons(interaction, session, opts = {}) {
-    const { targetUser, member, guild, meta, renderMainPngBuffer } = session;
+    const { targetUser, member, guild, renderMainPngBuffer } = session;
 
     const buildMainFile = async () => {
         const buf = await renderMainPngBuffer();
