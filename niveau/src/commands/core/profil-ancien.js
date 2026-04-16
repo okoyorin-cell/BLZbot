@@ -389,10 +389,7 @@ module.exports = {
                         const end = start + ACHIEVEMENTS_PER_PAGE;
                         const slicedAchievements = completedAchievements.slice(start, end);
 
-                        const png = await renderAchievementsCardFiche2({
-                            achievements: slicedAchievements,
-                            footerNote: '/profil-ancien',
-                        });
+                        const png = await renderAchievementsCardFiche2({ achievements: slicedAchievements });
                         const file = new AttachmentBuilder(png, { name: 'achievements.png' });
 
                         const mediaGallery = new MediaGalleryBuilder()
