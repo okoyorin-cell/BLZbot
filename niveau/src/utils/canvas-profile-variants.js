@@ -177,13 +177,10 @@ function simbaCell(ctx, x, y, w, h, r) {
 /** Cellules fiche 2 — chocolat semi-transparent (ref. d’origine), bord chaud. */
 function refStatCell(ctx, x, y, w, h, r) {
     rr(ctx, x, y, w, h, r);
-    const g = ctx.createLinearGradient(x, y, x, y + h);
-    g.addColorStop(0, 'rgba(110, 58, 48, 0.78)');
-    g.addColorStop(1, 'rgba(62, 32, 26, 0.82)');
-    ctx.fillStyle = g;
+    ctx.fillStyle = PROFILE_CARD_THEME.panel;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(200, 130, 95, 0.38)';
-    ctx.lineWidth = 1.25;
+    ctx.strokeStyle = PROFILE_CARD_THEME.outline;
+    ctx.lineWidth = 2;
     ctx.stroke();
 }
 
