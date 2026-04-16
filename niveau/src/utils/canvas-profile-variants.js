@@ -651,10 +651,9 @@ async function renderFiche2(data) {
             label: 'XP',
             value: `${xpCur.toLocaleString('fr-FR')} / ${(user.xp_needed ?? 0).toLocaleString('fr-FR')}`,
         },
-        { label: 'PROGRESSION', value: `${pct}%` },
     ];
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 5; i++) {
         const col = i % 3;
         const row = Math.floor(i / 3);
         const cx = mainX + col * (cellW + gGap);
@@ -669,6 +668,14 @@ async function renderFiche2(data) {
         ctx.fillText(cells[i].label, cx + 12, labelY);
         ctx.fillStyle = PROFILE_CARD_THEME.text;
         ctx.fillText(truncateText(ctx, cells[i].value, cellW - 20), cx + 12, valueY);
+    }
+    {
+        const col = 2;
+        const row = 1;
+        const cx = mainX + col * (cellW + gGap);
+        const cy = gridTop + row * (cellH + gGap);
+        refStatCell(ctx, cx, cy, cellW, cellH, 12);
+        drawFiche2GuildCell(ctx, cx, cy, cellW, cellH, user, previewHasGuild === true);
     }
 
     const barY = y0 + innerH - 38;
