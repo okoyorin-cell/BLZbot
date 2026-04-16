@@ -10,7 +10,7 @@ module.exports = {
         .addStringOption((opt) =>
             opt
                 .setName('style')
-                .setDescription('Fiche 1 (2×3) ou Fiche 2 (même fond que /profile)')
+                .setDescription('Fiche 1 (2×3) ou Fiche 2 (même fond que /profil)')
                 .setRequired(true)
                 .addChoices(
                     { name: 'Fiche 1 — colonne + grille 2×3 (sauvegardée)', value: 'fiche_1' },
