@@ -347,7 +347,7 @@ async function renderStaffProfileCardV2(data) {
             }
             y += 6;
         }
-    );
+    });
 
     ctx.fillStyle = 'rgba(200, 215, 230, 0.45)';
     ctx.font = 'italic 10px Inter, Arial';
