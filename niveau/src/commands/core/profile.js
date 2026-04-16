@@ -385,7 +385,10 @@ module.exports = {
                         const end = start + ACHIEVEMENTS_PER_PAGE;
                         const slicedAchievements = completedAchievements.slice(start, end);
 
-                        const png = await renderAchievementsCard({ achievements: slicedAchievements });
+                        const png = await renderAchievementsCardFiche2({
+                            achievements: slicedAchievements,
+                            footerNote: '/profile',
+                        });
                         const file = new AttachmentBuilder(png, { name: 'achievements.png' });
 
                         const mediaGallery = new MediaGalleryBuilder()
