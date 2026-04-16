@@ -19,8 +19,8 @@ module.exports = {
         .addStringOption((opt) =>
             opt
                 .setName('style')
-                .setDescription('Modèle de fiche')
-                .setRequired(true)
+                .setDescription('Modèle de fiche (défaut : Fiche 1)')
+                .setRequired(false)
                 .addChoices(
                     { name: 'Fiche 1 — colonne + grille 2×3 (sauvegardée)', value: 'fiche_1' },
                     { name: 'Fiche 2 — layout 3×2 (ref. 2ᵉ screen)', value: 'fiche_2' }
