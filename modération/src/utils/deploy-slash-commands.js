@@ -9,6 +9,10 @@ const { getSlashDeployGuildIds } = require(path.join(__dirname, '..', '..', '..'
 const COMMANDS_DIR = path.join(__dirname, '..', 'commands');
 const PANEL_COMMAND_NAMES = new Set(['panel']);
 
+function isArchivedSlashCommandFile(basename) {
+    return typeof basename === 'string' && basename.endsWith('-ancien.js');
+}
+
 function toCmdJson(data) {
     if (!data) return null;
     return typeof data.toJSON === 'function' ? data.toJSON() : data;
