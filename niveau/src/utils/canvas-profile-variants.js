@@ -548,8 +548,8 @@ async function renderFiche2(data) {
         ctx.fill();
     }
 
-    setCondensedBody(ctx, 13, 500);
-    ctx.fillStyle = 'rgba(235, 228, 228, 0.95)';
+    ctx.font = '500 13px Inter, Arial';
+    ctx.fillStyle = PROFILE_CARD_THEME.sub;
     ctx.fillText(`${pct}% vers le niveau ${nextLevel}`, mainX, barY + barH + 17);
 
     if (totalDebt > 0 || vocalNerfStatus) {
