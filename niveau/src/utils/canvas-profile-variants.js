@@ -49,7 +49,7 @@ const PROFILE_PREVIEW_VARIANTS = [
     {
         id: 'fiche_2',
         label: 'Fiche 2 — fond /profile (1024×381)',
-        hint: 'Rôle principal sous le pseudo, icônes rôles exclusifs (badge-config) à côté du nom si présents',
+        hint: 'Fond blz_bg bien visible, panneaux noirs transparents — grille 3×2',
     },
 ];
 
