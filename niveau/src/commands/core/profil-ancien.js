@@ -391,7 +391,7 @@ module.exports = {
 
                         const png = await renderAchievementsCardFiche2({
                             achievements: slicedAchievements,
-                            footerNote: '/profile',
+                            footerNote: '/profil-ancien',
                         });
                         const file = new AttachmentBuilder(png, { name: 'achievements.png' });
 
