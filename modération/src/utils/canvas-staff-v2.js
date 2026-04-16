@@ -315,13 +315,13 @@ async function renderStaffProfileCardV2(data) {
         let y = oy;
         for (const p of promos) {
             ctx.fillStyle = THEME.text;
-            ctx.font = '600 14px Inter, Arial';
+            ctx.font = '600 16px Inter, Arial';
             ctx.fillText(truncateText(ctx, p.role_name || '—', cw), ox, y);
-            y += 18;
+            y += 20;
             ctx.fillStyle = THEME.sub;
-            ctx.font = '500 13px Inter, Arial';
+            ctx.font = '500 15px Inter, Arial';
             ctx.fillText(formatDate(p.date), ox, y);
-            y += 22;
+            y += 24;
             if (y > oy + ch - 10) break;
         }
     });
