@@ -203,6 +203,7 @@ module.exports = async function deployCommands(client) {
                 /* Toujours re-PUT /testprofil : évite les définitions slash obsolètes (option style) si Discord/API skip à tort. */
                 const forceRefresh =
                     commandData.name === 'testprofil' ||
+                    commandData.name === 'profil-v2' ||
                     String(process.env.BLZ_FORCE_SLASH_REFRESH_NAMES || '')
                         .split(/[,;]/)
                         .map((s) => s.trim())
