@@ -177,9 +177,12 @@ async function sendProfilV2WithButtons(interaction, session, opts = {}) {
 
                 await i.editReply({ content: null, files: [qFile], components: comps, flags: MessageFlags.IsComponentsV2 });
             } else if (i.customId.startsWith(`${A_PREFIX}_`)) {
-                const rest = i.customId.slice(`${A_PREFIX}_`.length);
-                const page = parseInt(rest.split('_').pop(), 10);
-                const safePage = Number.isFinite(page) ? page : 0;
+                const aBase = `${A_PREFIX}_${targetUser.id}`;
+                let page = 0;
+                if (i.customId === aBase) page = 0;
+                else if (i.customId.startsWith(`${aBase}_`)) {
+                    page = parseInt(i.customId.slice(aBase.length + 1), 10) || 0;
+                }
                 const ACH = 8;
 
                 const userQuestsData = getAllUserQuests(targetUser.id);
