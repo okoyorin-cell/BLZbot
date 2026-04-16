@@ -535,7 +535,7 @@ async function renderFiche2(data) {
         const valueY = cy + 8 + statPx * 2;
         ctx.textBaseline = 'alphabetic';
         ctx.font = `700 ${statPx}px InterBold, Arial`;
-        ctx.fillStyle = PROFILE_CARD_THEME.labelYellow;
+        ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
         ctx.fillText(cells[i].label, cx + 12, labelY);
         ctx.fillStyle = PROFILE_CARD_THEME.text;
         ctx.fillText(truncateText(ctx, cells[i].value, cellW - 20), cx + 12, valueY);
