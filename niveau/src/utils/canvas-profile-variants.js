@@ -104,55 +104,6 @@ async function tryLoadBlzBg() {
     }
 }
 
-/** Rôle « principal » affiché sous le pseudo : staff connu en priorité, sinon plus haut rôle Discord. */
-const PRIMARY_ROLE_PRIORITY = [
-    'Admin',
-    'Administrateur',
-    'Superviseur',
-    'Employé',
-    'Membre',
-    'Member',
-];
-
-function pickPrimaryServerRole(member) {
-    if (!member?.roles?.cache) return 'Membre';
-    const byLower = new Map();
-    for (const r of member.roles.cache.values()) {
-        if (r.name === '@everyone') continue;
-        byLower.set(r.name.toLowerCase(), r.name);
-    }
-    for (const key of PRIMARY_ROLE_PRIORITY) {
-        const n = byLower.get(key.toLowerCase());
-        if (n) return n;
-    }
-    const h = member.roles.highest;
-    if (h?.name && h.name !== '@everyone') return h.name;
-    return 'Membre';
-}
-
-/** Icônes badges liés aux rôles Discord exclusifs (badge-config), dans l’ordre du fichier. */
-async function loadExclusiveBadgeImages(member) {
-    if (!member?.roles?.cache) return [];
-    const { BADGE_ROLE_MAP } = require('./badge-config');
-    const badgesDir = path.join(__dirname, '..', 'assets', 'badges');
-    const seen = new Set();
-    const out = [];
-    for (const { badgeId, roleIds } of BADGE_ROLE_MAP) {
-        if (seen.has(badgeId)) continue;
-        const has = roleIds.some((id) => member.roles.cache.has(id));
-        if (!has) continue;
-        seen.add(badgeId);
-        const fp = path.join(badgesDir, `${badgeId}.png`);
-        if (!fs.existsSync(fp)) continue;
-        try {
-            out.push(await loadImage(fs.readFileSync(fp)));
-        } catch {
-            /* ignore */
-        }
-    }
-    return out;
-}
-
 async function loadAvatar(member) {
     const url = member?.displayAvatarURL({ extension: 'png', size: 256 });
     if (!url) return null;
