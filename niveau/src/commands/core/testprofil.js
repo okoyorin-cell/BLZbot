@@ -39,7 +39,7 @@ module.exports = {
             return interaction.editReply({
                 content:
                     `🧪 ${hint}\n` +
-                    `_build ${PROFILE_PREVIEW_BUILD}_ · La commande \`/profile\` officielle est inchangée.`,
+                    `_build ${PROFILE_PREVIEW_BUILD}_ · La fiche publique reste \`/profil\`.`,
                 files: [file],
             });
         } catch (error) {
