@@ -15,7 +15,7 @@ function loadCommandData(filePath) {
     try {
         const resolved = path.resolve(filePath);
         /* Slash sensibles aux options : recharger le module pour un toJSON à jour au deploy. */
-        const slashReloadBasenames = new Set(['testprofil.js', 'profil-v2.js', 'profil.js']);
+        const slashReloadBasenames = new Set(['testprofil.js', 'profil.js']);
         if (slashReloadBasenames.has(path.basename(filePath))) {
             delete require.cache[resolved];
             const helpers = [
