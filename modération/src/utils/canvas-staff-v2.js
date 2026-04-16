@@ -181,7 +181,7 @@ async function renderStaffProfileCardV2(data) {
     ctx.textBaseline = 'alphabetic';
 
     /* Bandeau identité */
-    const headH = 76;
+    const headH = 88;
     rr(ctx, mainX, y0, mainW, headH, 12);
     ctx.fillStyle = THEME.header;
     ctx.fill();
