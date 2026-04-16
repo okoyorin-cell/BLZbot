@@ -1,7 +1,8 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { PROFILE_PREVIEW_BUILD } = require('../../utils/canvas-profile-variants');
 const { handleCommandError } = require('../../utils/error-handler');
-const { renderProfileFichePreviewFromInteraction } = require('../../utils/render-profile-fiche-preview-interaction');
+const { loadFiche2ProfileData } = require('../../utils/profil-v2-data');
+const { sendProfilV2WithButtons } = require('../../utils/profil-v2-interactive');
 
 /**
  * @param {string} commandName Nom slash Discord (ex. profil-v2, profil)
