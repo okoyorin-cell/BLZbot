@@ -15,7 +15,17 @@ const { getOngoingWar } = require('../../utils/guild/guild-wars');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('testprofil')
-        .setDescription('Aperçu : fiche compacte BLZ (style Carmin, grille Starss / RP / XP).')
+        .setDescription('Aperçu : fiches BLZ Carmin — Fiche 1 (2×3) ou Fiche 2 (3×2, ref. screen).')
+        .addStringOption((opt) =>
+            opt
+                .setName('style')
+                .setDescription('Modèle de fiche')
+                .setRequired(true)
+                .addChoices(
+                    { name: 'Fiche 1 — colonne + grille 2×3 (sauvegardée)', value: 'fiche_1' },
+                    { name: 'Fiche 2 — layout 3×2 (ref. 2ᵉ screen)', value: 'fiche_2' }
+                )
+        )
         .addUserOption((opt) =>
             opt.setName('membre').setDescription('Membre à prévisualiser (défaut : vous)').setRequired(false)
         ),
