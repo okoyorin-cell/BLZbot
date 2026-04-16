@@ -2828,7 +2828,6 @@ module.exports = {
   addDeepThinkButton,
   queryDeepThink,
   extractRawToolCall,
-  lastDisclaimerTime,
   channelCooldowns,
   deepThinkCache,
   // Nouvelles fonctions pour détection de doublons et contrôle contextuel
