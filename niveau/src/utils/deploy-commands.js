@@ -111,7 +111,7 @@ module.exports = async function deployCommands(client) {
         const dir = path.join(commandsPath, sub);
         if (!fs.existsSync(dir)) continue;
         fs.readdirSync(dir)
-            .filter((file) => file.endsWith('.js'))
+            .filter((file) => file.endsWith('.js') && !isArchivedSlashCommandFile(file))
             .forEach((file) => {
                 const commandData = loadCommandData(path.join(dir, file));
                 if (commandData) localCommands.set(commandData.name, { ...commandData, source: 'normal' });
