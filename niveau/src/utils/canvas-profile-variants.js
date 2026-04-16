@@ -526,7 +526,7 @@ async function renderFiche2(data) {
         const cy = gridTop + row * (cellH + gGap);
         refStatCell(ctx, cx, cy, cellW, cellH, 12);
         setCondensedBody(ctx, 9, 600);
-        ctx.fillStyle = 'rgba(255, 215, 195, 0.92)';
+        ctx.fillStyle = '#f0e68c';
         ctx.fillText(cells[i].label, cx + 10, cy + 18);
         setCondensedTitle(ctx, 17, 700);
         ctx.fillStyle = '#ffffff';
@@ -536,16 +536,29 @@ async function renderFiche2(data) {
     const barY = y0 + innerH - 36;
     const barH = 13;
     rr(ctx, mainX, barY, mainW, barH, barH / 2);
-    ctx.fillStyle = '#2e1814';
+    ctx.fillStyle = '#0d0808';
     ctx.fill();
     const fillW = Math.max(barH, Math.round(mainW * ratio));
-    const lg = ctx.createLinearGradient(mainX, 0, mainX + mainW, 0);
-    lg.addColorStop(0, '#ffd060');
-    lg.addColorStop(0.4, '#ff8c42');
-    lg.addColorStop(1, '#c43828');
-    rr(ctx, mainX, barY, fillW, barH, barH / 2);
-    ctx.fillStyle = lg;
-    ctx.fill();
+    if (ratio > 0 && ratio < 0.12) {
+        const cx = mainX + Math.max(barH * 0.5, fillW);
+        const cy = barY + barH / 2;
+        ctx.fillStyle = 'rgba(120, 20, 20, 0.85)';
+        ctx.fillRect(mainX + barH * 0.35, cy - 2, Math.max(0, cx - mainX - barH * 0.5), 4);
+        ctx.beginPath();
+        ctx.arc(cx, cy, barH / 2 + 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#ff2a2a';
+        ctx.fill();
+        ctx.strokeStyle = '#ff6666';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    } else if (fillW > 0) {
+        const lg = ctx.createLinearGradient(mainX, 0, mainX + fillW, 0);
+        lg.addColorStop(0, '#ff4444');
+        lg.addColorStop(1, '#7a0a0a');
+        rr(ctx, mainX, barY, fillW, barH, barH / 2);
+        ctx.fillStyle = lg;
+        ctx.fill();
+    }
 
     setCondensedBody(ctx, 11, 500);
     ctx.fillStyle = '#ffffff';
