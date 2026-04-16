@@ -62,6 +62,12 @@ async function deployModerationSlashCommands(client, config, opts = {}) {
         return;
     }
 
+    if (!compact) {
+        console.log(
+            `[modération/deploy] Guildes cibles : ${mainGuildIds.join(', ')} (GUILD_ID + BLZ_MAIN_GUILD_ID si défini). Le bot doit être invité sur chacune.`
+        );
+    }
+
     if (panelCommands.length > 0) {
         try {
             const panelGuild = await client.guilds.fetch(config.PANEL_GUILD_ID);

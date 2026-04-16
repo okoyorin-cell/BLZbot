@@ -4,11 +4,12 @@
  * Prérequis : .env à la racine du dépôt avec BOT_TOKEN et GUILD_ID.
  */
 const path = require('node:path');
-const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH, applyTestGuildOverride } = require(path.join(
-    __dirname,
-    '..',
-    'blzbot-env.js'
-));
+const {
+    resolveDotenvPath,
+    PEBBLE_HOST_ENV_PATH,
+    applyTestGuildOverride,
+    getSlashDeployGuildIds,
+} = require(path.join(__dirname, '..', 'blzbot-env.js'));
 
 require('dotenv').config({
     path: resolveDotenvPath(
