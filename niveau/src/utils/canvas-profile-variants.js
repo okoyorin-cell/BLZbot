@@ -25,18 +25,17 @@ const H = 520;
 const W2 = 1024;
 const H2 = 381;
 
-/** Base /profile + panneaux fiche 2 (un peu moins « noir total », plus lisible). */
+/** Base /profile + panneaux fiche 2 (saturé, lisible). */
 const PROFILE_CARD_THEME = Object.freeze({
     overlay: 'rgba(0,0,0,0.40)',
-    /* Fiche 2 : verre bordeaux/chocolat, pas du noir pur à 0.6+ */
-    panel: 'rgba(52, 26, 32, 0.48)',
-    header: 'rgba(48, 22, 28, 0.5)',
-    shell: 'rgba(38, 16, 22, 0.42)',
+    panel: 'rgba(72, 36, 46, 0.58)',
+    header: 'rgba(65, 30, 40, 0.58)',
+    shell: 'rgba(52, 22, 32, 0.5)',
     text: '#ffffff',
-    sub: '#f2d7d3',
-    accent: '#ffd166',
-    labelYellow: '#ffe08a',
-    outline: 'rgba(255,255,255,0.43)',
+    sub: '#fde8e4',
+    accent: '#ffe566',
+    labelYellow: '#fff59b',
+    outline: 'rgba(255, 235, 220, 0.52)',
     statFontPx: 20,
 });
 
