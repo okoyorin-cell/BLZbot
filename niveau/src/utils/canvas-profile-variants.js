@@ -33,8 +33,8 @@ const PROFILE_PREVIEW_VARIANTS = [
     },
     {
         id: 'fiche_2',
-        label: 'Fiche 2 — layout 3×2',
-        hint: 'Grand panneau avatar gauche, grille 3×2, barre pleine largeur zone droite (référence 2ᵉ screen)',
+        label: 'Fiche 2 — ref. screen (1024×381)',
+        hint: 'Même ratio et style que le PNG de référence : colonne avatar, grille 3×2, barre or→brique',
     },
 ];
 
