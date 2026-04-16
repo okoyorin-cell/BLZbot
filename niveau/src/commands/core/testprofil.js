@@ -19,7 +19,7 @@ module.exports = {
         .addStringOption((opt) =>
             opt
                 .setName('style')
-                .setDescription('Modèle de fiche (obligatoire pour forcer la mise à jour Discord)')
+                .setDescription('Fiche 1 (2×3) ou Fiche 2 (Carmin · Atlas, 1024×381)')
                 .setRequired(true)
                 .addChoices(
                     { name: 'Fiche 1 — colonne + grille 2×3 (sauvegardée)', value: 'fiche_1' },
