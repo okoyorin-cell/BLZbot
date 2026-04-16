@@ -239,9 +239,9 @@ async function renderStaffProfileCardV2(data) {
     const col1 = mainX + 12;
     const col2 = mainX + mainW / 2 + 4;
     const line1 = statsY + 56;
-    const line2 = statsY + 86;
-    const line3 = statsY + 116;
-    const line4 = statsY + 138;
+    const line2 = statsY + 84;
+    const line3 = statsY + 112;
+    const line4 = statsY + 140;
 
     ctx.font = '600 17px Inter, Arial';
     ctx.fillStyle = THEME.text;
