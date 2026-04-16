@@ -39,7 +39,7 @@ const PROFILE_CARD_THEME = Object.freeze({
     statFontPx: 20,
 });
 
-/** Jaune du libellé staff sous le pseudo — un ton plus soutenu que `accent` (barre / déco). */
+/** Jaune (staff + libellés grille STARSS, POINTS RP, etc.) — un ton plus soutenu que `accent` (barre / déco). */
 const PREVIEW_STAFF_TITLE_COLOR = '#e8b83a';
 
 /** Bump manuel pour vérifier que l’hôte exécute bien ce fichier (pied des cartes + message /testprofil). */
