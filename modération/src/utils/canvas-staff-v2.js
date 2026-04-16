@@ -302,7 +302,7 @@ async function renderStaffProfileCardV2(data) {
         ctx.font = '500 13px Inter, Arial';
         ctx.fillStyle = THEME.sub;
         if (fillContent) fillContent(px + 10, bottomY + 36, halfW - 20, bottomH - 44);
-        else ctx.fillText(emptyText, px + 10, bottomY + 42);
+        else ctx.fillText(emptyText, px + 10, bottomY + 44);
     }
 
     drawBottomPanel(mainX, 'Historique des postes', 'Aucune promotion enregistrée', (ox, oy, cw, ch) => {
