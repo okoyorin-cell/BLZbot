@@ -121,13 +121,15 @@ module.exports = {
                 variant
             );
 
-            const file = new AttachmentBuilder(png, { name: `testprofil-${variant}.png` });
+            const file = new AttachmentBuilder(png, {
+                name: `testprofil-${variant}-${Date.now()}.png`,
+            });
             const hint = meta ? `**${meta.label}** — _${meta.hint}_` : variant;
 
             return interaction.editReply({
                 content:
                     `🧪 ${hint}\n` +
-                    `La commande \`/profile\` officielle est inchangée.`,
+                    `_build ${PROFILE_PREVIEW_BUILD}_ · La commande \`/profile\` officielle est inchangée.`,
                 files: [file],
             });
         } catch (error) {

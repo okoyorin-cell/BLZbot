@@ -596,6 +596,7 @@ function normalizeProfileVariant(v) {
 }
 
 module.exports = {
+    PROFILE_PREVIEW_BUILD,
     PROFILE_PREVIEW_VARIANTS,
     renderProfilePreviewVariant,
     normalizeProfileVariant,
