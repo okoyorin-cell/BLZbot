@@ -13,7 +13,10 @@ function buildProfilV2Slash(commandName, description, attachmentPrefix) {
             .setName(commandName)
             .setDescription(description)
             .addUserOption((opt) =>
-                opt.setName('membre').setDescription('Membre à afficher (défaut : vous)').setRequired(false)
+                opt
+                    .setName('membre')
+                    .setDescription('Membre dont afficher la fiche (par défaut : toi-même).')
+                    .setRequired(false)
             ),
 
         async execute(interaction) {

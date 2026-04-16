@@ -1,14 +1,19 @@
 const { SlashCommandBuilder, AttachmentBuilder, PermissionFlagsBits } = require('discord.js');
 const CONFIG = require('../config.js');
-const { renderStaffProfileCardV2, STAFF_CARD_BUILD } = require('../utils/canvas-staff-v2');
+const { renderStaffProfileCardV2 } = require('../utils/canvas-staff-v2');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('profil-staff')
-        .setDescription('Carte staff compacte (même données que l’ancien profilstaff, style carte BLZ).')
+        .setDescription(
+            'Fiche synthèse staff : candidatures, tests modo, sanctions, appréciations et sensibilité.'
+        )
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addUserOption((option) =>
-            option.setName('utilisateur').setDescription('Membre staff à afficher').setRequired(false)
+            option
+                .setName('utilisateur')
+                .setDescription('Staff à afficher (par défaut : toi-même). Réservé aux comptes staff.')
+                .setRequired(false)
         ),
 
     async execute(interaction, { dbManager }) {
