@@ -171,8 +171,8 @@ async function renderQuestsCardFiche2({ quests, footerNote = '/profil-v2' }) {
     return canvas.toBuffer('image/png');
 }
 
-/** @param {{ achievements: Array<{name:string,description:string,rarity?:string}> }} param0 */
-async function renderAchievementsCardFiche2({ achievements }) {
+/** @param {{ achievements: Array<{name:string,description:string,rarity?:string}>, footerNote?: string }} param0 */
+async function renderAchievementsCardFiche2({ achievements, footerNote = '/profil-v2' }) {
     const canvas = createCanvas(W, H);
     const ctx = canvas.getContext('2d');
     const pad = await drawFiche2Frame(ctx);
