@@ -20,7 +20,9 @@ function loadTopLevelCommands(client) {
     for (const sub of MAIN_COMMAND_SUBDIRS) {
         const dir = path.join(commandsRootPath, sub);
         if (!fs.existsSync(dir)) continue;
-        const commandFiles = fs.readdirSync(dir).filter((file) => file.endsWith('.js'));
+        const commandFiles = fs
+            .readdirSync(dir)
+            .filter((file) => file.endsWith('.js') && !isArchivedSlashCommandFile(file));
         for (const file of commandFiles) {
             const filePath = path.join(dir, file);
             const command = require(filePath);
