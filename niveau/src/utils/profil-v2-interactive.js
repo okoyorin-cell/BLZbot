@@ -20,7 +20,6 @@ const { handleCommandError } = require('./error-handler');
 const { getItem, PASSIVE_ITEMS } = require('./items');
 const logger = require('./logger');
 const { renderQuestsCardFiche2, renderAchievementsCardFiche2 } = require('./canvas-fiche2-quests-trophies');
-const { PROFILE_PREVIEW_BUILD } = require('./canvas-profile-variants');
 
 const Q_PREFIX = 'pv2_q';
 const A_PREFIX = 'pv2_a';
