@@ -351,4 +351,4 @@ async function renderStaffProfileCardV2(data) {
     return canvas.toBuffer('image/png');
 }
 
-module.exports = { renderStaffProfileCardV2, STAFF_CARD_BUILD };
+module.exports = { renderStaffProfileCardV2 };
