@@ -476,7 +476,7 @@ async function renderFiche2(data) {
     if (invokerStaffTitle) {
         ctx.font = '600 13px InterBold, Inter, Arial';
         ctx.fillStyle = PROFILE_CARD_THEME.accent;
-        ctx.fillText(invokerStaffTitle, mainX, y0 + 52);
+        ctx.fillText(truncateText(ctx, invokerStaffTitle, titleMax), mainX, y0 + 52);
     }
     ctx.font = '500 14px Inter, Arial';
     ctx.fillStyle = PROFILE_CARD_THEME.sub;
