@@ -25,6 +25,18 @@ const H = 520;
 const W2 = 1024;
 const H2 = 381;
 
+/** Même base visuelle que `canvas-profile.js` (`/profile`). */
+const PROFILE_CARD_THEME = Object.freeze({
+    overlay: 'rgba(0,0,0,0.40)',
+    panel: 'rgba(0,0,0,0.62)',
+    header: 'rgba(0,0,0,0.58)',
+    shell: 'rgba(0,0,0,0.50)',
+    text: '#ffffff',
+    sub: '#f2d7d3',
+    accent: '#ffd166',
+    outline: 'rgba(255,255,255,0.43)',
+});
+
 const PROFILE_PREVIEW_VARIANTS = [
     {
         id: 'fiche_1',
