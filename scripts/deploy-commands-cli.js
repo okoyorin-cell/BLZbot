@@ -49,7 +49,10 @@ async function main() {
     try {
         await deployCommands(client);
         console.log(
-            '\n💡 Si /testprofil n’affiche pas l’option « style » : recharge Discord (Ctrl+Maj+R), vérifie que GUILD_ID correspond à CE serveur, et sur le serveur principal ajoute BLZ_MAIN_GUILD_ID dans le .env puis relance ce script.'
+            '\n💡 Nouvelles commandes profil : /profil et /profil-v2 (carte 1024×381). L’ancienne fiche complète reste /profile (anglais).'
+        );
+        console.log(
+            '   Si elles n’apparaissent pas : recharge Discord (Ctrl+Maj+R), vérifie GUILD_ID = ce serveur, et sur le serveur principal ajoute BLZ_MAIN_GUILD_ID puis relance ce script. Sur l’hôte : vérifie SKIP_SLASH_DEPLOY_ON_START=0 pour déployer les slash au démarrage.'
         );
     } finally {
         client.destroy();
