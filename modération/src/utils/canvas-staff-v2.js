@@ -280,7 +280,7 @@ async function renderStaffProfileCardV2(data) {
         ctx.fillText(
             isVoting ? 'Vote de promotion en cours' : 'Modo test en cours',
             col2,
-            statsY + statsH - 14
+            statsY + statsH - 10
         );
     }
 
