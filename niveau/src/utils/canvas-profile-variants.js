@@ -534,25 +534,26 @@ async function renderFiche2(data) {
     const barY = y0 + innerH - 38;
     const barH = 14;
     rr(ctx, mainX, barY, mainW, barH, barH / 2);
-    ctx.fillStyle = '#0d0808';
+    ctx.fillStyle = 'rgba(14, 8, 6, 0.92)';
     ctx.fill();
     const fillW = Math.max(barH, Math.round(mainW * ratio));
     if (ratio > 0 && ratio < 0.12) {
         const cx = mainX + Math.max(barH * 0.5, fillW);
         const cy = barY + barH / 2;
-        ctx.fillStyle = 'rgba(120, 20, 20, 0.85)';
+        ctx.fillStyle = 'rgba(55, 32, 22, 0.9)';
         ctx.fillRect(mainX + barH * 0.35, cy - 2, Math.max(0, cx - mainX - barH * 0.5), 4);
         ctx.beginPath();
         ctx.arc(cx, cy, barH / 2 + 2, 0, Math.PI * 2);
-        ctx.fillStyle = '#e5c07b';
+        ctx.fillStyle = '#f0c85a';
         ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 230, 180, 0.9)';
+        ctx.strokeStyle = 'rgba(255, 238, 200, 0.95)';
         ctx.lineWidth = 1;
         ctx.stroke();
     } else if (fillW > 0) {
         const lg = ctx.createLinearGradient(mainX, 0, mainX + fillW, 0);
-        lg.addColorStop(0, '#ff4444');
-        lg.addColorStop(1, '#7a0a0a');
+        lg.addColorStop(0, '#ffcc33');
+        lg.addColorStop(0.45, '#f5a623');
+        lg.addColorStop(1, '#e65c00');
         rr(ctx, mainX, barY, fillW, barH, barH / 2);
         ctx.fillStyle = lg;
         ctx.fill();
