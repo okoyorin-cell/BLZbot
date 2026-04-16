@@ -33,7 +33,7 @@ const PROFILE_PREVIEW_VARIANTS = [
     },
     {
         id: 'fiche_2',
-        label: 'Fiche 2 — Carmin · Atlas (1024×381)',
+        label: 'Fiche 2 — bois / chocolat (1024×381)',
         hint: 'Style écran d’origine (chocolat / bois), transparence, barre jaune-or — grille 3×2',
     },
 ];
