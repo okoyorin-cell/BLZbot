@@ -473,6 +473,17 @@ async function renderFiche2(data) {
     ctx.lineWidth = 2;
     ctx.stroke();
 
+    if (invokerStaffTitle) {
+        const staffMax = leftW - 16;
+        ctx.font = '600 12px InterBold, Inter, Arial';
+        ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(truncateText(ctx, invokerStaffTitle, staffMax), avCx, avCy + avR + 10);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+    }
+
     const thumb = 48;
     const thumbX = mainX + mainW - thumb;
     const thumbY = y0 + 4;
