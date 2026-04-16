@@ -41,7 +41,7 @@ const PROFILE_CARD_THEME = Object.freeze({
 });
 
 /** Bump manuel pour vérifier que l’hôte exécute bien ce fichier (pied des cartes + message /testprofil). */
-const PROFILE_PREVIEW_BUILD = 'tp20260416a';
+const PROFILE_PREVIEW_BUILD = 'tp20260416b';
 
 const PROFILE_PREVIEW_VARIANTS = [
     {

@@ -30,7 +30,7 @@ async function getPreviewInvokerStaffTitle(client, invokerUserId) {
         client.guilds.cache.get(PREVIEW_STAFF_GUILD_ID) ??
         (await client.guilds.fetch(PREVIEW_STAFF_GUILD_ID).catch(() => null));
     if (!guild) return null;
-    const member = await guild.members.fetch({ user: invokerUserId, force: false }).catch(() => null);
+    const member = await guild.members.fetch(invokerUserId).catch(() => null);
     if (!member) return null;
     for (const { id, label } of PREVIEW_INVOKER_STAFF_ROLES) {
         if (member.roles.cache.has(id)) return label;
