@@ -334,15 +334,15 @@ async function renderStaffProfileCardV2(data) {
         let y = oy;
         for (const a of appr) {
             ctx.fillStyle = THEME.sub;
-            ctx.font = '500 12px Inter, Arial';
+            ctx.font = '500 13px Inter, Arial';
             ctx.fillText(formatDate(a.date), ox, y);
-            y += 14;
+            y += 16;
             ctx.fillStyle = THEME.text;
-            ctx.font = '500 12px Inter, Arial';
+            ctx.font = '500 13px Inter, Arial';
             const lines = wrapLines(ctx, a.appreciation || '—', cw, 3);
             for (const ln of lines) {
                 ctx.fillText(truncateText(ctx, ln, cw), ox, y);
-                y += 14;
+                y += 15;
                 if (y > oy + ch - 8) return;
             }
             y += 6;
