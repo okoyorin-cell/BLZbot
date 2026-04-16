@@ -1,7 +1,7 @@
 /**
  * Aperçus /testprofil — fiches BLZ Carmin.
  * fiche_1 : colonne + grille 2×3 (version actuelle sauvegardée).
- * fiche_2 : même dimensions (1040×520), layout type 2ᵉ ref. (3×2, avatar carré gauche, barre jaune-orange).
+ * fiche_2 : dimensions ref. PNG 1024×381, layout 3×2 + colonne avatar (identique au screen de référence).
  */
 const { createCanvas, loadImage, registerFont } = require('canvas');
 const fs = require('node:fs');
