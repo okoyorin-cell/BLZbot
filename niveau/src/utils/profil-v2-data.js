@@ -91,38 +91,67 @@ async function loadFiche2ProfileData(interaction) {
 
     const renderMainPngBuffer = async () => {
         const u = getOrCreateUser(targetUser.id, targetUser.username);
-        u.guild_name = user.guild_name;
-        u.guild_level = user.guild_level;
-        u.guild_emoji = user.guild_emoji;
-        u.guild_treasury = user.guild_treasury;
-        u.guild_treasury_capacity = user.guild_treasury_capacity;
-        u.guild_upgrade_level = user.guild_upgrade_level;
-        u.guild_total_treasury_generated = user.guild_total_treasury_generated;
-        u.guild_wars_won = user.guild_wars_won;
-        u.guild_members = user.guild_members;
-        u.guild_member_slots = user.guild_member_slots;
-        u.guild_treasury_income = user.guild_treasury_income;
-        u.guild_state = user.guild_state;
+        const g = getGuildOfUser(targetUser.id);
+        u.guild_name = g ? g.name : 'Aucune Guilde';
+        u.guild_level = g ? g.level : 1;
+        u.guild_emoji = g ? g.emoji : '🛡️';
+        u.guild_treasury = g ? g.treasury : 0;
+        u.guild_treasury_capacity = g ? g.treasury_capacity : 0;
+        u.guild_upgrade_level = g ? g.upgrade_level : 1;
+        u.guild_total_treasury_generated = g ? g.total_treasury_generated : 0;
+        u.guild_wars_won = g ? g.wars_won : 0;
+        if (g) {
+            const guildMembers = getGuildMembersWithDetails(g.id);
+            u.guild_members = guildMembers.length;
+            u.guild_member_slots = g.member_slots;
+            const { calculateDailyIncome } = require('./guild/guild-treasury');
+            u.guild_treasury_income = calculateDailyIncome(g);
+        } else {
+            u.guild_members = 0;
+            u.guild_member_slots = 5;
+            u.guild_treasury_income = 0;
+        }
+        let gs = 'En Paix';
+        if (g) {
+            const war = getOngoingWar(g.id);
+            if (war) gs = 'En Guerre';
+        }
+        u.guild_state = gs;
+
+        const todayR = new Date().setHours(0, 0, 0, 0);
+        let dvx = u.daily_voice_xp || 0;
+        let dvp = u.daily_voice_points || 0;
+        if ((u.daily_voice_last_reset || 0) < todayR) {
+            dvx = 0;
+            dvp = 0;
+        }
+        let vns = null;
+        if (dvx >= 15000 || dvp >= 7000) vns = '⛔ Limite vocale journalière (0 gains).';
+        else if (dvx >= 10000 || dvp >= 5000) vns = '⚠️ Gains vocaux /5.';
 
         const invokerStaffTitle = await getPreviewInvokerStaffTitle(interaction.client, interaction.user.id);
         const r = getDisplayRank(targetUser.id, u.points);
+        const ri = RANKS.findIndex((x) => x.name === r.name);
+        const nr = ri < RANKS.length - 1 ? RANKS[ri + 1] : null;
+        let rip = path.resolve(__dirname, '..', 'assets', 'rank-icons', `${ri + 1}.png`);
+        if (!fs.existsSync(rip)) rip = path.resolve(__dirname, '..', 'assets', 'rank-icons', '1.png');
 
         return renderProfilePreviewVariant(
             {
                 user: u,
                 member,
                 rank: r,
-                nextRank,
+                nextRank: nr,
                 highestRoleName,
-                rankIconPath,
+                rankIconPath: rip,
                 totalDebt: getTotalDebt(targetUser.id),
                 debtTimeRemaining: getClosestDebtDeadline(targetUser.id),
-                vocalNerfStatus,
+                vocalNerfStatus: vns,
                 userId: targetUser.id,
                 invokerStaffTitle,
                 invokerMember: interaction.member,
                 invokerUser: interaction.user,
-                previewHasGuild,
+                previewHasGuild: Boolean(g),
             },
             'fiche_2'
         );
