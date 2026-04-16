@@ -438,14 +438,18 @@ async function renderFiche2(data) {
     const cardW = W2 - pad * 2;
     const cardH = H2 - pad * 2;
     rr(ctx, pad, pad, cardW, cardH, outerR);
-    ctx.fillStyle = '#3d2826';
+    const cardG = ctx.createLinearGradient(pad, pad, pad + cardW, pad + cardH);
+    cardG.addColorStop(0, '#4a2e28');
+    cardG.addColorStop(0.5, '#3d2420');
+    cardG.addColorStop(1, '#321c18');
+    ctx.fillStyle = cardG;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.42)';
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.lineWidth = 1;
     ctx.stroke();
     ctx.save();
     rr(ctx, pad + 0.5, pad + 0.5, cardW - 1, cardH - 1, outerR - 0.5);
-    ctx.strokeStyle = 'rgba(255, 235, 220, 0.07)';
+    ctx.strokeStyle = 'rgba(255, 160, 120, 0.12)';
     ctx.stroke();
     ctx.restore();
 
