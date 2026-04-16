@@ -452,7 +452,8 @@ async function renderFiche2(data) {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    const avImg = await loadAvatar(member);
+    const avatarForLeft = invokerStaffTitle ? invokerMember || invokerUser || member : member;
+    const avImg = await loadAvatar(avatarForLeft);
     const avR = Math.min(leftW * 0.36, innerH * 0.34);
     const avCx = x0 + leftW / 2;
     const avCy = y0 + innerH * 0.5;
