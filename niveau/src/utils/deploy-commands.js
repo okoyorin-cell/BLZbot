@@ -197,7 +197,16 @@ module.exports = async function deployCommands(client) {
                 const commandData = commandsToCreate[i];
                 const existing = existingMap.get(commandData.name);
 
-                if (existing && commandsAreEqual(existing, commandData)) {
+                /* Toujours re-PUT /testprofil : évite les définitions slash obsolètes (option style) si Discord/API skip à tort. */
+                const forceRefresh =
+                    commandData.name === 'testprofil' ||
+                    String(process.env.BLZ_FORCE_SLASH_REFRESH_NAMES || '')
+                        .split(/[,;]/)
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                        .includes(commandData.name);
+
+                if (existing && commandsAreEqual(existing, commandData) && !forceRefresh) {
                     skippedCount++;
                     continue;
                 }
