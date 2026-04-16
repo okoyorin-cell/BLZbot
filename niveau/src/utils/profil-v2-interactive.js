@@ -27,7 +27,7 @@ const logger = require('./logger');
 const { renderQuestsCardFiche2, renderAchievementsCardFiche2 } = require('./canvas-fiche2-quests-trophies');
 
 /**
- * Charge tout le contexte nécessaire à la fiche 2 + boutons (/profil-v2).
+ * Charge tout le contexte nécessaire à la fiche 2 + boutons (/profil).
  * @param {import('discord.js').ChatInputCommandInteraction} interaction
  */
 async function loadFiche2ProfileData(interaction) {

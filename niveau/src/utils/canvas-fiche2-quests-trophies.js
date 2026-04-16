@@ -103,7 +103,7 @@ function drawProgress(ctx, x, y, w, h, pct) {
 }
 
 /** @param {{ quests: Array<{name:string,description:string,progress:number,goal:any,rarity?:string,isNumeric?:boolean}>, footerNote?: string }} param0 */
-async function renderQuestsCardFiche2({ quests, footerNote = '/profil-v2' }) {
+async function renderQuestsCardFiche2({ quests, footerNote = '/profil' }) {
     const canvas = createCanvas(W, H);
     const ctx = canvas.getContext('2d');
     const pad = await drawFiche2Frame(ctx);

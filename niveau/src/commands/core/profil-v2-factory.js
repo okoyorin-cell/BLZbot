@@ -3,7 +3,7 @@ const { handleCommandError } = require('../../utils/error-handler');
 const { loadFiche2ProfileData, sendProfilV2WithButtons } = require('../../utils/profil-v2-interactive');
 
 /**
- * @param {string} commandName Nom slash Discord (ex. profil-v2, profil)
+ * @param {string} commandName Nom slash Discord (ex. profil)
  * @param {string} description
  * @param {string} attachmentPrefix Préfixe du fichier PNG joint
  */
