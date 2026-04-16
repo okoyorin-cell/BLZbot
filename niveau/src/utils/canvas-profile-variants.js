@@ -617,7 +617,7 @@ async function renderFiche2(data) {
 
     if (invokerStaffTitle) {
         const staffMax = leftW - 16;
-        ctx.font = '600 12px InterBold, Inter, Arial';
+        ctx.font = '600 13px InterBold, Inter, Arial';
         ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
