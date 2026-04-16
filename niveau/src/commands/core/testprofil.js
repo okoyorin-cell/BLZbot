@@ -15,7 +15,7 @@ const { getOngoingWar } = require('../../utils/guild/guild-wars');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('testprofil')
-        .setDescription('Aperçu : fiches BLZ — Fiche 1 (1040×520) ou Fiche 2 (1024×381, même ratio que la ref.).')
+        .setDescription('Aperçu fiches BLZ : choisis le style (Fiche 1 ou Fiche 2 Carmin · Atlas).')
         .addStringOption((opt) =>
             opt
                 .setName('style')
