@@ -457,40 +457,17 @@ async function renderFiche2(data) {
     const thumbX = mainX + mainW - thumb;
     const thumbY = y0 + 4;
 
-    const exclusiveIcons = await loadExclusiveBadgeImages(member);
-    const iconSize = 24;
-    const iconGap = 5;
-    const iconsWidth = exclusiveIcons.length
-        ? exclusiveIcons.length * (iconSize + iconGap) - iconGap
-        : 0;
-    const lineBudget = mainW - thumb - 14;
-    const nameBudget = Math.max(48, lineBudget - iconsWidth - (exclusiveIcons.length ? 10 : 0));
-
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.font = '700 34px InterBold, Arial';
     ctx.fillStyle = PROFILE_CARD_THEME.text;
-    const nameStr = truncateText(ctx, displayName, nameBudget);
-    ctx.fillText(nameStr, mainX, y0 + 32);
+    const titleMax = mainW - thumb - 10;
+    ctx.fillText(truncateText(ctx, displayName, titleMax), mainX, y0 + 32);
 
-    let ix = mainX + ctx.measureText(nameStr).width + (exclusiveIcons.length ? 10 : 0);
-    const iconTop = y0 + 32 - Math.round(iconSize * 0.72);
-    for (const img of exclusiveIcons) {
-        if (ix + iconSize > thumbX - 6) break;
-        ctx.drawImage(img, ix, iconTop, iconSize, iconSize);
-        ix += iconSize + iconGap;
-    }
-
-    const primaryRole = pickPrimaryServerRole(member);
-    ctx.font = '600 16px InterBold, Arial';
-    ctx.fillStyle = PROFILE_CARD_THEME.accent;
-    ctx.fillText(primaryRole, mainX, y0 + 54);
-
-    ctx.font = '500 13px Inter, Arial';
+    ctx.font = '500 14px Inter, Arial';
     ctx.fillStyle = PROFILE_CARD_THEME.sub;
-    ctx.fillText(`Membre depuis : ${joined}`, mainX, y0 + 74);
+    ctx.fillText(`Membre depuis : ${joined}`, mainX, y0 + 54);
 
-    /* thumb déjà positionné */
     rr(ctx, thumbX, thumbY, thumb, thumb, 10);
     ctx.fillStyle = PROFILE_CARD_THEME.header;
     ctx.fill();
