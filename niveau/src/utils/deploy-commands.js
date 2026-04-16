@@ -139,8 +139,8 @@ module.exports = async function deployCommands(client) {
     // Charger les commandes de Saint-Valentin
     if (fs.existsSync(valentinCommandsPath)) {
         fs.readdirSync(valentinCommandsPath)
-            .filter(file => file.endsWith('.js'))
-            .forEach(file => {
+            .filter((file) => file.endsWith('.js') && !isArchivedSlashCommandFile(file))
+            .forEach((file) => {
                 const commandData = loadCommandData(path.join(valentinCommandsPath, file));
                 if (commandData) localCommands.set(commandData.name, { ...commandData, source: 'valentin' });
             });
