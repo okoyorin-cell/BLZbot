@@ -105,8 +105,8 @@ function wrapLines(ctx, text, maxWidth, maxLines) {
 }
 
 /**
- * Carte staff compacte (même fond asset que /profilstaff), mise en page proche du profil BLZ v2.
- * @param {object} data — même forme que renderStaffProfileCard (profilstaff)
+ * Carte staff compacte (même fond asset que l’ancien profilstaff), mise en page proche du profil BLZ.
+ * @param {object} data — même forme que renderStaffProfileCard (profil-staff-ancien.js)
  */
 async function renderStaffProfileCardV2(data) {
     const bg = await loadStaffBackground();
