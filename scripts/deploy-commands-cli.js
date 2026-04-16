@@ -48,6 +48,9 @@ async function main() {
 
     try {
         await deployCommands(client);
+        console.log(
+            '\n💡 Si /testprofil n’affiche pas l’option « style » : recharge Discord (Ctrl+Maj+R), vérifie que GUILD_ID correspond à CE serveur, et sur le serveur principal ajoute BLZ_MAIN_GUILD_ID dans le .env puis relance ce script.'
+        );
     } finally {
         client.destroy();
     }
