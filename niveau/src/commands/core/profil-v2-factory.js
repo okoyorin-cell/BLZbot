@@ -1,5 +1,4 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { PROFILE_PREVIEW_BUILD } = require('../../utils/canvas-profile-variants');
 const { handleCommandError } = require('../../utils/error-handler');
 const { loadFiche2ProfileData, sendProfilV2WithButtons } = require('../../utils/profil-v2-interactive');
 
