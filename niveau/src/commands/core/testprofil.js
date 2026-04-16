@@ -5,6 +5,7 @@ const { getOrCreateUser } = require('../../utils/db-users');
 const { getGuildOfUser, getGuildMembersWithDetails } = require('../../utils/db-guilds');
 const { getDisplayRank, RANKS } = require('../../utils/ranks');
 const {
+    PROFILE_PREVIEW_BUILD,
     PROFILE_PREVIEW_VARIANTS,
     renderProfilePreviewVariant,
     normalizeProfileVariant,
