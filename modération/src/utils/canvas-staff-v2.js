@@ -226,9 +226,9 @@ async function renderStaffProfileCardV2(data) {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    ctx.font = '700 18px InterBold, Arial';
+    ctx.font = '700 20px InterBold, Arial';
     ctx.fillStyle = THEME.accent;
-    ctx.fillText('Statistiques', mainX + 12, statsY + 22);
+    ctx.fillText('Statistiques', mainX + 12, statsY + 24);
 
     const candAccepted = (data.candidatures || []).filter((c) => c.status === 'accepte').length;
     const candRejected = (data.candidatures || []).filter((c) => c.status === 'refuse').length;
@@ -237,12 +237,12 @@ async function renderStaffProfileCardV2(data) {
 
     const col1 = mainX + 12;
     const col2 = mainX + mainW / 2 + 4;
-    const line1 = statsY + 46;
-    const line2 = statsY + 68;
-    const line3 = statsY + 90;
-    const line4 = statsY + 112;
+    const line1 = statsY + 50;
+    const line2 = statsY + 76;
+    const line3 = statsY + 102;
+    const line4 = statsY + 128;
 
-    ctx.font = '600 14px Inter, Arial';
+    ctx.font = '600 15px Inter, Arial';
     ctx.fillStyle = THEME.text;
     ctx.fillText(
         `Historique candidatures : ${(data.candidatures || []).length} (${candAccepted} ✅ / ${candRejected} ❌)`,
@@ -250,10 +250,10 @@ async function renderStaffProfileCardV2(data) {
         line1
     );
     ctx.fillStyle = THEME.accent;
-    ctx.font = '600 13px InterBold, Inter, Arial';
+    ctx.font = '600 14px InterBold, Inter, Arial';
     ctx.fillText(`Chances actuelles : ${data.candidatureChances ?? 2}/2`, col1 + 8, line2);
 
-    ctx.font = '600 14px Inter, Arial';
+    ctx.font = '600 15px Inter, Arial';
     ctx.fillStyle = THEME.text;
     ctx.fillText(
         `Historique modo tests : ${(data.modoTestPeriods || []).length} (${modoAccepted} ✅ / ${modoRejected} ❌)`,
@@ -261,21 +261,21 @@ async function renderStaffProfileCardV2(data) {
         line3
     );
     ctx.fillStyle = THEME.accent;
-    ctx.font = '600 13px InterBold, Inter, Arial';
+    ctx.font = '600 14px InterBold, Inter, Arial';
     ctx.fillText(`Chances actuelles : ${data.modoTestChances ?? 1}/1`, col1 + 8, line4);
 
-    ctx.font = '600 14px Inter, Arial';
+    ctx.font = '600 15px Inter, Arial';
     ctx.fillStyle = THEME.text;
     ctx.fillText(`Sanctions émises : ${data.sanctions ?? 0}`, col2, line1);
     ctx.fillStyle = (data.staffWarns || 0) > 0 ? THEME.warn : THEME.text;
-    ctx.fillText(`Warns staff : ${data.staffWarns ?? 0}`, col2, line2 + 22);
+    ctx.fillText(`Warns staff : ${data.staffWarns ?? 0}`, col2, line2 + 24);
 
     const currentModoTest = (data.modoTestPeriods || []).find(
         (p) => p.status === 'en_cours' || p.status === 'vote_en_cours'
     );
     if (currentModoTest) {
         const isVoting = currentModoTest.status === 'vote_en_cours';
-        ctx.font = '600 13px InterBold, Inter, Arial';
+        ctx.font = '600 14px InterBold, Inter, Arial';
         ctx.fillStyle = isVoting ? THEME.accent : THEME.roleLavender;
         ctx.fillText(
             isVoting ? 'Vote de promotion en cours' : 'Modo test en cours',
