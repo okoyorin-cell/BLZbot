@@ -21,6 +21,9 @@ try {
 
 const W = 1040;
 const H = 520;
+/** Fiche 2 — même taille que l’asset de référence (1024×381). */
+const W2 = 1024;
+const H2 = 381;
 
 const PROFILE_PREVIEW_VARIANTS = [
     {
