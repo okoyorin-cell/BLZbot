@@ -263,11 +263,7 @@ async function sendProfilV2WithButtons(interaction, session) {
 
     const file = await buildMainFile();
     const mediaGallery = new MediaGalleryBuilder().addItems({ media: { url: 'attachment://profil-v2-main.png' } });
-    const container = new ContainerBuilder();
-    if (opts.headerText) {
-        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(opts.headerText));
-    }
-    container.addMediaGalleryComponents(mediaGallery).addActionRowComponents(buildButtons(false));
+    const container = new ContainerBuilder().addMediaGalleryComponents(mediaGallery).addActionRowComponents(buildButtons(false));
 
     const message = await interaction.editReply({
         content: null,
