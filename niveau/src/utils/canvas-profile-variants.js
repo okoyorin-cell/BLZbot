@@ -446,29 +446,29 @@ async function renderFiche2(data) {
     ctx.restore();
     ctx.beginPath();
     ctx.arc(avCx, avCy, avR + 2, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(245, 228, 210, 0.88)';
+    ctx.strokeStyle = PROFILE_CARD_THEME.outline;
     ctx.lineWidth = 2;
     ctx.stroke();
 
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
-    setCondensedTitle(ctx, 34, 700);
-    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 34px InterBold, Arial';
+    ctx.fillStyle = PROFILE_CARD_THEME.text;
     const thumb = 48;
     const titleMax = mainW - thumb - 10;
     ctx.fillText(truncateText(ctx, displayName, titleMax), mainX, y0 + 32);
 
-    setCondensedBody(ctx, 14, 500);
-    ctx.fillStyle = 'rgba(200, 190, 190, 0.95)';
+    ctx.font = '500 14px Inter, Arial';
+    ctx.fillStyle = PROFILE_CARD_THEME.sub;
     ctx.fillText(`Membre depuis : ${joined}`, mainX, y0 + 54);
 
     const thumbX = mainX + mainW - thumb;
     const thumbY = y0 + 4;
     rr(ctx, thumbX, thumbY, thumb, thumb, 10);
-    ctx.fillStyle = 'rgba(40, 22, 18, 0.62)';
+    ctx.fillStyle = PROFILE_CARD_THEME.header;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(190, 120, 88, 0.5)';
-    ctx.lineWidth = 1.25;
+    ctx.strokeStyle = PROFILE_CARD_THEME.outline;
+    ctx.lineWidth = 2;
     ctx.stroke();
     if (rankIconPath && fs.existsSync(rankIconPath)) {
         try {
