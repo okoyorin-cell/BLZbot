@@ -439,12 +439,12 @@ async function renderFiche2(data) {
     const mainX = x0 + leftW + gap;
     const mainW = innerW - leftW - gap;
 
-    /* Colonne avatar — même panneau Carmin que les cartes */
+    /* Colonne avatar — même verre semi-transparent */
     rr(ctx, x0, y0, leftW, innerH, 14);
-    ctx.fillStyle = '#2a0a0a';
+    ctx.fillStyle = 'rgba(38, 12, 14, 0.5)';
     ctx.fill();
-    ctx.strokeStyle = '#7a3a3a';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(110, 42, 48, 0.72)';
+    ctx.lineWidth = 1.25;
     ctx.stroke();
 
     const avImg = await loadAvatar(member);
