@@ -22,20 +22,15 @@ function buildProfilV2Slash(commandName, description, attachmentPrefix) {
             try {
                 await interaction.deferReply();
 
-                const result = await renderProfileFichePreviewFromInteraction(interaction, 'fiche_2', {
-                    attachmentPrefix,
-                });
-                if (result.error) {
-                    return interaction.editReply({ content: result.error });
+                const session = await loadFiche2ProfileData(interaction);
+                if (session.error) {
+                    return interaction.editReply({ content: session.error });
                 }
 
-                const { file, meta } = result;
-                const hint = meta ? `**${meta.label}** — _${meta.hint}_` : 'fiche_2';
+                const hint = session.meta ? `**${session.meta.label}** — _${session.meta.hint}_` : 'fiche_2';
+                const headerText = `${hint}\n_build ${PROFILE_PREVIEW_BUILD}_`;
 
-                return interaction.editReply({
-                    content: `${hint}\n_build ${PROFILE_PREVIEW_BUILD}_`,
-                    files: [file],
-                });
+                return sendProfilV2WithButtons(interaction, session, { headerText });
             } catch (error) {
                 await handleCommandError(interaction, error, interaction.client);
             }
