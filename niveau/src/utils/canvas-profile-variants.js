@@ -130,30 +130,38 @@ async function drawBackdrop1(ctx) {
     ctx.fillRect(0, 0, W, H);
 }
 
-/** Fond fiche 2 — Carmin · Atlas (#1a0505 + obliques bordeaux). */
+/** Fond fiche 2 — base sombre + grain léger (visible sous les couches transparentes). */
 async function drawBackdrop2(ctx, cw, ch) {
-    ctx.fillStyle = '#1a0505';
+    ctx.fillStyle = '#1a0f0e';
     ctx.fillRect(0, 0, cw, ch);
 
-    ctx.strokeStyle = 'rgba(90, 25, 35, 0.45)';
+    ctx.strokeStyle = 'rgba(70, 35, 30, 0.22)';
     ctx.lineWidth = 1;
-    for (let d = -ch; d < cw + ch; d += 22) {
+    for (let x = 0; x < cw; x += 6) {
+        ctx.beginPath();
+        ctx.moveTo(x + 0.5, 0);
+        ctx.lineTo(x + 0.5, ch);
+        ctx.stroke();
+    }
+
+    ctx.strokeStyle = 'rgba(90, 25, 35, 0.35)';
+    for (let d = -ch; d < cw + ch; d += 26) {
         ctx.beginPath();
         ctx.moveTo(d, 0);
         ctx.lineTo(d + ch * 0.92, ch);
         ctx.stroke();
     }
 
-    const vin = ctx.createRadialGradient(cw * 0.5, ch * 0.5, 0, cw * 0.5, ch * 0.52, Math.hypot(cw, ch) * 0.75);
-    vin.addColorStop(0, 'rgba(45, 12, 18, 0.35)');
-    vin.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
+    const vin = ctx.createRadialGradient(cw * 0.5, ch * 0.45, 0, cw * 0.5, ch * 0.55, Math.hypot(cw, ch) * 0.85);
+    vin.addColorStop(0, 'rgba(55, 22, 22, 0.25)');
+    vin.addColorStop(1, 'rgba(0, 0, 0, 0.35)');
     ctx.fillStyle = vin;
     ctx.fillRect(0, 0, cw, ch);
 
     const bg = await tryLoadBlzBg();
     if (bg) {
         ctx.save();
-        ctx.globalAlpha = 0.05;
+        ctx.globalAlpha = 0.08;
         ctx.drawImage(bg, 0, 0, cw, ch);
         ctx.restore();
     }
