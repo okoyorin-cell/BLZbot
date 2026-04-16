@@ -509,11 +509,12 @@ async function renderFiche2(data) {
         const cx = mainX + col * (cellW + gGap);
         const cy = gridTop + row * (cellH + gGap);
         refStatCell(ctx, cx, cy, cellW, cellH, 12);
-        setCondensedBody(ctx, 11, 600);
-        ctx.fillStyle = 'rgba(198, 186, 176, 0.95)';
+        ctx.font = '600 11px Inter, Arial';
+        ctx.fillStyle = PROFILE_CARD_THEME.sub;
+        ctx.textBaseline = 'alphabetic';
         ctx.fillText(cells[i].label, cx + 12, cy + 20);
-        setCondensedTitle(ctx, 22, 700);
-        ctx.fillStyle = '#ffffff';
+        ctx.font = '700 22px InterBold, Arial';
+        ctx.fillStyle = PROFILE_CARD_THEME.text;
         ctx.textBaseline = 'bottom';
         ctx.fillText(truncateText(ctx, cells[i].value, cellW - 20), cx + 12, cy + cellH - 10);
         ctx.textBaseline = 'alphabetic';
