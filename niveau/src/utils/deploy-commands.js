@@ -22,22 +22,53 @@ function loadCommandData(filePath) {
     return null;
 }
 
+/**
+ * Payload stable pour comparer une commande locale (toJSON) et une commande Discord (ApplicationCommand).
+ * Évite les « skip » à tort (ordre d’options, champs extra API, objets vs plain JSON).
+ */
+function normalizeSlashCommandPayload(cmd) {
+    const c = cmd && typeof cmd.toJSON === 'function' ? cmd.toJSON() : cmd;
+    if (!c || typeof c !== 'object') return '';
+    const pickChoice = (ch) => ({ name: ch.name, value: ch.value });
+    const pickOption = (o) => {
+        const j = o && typeof o.toJSON === 'function' ? o.toJSON() : o;
+        if (!j || typeof j !== 'object') return null;
+        const out = {
+            type: j.type,
+            name: j.name,
+            description: j.description || '',
+            required: Boolean(j.required),
+        };
+        if (Array.isArray(j.choices) && j.choices.length) {
+            out.choices = [...j.choices]
+                .map(pickChoice)
+                .sort((a, b) => String(a.value).localeCompare(String(b.value)));
+        }
+        if (Array.isArray(j.options) && j.options.length) {
+            out.options = [...j.options].map(pickOption).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name));
+        }
+        return out;
+    };
+    const opts = [...(c.options || [])]
+        .map(pickOption)
+        .filter(Boolean)
+        .sort((a, b) => a.name.localeCompare(b.name));
+    const perm =
+        c.default_member_permissions != null
+            ? String(c.default_member_permissions)
+            : c.defaultMemberPermissions != null
+              ? String(c.defaultMemberPermissions)
+              : null;
+    return JSON.stringify({
+        description: c.description || '',
+        options: opts,
+        default_member_permissions: perm,
+    });
+}
+
 // Compare deux commandes pour déterminer si elles sont identiques
 function commandsAreEqual(remote, local) {
-    // Comparer les champs principaux
-    if (remote.description !== local.description) return false;
-
-    // Comparer les options (arguments, sous-commandes, etc.)
-    const remoteOpts = JSON.stringify(remote.options || []);
-    const localOpts = JSON.stringify(local.options || []);
-    if (remoteOpts !== localOpts) return false;
-
-    // Comparer default_member_permissions (Discord renvoie souvent un BigInt, le JSON local une chaîne)
-    const rp = remote.defaultMemberPermissions != null ? String(remote.defaultMemberPermissions) : '';
-    const lp = local.default_member_permissions != null ? String(local.default_member_permissions) : '';
-    if (rp !== lp) return false;
-
-    return true;
+    return normalizeSlashCommandPayload(remote) === normalizeSlashCommandPayload(local);
 }
 
 module.exports = async function deployCommands(client) {
