@@ -200,6 +200,7 @@ function unloadValentinCommands(client) {
 
 module.exports = {
     MAIN_COMMAND_SUBDIRS,
+    isArchivedSlashCommandFile,
     loadTopLevelCommands,
     loadSeasonalCommands,
     loadHalloweenCommands,
