@@ -49,7 +49,7 @@ const PROFILE_PREVIEW_VARIANTS = [
     {
         id: 'fiche_2',
         label: 'Fiche 2 — fond /profile (1024×381)',
-        hint: 'blz_bg + overlay comme /profile, panneaux noirs semi-transparents, grille 3×2',
+        hint: 'blz_bg + overlay /profile, panneaux bordeaux légers, labels jaunes + valeurs blanches (même corps)',
     },
 ];
 
