@@ -464,11 +464,14 @@ async function renderFiche2(data) {
     const mainX = x0 + leftW + gap;
     const mainW = innerW - leftW - gap;
 
-    /* Colonne avatar — rectangle arrondi plus sombre que la carte */
+    /* Colonne avatar — plus sombre et chaude pour se détacher de la carte */
     rr(ctx, x0, y0, leftW, innerH, 14);
-    ctx.fillStyle = '#352018';
+    const leftG = ctx.createLinearGradient(x0, y0, x0 + leftW, y0);
+    leftG.addColorStop(0, '#3a1814');
+    leftG.addColorStop(1, '#28100c');
+    ctx.fillStyle = leftG;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.strokeStyle = 'rgba(180, 90, 70, 0.22)';
     ctx.lineWidth = 1;
     ctx.stroke();
 
