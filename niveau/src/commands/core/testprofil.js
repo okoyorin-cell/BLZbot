@@ -121,6 +121,8 @@ module.exports = {
                     vocalNerfStatus,
                     userId: targetUser.id,
                     invokerStaffTitle,
+                    invokerMember: interaction.member,
+                    invokerUser: interaction.user,
                 },
                 variant
             );
