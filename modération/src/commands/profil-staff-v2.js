@@ -22,7 +22,7 @@ module.exports = {
             });
         }
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply();
 
         const targetUser = interaction.options.getUser('utilisateur') || interaction.user;
         const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);

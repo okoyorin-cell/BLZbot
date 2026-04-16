@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const { PROFILE_PREVIEW_BUILD } = require('../../utils/canvas-profile-variants');
 const { handleCommandError } = require('../../utils/error-handler');
 const { renderProfileFichePreviewFromInteraction } = require('../../utils/render-profile-fiche-preview-interaction');
