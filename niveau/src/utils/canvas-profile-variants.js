@@ -178,31 +178,18 @@ function simbaCell(ctx, x, y, w, h, r) {
     ctx.stroke();
 }
 
-/** Cellules fiche 2 — ton brique plus riche + contraste sur le fond. */
+/** Cellules fiche 2 — panneaux Carmin (#2a0a0a, bord #7a3a3a). */
 function refStatCell(ctx, x, y, w, h, r) {
     rr(ctx, x, y, w, h, r);
-    const cg = ctx.createLinearGradient(x, y, x, y + h);
-    cg.addColorStop(0, '#7a4a3e');
-    cg.addColorStop(0.55, '#5c3228');
-    cg.addColorStop(1, '#4a261e');
-    ctx.fillStyle = cg;
+    ctx.fillStyle = '#2a0a0a';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(220, 140, 100, 0.28)';
-    ctx.lineWidth = 1;
+    ctx.shadowColor = 'rgba(180, 60, 60, 0.25)';
+    ctx.shadowBlur = 4;
+    ctx.strokeStyle = '#7a3a3a';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
-    ctx.lineWidth = 1;
-    rr(ctx, x + 0.5, y + 0.5, w - 1, h - 1, Math.max(0, r - 0.5));
-    ctx.stroke();
-    ctx.save();
-    rr(ctx, x + 1, y + 1, w - 2, h - 2, Math.max(0, r - 1));
-    ctx.clip();
-    const hi = ctx.createLinearGradient(x, y, x, y + h * 0.4);
-    hi.addColorStop(0, 'rgba(255, 200, 170, 0.1)');
-    hi.addColorStop(1, 'rgba(255, 255, 255, 0)');
-    ctx.fillStyle = hi;
-    ctx.fillRect(x, y, w, h * 0.45);
-    ctx.restore();
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
 }
 
 function setCondensedTitle(ctx, sizePx, weight) {
