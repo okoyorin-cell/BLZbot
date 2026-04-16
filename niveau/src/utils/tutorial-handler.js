@@ -416,7 +416,7 @@ Un salon spécial où il faut compter dans l'ordre !
 
 **📊 Commandes Utiles**
 
-• **/profile** : Ton profil complet
+• **/profil** : Ton profil complet
 • **/classement** : Le classement du serveur
 • **/liste-guildes** : Toutes les guildes
 • **/acces-quetes** : Tes quêtes
