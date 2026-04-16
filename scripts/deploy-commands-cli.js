@@ -46,14 +46,15 @@ async function main() {
     });
 
     console.log(`✅ Connecté : ${client.user.tag}\n`);
+    console.log(`[niveau] Guildes slash déployées : ${getSlashDeployGuildIds().join(', ') || '(aucune — vérifie GUILD_ID)'}\n`);
 
     try {
         await deployCommands(client);
         console.log(
-            '\n💡 Nouvelles commandes profil : /profil et /profil-v2 (carte 1024×381). L’ancienne fiche complète reste /profile (anglais).'
+            '\n💡 /profil et /profil-v2 : réponses visibles par tout le monde dans le salon (plus éphémères).'
         );
         console.log(
-            '   Si elles n’apparaissent pas : recharge Discord (Ctrl+Maj+R), vérifie GUILD_ID = ce serveur, et sur le serveur principal ajoute BLZ_MAIN_GUILD_ID puis relance ce script. Sur l’hôte : vérifie SKIP_SLASH_DEPLOY_ON_START=0 pour déployer les slash au démarrage.'
+            '   Pour le **serveur de prod** en plus du test : définis BLZ_MAIN_GUILD_ID dans le .env puis relance ce script (les deux IDs doivent lister le bot). Recharge Discord (Ctrl+Maj+R). Sur l’hôte : SKIP_SLASH_DEPLOY_ON_START=0 pour déployer au démarrage.'
         );
     } finally {
         client.destroy();

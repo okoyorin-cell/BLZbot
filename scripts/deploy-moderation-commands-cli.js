@@ -45,11 +45,16 @@ async function main() {
         client.login(token);
     });
 
-    console.log(`✅ Connecté : ${client.user.tag} — déploiement modération sur GUILD_ID=${config.GUILD_ID}\n`);
+    console.log(`✅ Connecté : ${client.user.tag}`);
+    console.log(
+        `[modération] Guildes slash : ${getSlashDeployGuildIds().join(', ') || config.GUILD_ID} (GUILD_ID + BLZ_MAIN_GUILD_ID)\n`
+    );
 
     try {
         await deployModerationSlashCommands(client, config, { compact: false });
-        console.log('\n💡 Nouvelle commande : /profil-staff-v2 (carte staff compacte). Redémarre le bot modération ou relance ce script après chaque pull.');
+        console.log(
+            '\n💡 /profil-staff-v2 : réponse visible par tout le monde dans le salon. Pour prod + test : BLZ_MAIN_GUILD_ID dans le .env, bot invité sur les deux serveurs, puis relance ce script.'
+        );
     } finally {
         client.destroy();
     }
