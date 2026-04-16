@@ -7,7 +7,6 @@ const config = require('./config.js');
 let userSettings = {};
 let quotas = {};
 let knowledgeBaseEmbeddings = [];
-let lastDisclaimerTime = 0;
 const channelCooldowns = new Map();
 const blacklistedModels = new Set();
 let lastBlacklistReset = new Date().getDate();

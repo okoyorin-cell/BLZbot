@@ -697,12 +697,6 @@ async function handleMessageCreate(message, client, activeThreads) {
             }
         }
 
-        const now = Date.now();
-        if (now - utils.lastDisclaimerTime >= 3600000) {
-            responseContent += "\n\nBLZbot peut faire des erreurs, veillez vérifier les informations dites par le bot.";
-            utils.lastDisclaimerTime = now;
-        }
-
         // Si une image doit être générée
         if (shouldGenerateImage && imagePrompt) {
             utils.log(`Génération d'image demandée avec le prompt: ${imagePrompt}`);
