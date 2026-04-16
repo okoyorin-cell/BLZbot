@@ -526,16 +526,18 @@ async function renderFiche2(data) {
         const cx = mainX + col * (cellW + gGap);
         const cy = gridTop + row * (cellH + gGap);
         refStatCell(ctx, cx, cy, cellW, cellH, 12);
-        setCondensedBody(ctx, 9, 600);
-        ctx.fillStyle = '#f0e68c';
-        ctx.fillText(cells[i].label, cx + 10, cy + 18);
-        setCondensedTitle(ctx, 17, 700);
+        setCondensedBody(ctx, 11, 600);
+        ctx.fillStyle = '#e3d29a';
+        ctx.fillText(cells[i].label, cx + 12, cy + 20);
+        setCondensedTitle(ctx, 22, 700);
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(truncateText(ctx, cells[i].value, cellW - 18), cx + 10, cy + cellH - 12);
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(truncateText(ctx, cells[i].value, cellW - 20), cx + 12, cy + cellH - 10);
+        ctx.textBaseline = 'alphabetic';
     }
 
-    const barY = y0 + innerH - 36;
-    const barH = 13;
+    const barY = y0 + innerH - 38;
+    const barH = 14;
     rr(ctx, mainX, barY, mainW, barH, barH / 2);
     ctx.fillStyle = '#0d0808';
     ctx.fill();
