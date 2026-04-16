@@ -164,17 +164,17 @@ async function renderQuestsCardFiche2({ quests }) {
         });
     }
 
-    ctx.fillStyle = 'rgba(200, 215, 230, 0.45)';
-    ctx.font = 'italic 10px Inter, Arial';
+    ctx.fillStyle = 'rgba(200, 215, 230, 0.5)';
+    ctx.font = 'italic 9px Inter, Arial';
     ctx.textAlign = 'right';
-    ctx.fillText(`Quêtes — ${footerNote}`, W - pad - 8, H - pad - 8);
+    ctx.fillText(CANVAS_CREDIT_LINE, W - pad - 8, H - pad - 8);
     ctx.textAlign = 'left';
 
     return canvas.toBuffer('image/png');
 }
 
-/** @param {{ achievements: Array<{name:string,description:string,rarity?:string}>, footerNote?: string }} param0 */
-async function renderAchievementsCardFiche2({ achievements, footerNote = '/profil' }) {
+/** @param {{ achievements: Array<{name:string,description:string,rarity?:string}> }} param0 */
+async function renderAchievementsCardFiche2({ achievements }) {
     const canvas = createCanvas(W, H);
     const ctx = canvas.getContext('2d');
     const pad = await drawFiche2Frame(ctx);
