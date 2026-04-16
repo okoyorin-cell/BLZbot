@@ -700,40 +700,36 @@ async function renderFiche2(data) {
     const cellW = (mainW - gGap * 2) / 3;
     const cellH = (gridH - gGap) / 2;
 
-    const cells = [
+    const statPx = PROFILE_CARD_THEME.statFontPx;
+    const topCells = [
         { label: 'STARSS', value: `${(user.stars ?? 0).toLocaleString('fr-FR')} ⭐` },
         { label: 'POINTS RP', value: `${(user.points ?? 0).toLocaleString('fr-FR')} RP` },
         { label: 'RANG ACTUEL', value: rank?.name ?? '—' },
-        { label: 'NIVEAU', value: String(user.level ?? 1) },
-        {
-            label: 'XP',
-            value: `${xpCur.toLocaleString('fr-FR')} / ${(user.xp_needed ?? 0).toLocaleString('fr-FR')}`,
-        },
     ];
-
-    for (let i = 0; i < 5; i++) {
-        const col = i % 3;
-        const row = Math.floor(i / 3);
-        const cx = mainX + col * (cellW + gGap);
-        const cy = gridTop + row * (cellH + gGap);
+    for (let i = 0; i < 3; i++) {
+        const cx = mainX + i * (cellW + gGap);
+        const cy = gridTop;
         refStatCell(ctx, cx, cy, cellW, cellH, 12);
-        const statPx = PROFILE_CARD_THEME.statFontPx;
         const labelY = cy + 4 + statPx;
         const valueY = cy + 8 + statPx * 2;
         ctx.textBaseline = 'alphabetic';
         ctx.font = `700 ${statPx}px InterBold, Arial`;
         ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
-        ctx.fillText(cells[i].label, cx + 12, labelY);
+        ctx.fillText(topCells[i].label, cx + 12, labelY);
         ctx.fillStyle = PROFILE_CARD_THEME.text;
-        ctx.fillText(truncateText(ctx, cells[i].value, cellW - 20), cx + 12, valueY);
+        ctx.fillText(truncateText(ctx, topCells[i].value, cellW - 20), cx + 12, valueY);
     }
-    {
-        const col = 2;
-        const row = 1;
-        const cx = mainX + col * (cellW + gGap);
-        const cy = gridTop + row * (cellH + gGap);
-        refStatCell(ctx, cx, cy, cellW, cellH, 12);
-        drawFiche2GuildCell(ctx, cx, cy, cellW, cellH, user, Boolean(previewHasGuild));
+
+    const row1Y = gridTop + cellH + gGap;
+    const bottomRow = [
+        { draw: () => drawFiche2LevelXpCell(ctx, mainX, row1Y, cellW, cellH, user, xpCur, xpNeed) },
+        { draw: () => drawFiche2TreasuryCell(ctx, mainX + (cellW + gGap), row1Y, cellW, cellH, user, Boolean(previewHasGuild)) },
+        { draw: () => drawFiche2GuildCell(ctx, mainX + 2 * (cellW + gGap), row1Y, cellW, cellH, user, Boolean(previewHasGuild)) },
+    ];
+    for (let c = 0; c < 3; c++) {
+        const cx = mainX + c * (cellW + gGap);
+        refStatCell(ctx, cx, row1Y, cellW, cellH, 12);
+        bottomRow[c].draw();
     }
 
     const barY = y0 + innerH - 38;
