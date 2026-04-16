@@ -183,12 +183,15 @@ function simbaCell(ctx, x, y, w, h, r) {
     ctx.stroke();
 }
 
-/** Cellules fiche 2 — verre sombre semi-transparent + bord bordeaux. */
+/** Cellules fiche 2 — chocolat semi-transparent (ref. d’origine), bord chaud. */
 function refStatCell(ctx, x, y, w, h, r) {
     rr(ctx, x, y, w, h, r);
-    ctx.fillStyle = 'rgba(48, 18, 20, 0.52)';
+    const g = ctx.createLinearGradient(x, y, x, y + h);
+    g.addColorStop(0, 'rgba(110, 58, 48, 0.78)');
+    g.addColorStop(1, 'rgba(62, 32, 26, 0.82)');
+    ctx.fillStyle = g;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(120, 45, 50, 0.72)';
+    ctx.strokeStyle = 'rgba(200, 130, 95, 0.38)';
     ctx.lineWidth = 1.25;
     ctx.stroke();
 }
