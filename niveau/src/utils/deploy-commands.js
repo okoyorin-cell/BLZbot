@@ -10,6 +10,8 @@ const { getSlashDeployGuildIds } = require(path.join(__dirname, '..', '..', '..'
 // Fonction pour charger les données de commande depuis un fichier
 function loadCommandData(filePath) {
     try {
+        const resolved = path.resolve(filePath);
+        delete require.cache[resolved];
         const command = require(filePath);
         if (command.data && command.execute) {
             const raw =
