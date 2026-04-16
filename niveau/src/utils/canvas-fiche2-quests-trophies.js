@@ -233,7 +233,7 @@ async function renderAchievementsCardFiche2({ achievements, footerNote = '/profi
     ctx.fillStyle = 'rgba(200, 215, 230, 0.45)';
     ctx.font = 'italic 10px Inter, Arial';
     ctx.textAlign = 'right';
-    ctx.fillText('Trophées — /profil-v2', W - pad - 8, H - pad - 8);
+    ctx.fillText(`Trophées — ${footerNote}`, W - pad - 8, H - pad - 8);
     ctx.textAlign = 'left';
 
     return canvas.toBuffer('image/png');
