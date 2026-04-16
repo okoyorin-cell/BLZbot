@@ -7,6 +7,11 @@ const commandsRootPath = path.join(__dirname, '..', 'commands');
 /** Dossiers de commandes « principales » (hors saisonniers, hors giveaway/helpers, hors archive). */
 const MAIN_COMMAND_SUBDIRS = Object.freeze(['core', 'guilde', 'admin', 'misc']);
 
+/** Fichiers `*-ancien.js` : code conservé dans le repo, jamais chargé ni déployé sur Discord. */
+function isArchivedSlashCommandFile(basename) {
+    return typeof basename === 'string' && basename.endsWith('-ancien.js');
+}
+
 /**
  * Charge les commandes slash depuis commands/core, guilde, admin, misc.
  * @param {import('discord.js').Client} client
