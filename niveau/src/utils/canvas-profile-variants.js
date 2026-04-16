@@ -148,20 +148,78 @@ async function loadUserBadgeImages(userId, limit = 8) {
     return out;
 }
 
+/** Case fiche 2 : niveau joueur + barre d’XP (texte). */
+function drawFiche2LevelXpCell(ctx, cx, cy, cw, ch, user, xpCur, xpNeed) {
+    const padX = 12;
+    const statPx = PROFILE_CARD_THEME.statFontPx;
+    const labelY = cy + 4 + statPx;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.font = `700 ${statPx}px InterBold, Arial`;
+    ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
+    ctx.fillText('NIVEAU / XP', cx + padX, labelY);
+
+    ctx.font = '800 24px InterBold, Arial';
+    ctx.fillStyle = PROFILE_CARD_THEME.text;
+    ctx.fillText(String(user.level ?? 1), cx + padX, labelY + 30);
+
+    ctx.font = '600 15px Inter, Arial';
+    ctx.fillStyle = PROFILE_CARD_THEME.sub;
+    const xpStr = `${xpCur.toLocaleString('fr-FR')} / ${xpNeed.toLocaleString('fr-FR')} XP`;
+    ctx.fillText(truncateText(ctx, xpStr, cw - padX * 2), cx + padX, labelY + 52);
+}
+
+/** Case fiche 2 : trésorerie de guilde. */
+function drawFiche2TreasuryCell(ctx, cx, cy, cw, ch, user, previewHasGuild) {
+    const padX = 12;
+    const statPx = PROFILE_CARD_THEME.statFontPx;
+    const labelY = cy + 4 + statPx;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.font = `700 ${statPx}px InterBold, Arial`;
+    ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
+    ctx.fillText('TRÉSORERIE', cx + padX, labelY);
+
+    if (!previewHasGuild) {
+        ctx.font = '600 17px Inter, Arial';
+        ctx.fillStyle = PROFILE_CARD_THEME.sub;
+        ctx.fillText('—', cx + padX, labelY + 30);
+        return;
+    }
+    const cur = Number(user.guild_treasury ?? 0);
+    const cap = Number(user.guild_treasury_capacity ?? 0);
+    ctx.font = '800 22px InterBold, Arial';
+    ctx.fillStyle = PROFILE_CARD_THEME.text;
+    ctx.fillText(`${cur.toLocaleString('fr-FR')} ⭐`, cx + padX, labelY + 30);
+    if (cap > 0) {
+        ctx.font = '600 14px Inter, Arial';
+        ctx.fillStyle = PROFILE_CARD_THEME.sub;
+        ctx.fillText(
+            truncateText(ctx, `/ ${cap.toLocaleString('fr-FR')} ⭐ max`, cw - padX * 2),
+            cx + padX,
+            labelY + 52
+        );
+    } else {
+        ctx.font = '600 13px Inter, Arial';
+        ctx.fillStyle = PROFILE_CARD_THEME.sub;
+        ctx.fillText(truncateText(ctx, 'Capacité : upgrade 2', cw - padX * 2), cx + padX, labelY + 48);
+    }
+}
+
 /** Dernière case fiche 2 : guilde (nom + emoji, paix/guerre, niveau). */
 function drawFiche2GuildCell(ctx, cx, cy, cw, ch, user, previewHasGuild) {
     const padX = 12;
-    let ly = cy + 10;
+    let ly = cy + 8;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
 
     if (!previewHasGuild) {
-        ctx.font = '700 15px InterBold, Arial';
+        ctx.font = '700 18px InterBold, Arial';
         ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
         ctx.fillText(truncateText(ctx, user.guild_name || 'Aucune guilde', cw - padX * 2), cx + padX, ly);
-        ctx.font = '500 12px Inter, Arial';
+        ctx.font = '600 14px Inter, Arial';
         ctx.fillStyle = PROFILE_CARD_THEME.sub;
-        ctx.fillText('—', cx + padX, ly + 22);
+        ctx.fillText('—', cx + padX, ly + 26);
         ctx.textBaseline = 'alphabetic';
         return;
     }
@@ -170,24 +228,24 @@ function drawFiche2GuildCell(ctx, cx, cy, cw, ch, user, previewHasGuild) {
     let gEmoji = user.guild_emoji || '⚔️';
     if (typeof gEmoji === 'string' && gEmoji.includes('<')) gEmoji = '⚔️';
 
-    ctx.font = '700 15px InterBold, Arial';
+    ctx.font = '700 19px InterBold, Arial';
     ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
-    const emojiSlot = 28;
+    const emojiSlot = 32;
     const nameMax = Math.max(40, cw - padX * 2 - emojiSlot);
     const nameStr = truncateText(ctx, gName, nameMax);
     ctx.fillText(nameStr, cx + padX, ly);
     const nw = ctx.measureText(nameStr).width;
-    ctx.font = '18px "Segoe UI Emoji", "Apple Color Emoji", Arial';
+    ctx.font = '20px "Segoe UI Emoji", "Apple Color Emoji", Arial';
     ctx.fillText(gEmoji, cx + padX + nw + 6, ly - 1);
 
-    ly += 22;
+    ly += 26;
     const atWar = String(user.guild_state || '').includes('Guerre');
-    ctx.font = '600 13px InterBold, Inter, Arial';
+    ctx.font = '700 17px InterBold, Inter, Arial';
     ctx.fillStyle = atWar ? '#ef4444' : '#22c55e';
     ctx.fillText(atWar ? 'En guerre' : 'En paix', cx + padX, ly);
 
-    ly += 20;
-    ctx.font = '700 13px InterBold, Arial';
+    ly += 24;
+    ctx.font = '700 15px InterBold, Arial';
     ctx.fillStyle = PREVIEW_STAFF_TITLE_COLOR;
     ctx.fillText(`Niveau ${user.guild_level ?? 1}`, cx + padX, ly);
     ctx.textBaseline = 'alphabetic';
