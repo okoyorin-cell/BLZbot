@@ -15,23 +15,21 @@ const { getOngoingWar } = require('../../utils/guild/guild-wars');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('testprofil')
-        .setDescription('Aperçu canvas : 10 variantes (3 originales + 7 BLZ). Ne remplace pas /profile.')
+        .setDescription('Aperçu : 5 mises en page thème Carmin (ne remplace pas /profile).')
         .addStringOption((opt) =>
             opt
                 .setName('style')
                 .setDescription('Variante à afficher')
                 .setRequired(true)
                 .addChoices(
-                    { name: 'Aurora — glacier & verre', value: 'aurora' },
-                    { name: 'Nocturne — grille cyber', value: 'nocturne' },
-                    { name: 'Parchemin — chaleureux', value: 'parchment' },
-                    { name: 'Rubis — halo rouge BLZ', value: 'rubis' },
-                    { name: 'Carmin — vignette cramoisie', value: 'carmin' },
-                    { name: 'Forge — diagonales dorées', value: 'forge' },
-                    { name: 'Bannière — bandeaux horizontaux', value: 'banniere' },
-                    { name: 'Monolithe — centre lumineux', value: 'monolithe' },
-                    { name: 'Vitres — panneaux très transparents', value: 'vitres' },
-                    { name: 'Braise — lueur ambrée', value: 'braise' }
+                    {
+                        name: 'Carmin — vignette cramoisie, contraste fort',
+                        value: 'carmin',
+                    },
+                    { name: 'Carmin · Atlas — portrait + colonne', value: 'carmin_atlas' },
+                    { name: 'Carmin · Naos — bandeau + 2 blocs', value: 'carmin_naos' },
+                    { name: 'Carmin · Médaillon — compact + gros avatar', value: 'carmin_medalion' },
+                    { name: 'Carmin · Tribunal — estrades', value: 'carmin_tribunal' }
                 )
         )
         .addUserOption((opt) =>
@@ -134,7 +132,7 @@ module.exports = {
             return interaction.editReply({
                 content:
                     `🧪 Prévisualisation **${variant}** (${hint})\n` +
-                    `La commande \`/profile\` officielle est inchangée. Ouvre le menu **style** pour les 10 variantes.`,
+                    `La commande \`/profile\` officielle est inchangée. Thème **Carmin** : 5 dispositions différentes.`,
                 files: [file],
             });
         } catch (error) {

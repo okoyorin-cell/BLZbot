@@ -1,6 +1,6 @@
 /**
- * Aperçus visuels pour /testprofil (ne remplace pas renderProfileCard).
- * 10 styles : aurora, nocturne, parchment + 7 thèmes BLZ (fonds / vitrages proches du /profile).
+ * Aperçus /testprofil — famille **Carmin** uniquement (vignette cramoisie, or / bordeaux).
+ * 5 mises en page distinctes (la 1re = ancienne grille « carmin »).
  */
 const { createCanvas, loadImage, registerFont } = require('canvas');
 const fs = require('node:fs');
@@ -22,17 +22,35 @@ const W = 1200;
 const H = 700;
 
 const PROFILE_PREVIEW_VARIANTS = [
-    { id: 'aurora', label: 'Aurora', hint: 'Glacier, verre, dégradé froid' },
-    { id: 'nocturne', label: 'Nocturne', hint: 'Grille cyber, néons cyan / magenta' },
-    { id: 'parchment', label: 'Parchemin', hint: 'Ton chaud, contraste type carte RPG' },
-    { id: 'rubis', label: 'Rubis', hint: 'BLZ + halo rubis, cartes bordeaux-or' },
-    { id: 'carmin', label: 'Carmin', hint: 'Vignette cramoisie, contraste fort' },
-    { id: 'forge', label: 'Forge', hint: 'Fond sombre + traits dorés subtils' },
-    { id: 'banniere', label: 'Bannière', hint: 'Bandeaux horizontaux type étendard' },
-    { id: 'monolithe', label: 'Monolithe', hint: 'Centre lumineux, bords sombres' },
-    { id: 'vitres', label: 'Vitres', hint: 'Panneaux très transparents, BLZ visible' },
-    { id: 'braise', label: 'Braise', hint: 'Sous-couche ambrée / feu doux' },
+    { id: 'carmin', label: 'Carmin', hint: 'Vignette cramoisie, contraste fort — grille classique' },
+    { id: 'carmin_atlas', label: 'Carmin · Atlas', hint: 'Portrait large à gauche, stats en colonne' },
+    { id: 'carmin_naos', label: 'Carmin · Naos', hint: 'Bandeau titre + 2 blocs + rang pleine largeur' },
+    { id: 'carmin_medalion', label: 'Carmin · Médaillon', hint: 'Format plus compact, avatar central XXL' },
+    { id: 'carmin_tribunal', label: 'Carmin · Tribunal', hint: 'Avatar en coin, trois estrades en bas' },
 ];
+
+const T = {
+    header: 'rgba(36, 6, 14, 0.88)',
+    panel: 'rgba(12, 2, 6, 0.78)',
+    stroke: 'rgba(255, 120, 100, 0.45)',
+    text: '#ffffff',
+    sub: '#f5b8c0',
+    accent: '#ffcc4d',
+    xpFill: '#dc2626',
+    xpTrack: 'rgba(255, 255, 255, 0.1)',
+};
+
+const LEGACY_PROFILE_VARIANT = Object.freeze({
+    aurora: 'carmin',
+    nocturne: 'carmin_atlas',
+    parchment: 'carmin_naos',
+    rubis: 'carmin',
+    forge: 'carmin_tribunal',
+    banniere: 'carmin_naos',
+    monolithe: 'carmin_medalion',
+    vitres: 'carmin_medalion',
+    braise: 'carmin_tribunal',
+});
 
 function rr(ctx, x, y, w, h, r) {
     const R = Math.min(r, w / 2, h / 2);
@@ -90,252 +108,90 @@ async function loadAvatar(member) {
     }
 }
 
-const BLZ_TEST_IDS = new Set(['rubis', 'carmin', 'forge', 'banniere', 'monolithe', 'vitres', 'braise']);
-
-const BLZ_THEMES = {
-    rubis: {
-        footer: 'Aperçu Rubis — /testprofil',
-        header: 'rgba(48, 10, 22, 0.82)',
-        panel: 'rgba(18, 4, 10, 0.72)',
-        stroke: 'rgba(255, 200, 90, 0.55)',
-        text: '#fff8f0',
-        sub: '#f0c0c8',
-        accent: '#ffd166',
-        xpFill: '#e11d48',
-        xpTrack: 'rgba(255, 255, 255, 0.14)',
-    },
-    carmin: {
-        footer: 'Aperçu Carmin — /testprofil',
-        header: 'rgba(36, 6, 14, 0.88)',
-        panel: 'rgba(12, 2, 6, 0.78)',
-        stroke: 'rgba(255, 120, 100, 0.45)',
-        text: '#ffffff',
-        sub: '#f5b8c0',
-        accent: '#ffcc4d',
-        xpFill: '#dc2626',
-        xpTrack: 'rgba(255, 255, 255, 0.1)',
-    },
-    forge: {
-        footer: 'Aperçu Forge — /testprofil',
-        header: 'rgba(22, 12, 8, 0.85)',
-        panel: 'rgba(8, 4, 2, 0.76)',
-        stroke: 'rgba(255, 190, 70, 0.5)',
-        text: '#fff8f0',
-        sub: '#e8c8a8',
-        accent: '#fbbf24',
-        xpFill: '#f59e0b',
-        xpTrack: 'rgba(255, 220, 180, 0.12)',
-    },
-    banniere: {
-        footer: 'Aperçu Bannière — /testprofil',
-        header: 'rgba(32, 8, 12, 0.8)',
-        panel: 'rgba(14, 4, 8, 0.7)',
-        stroke: 'rgba(255, 215, 120, 0.6)',
-        text: '#fffaf5',
-        sub: '#f0c8b8',
-        accent: '#fde047',
-        xpFill: '#ca8a04',
-        xpTrack: 'rgba(255, 255, 255, 0.12)',
-    },
-    monolithe: {
-        footer: 'Aperçu Monolithe — /testprofil',
-        header: 'rgba(16, 8, 12, 0.9)',
-        panel: 'rgba(10, 6, 10, 0.75)',
-        stroke: 'rgba(200, 180, 255, 0.35)',
-        text: '#f5f0ff',
-        sub: '#d8c8e8',
-        accent: '#c4b5fd',
-        xpFill: '#a78bfa',
-        xpTrack: 'rgba(255, 255, 255, 0.1)',
-    },
-    vitres: {
-        footer: 'Aperçu Vitres — /testprofil',
-        header: 'rgba(20, 6, 10, 0.48)',
-        panel: 'rgba(6, 2, 4, 0.42)',
-        stroke: 'rgba(255, 220, 140, 0.65)',
-        text: '#ffffff',
-        sub: '#fce7e7',
-        accent: '#fde68a',
-        xpFill: '#facc15',
-        xpTrack: 'rgba(255, 255, 255, 0.18)',
-    },
-    braise: {
-        footer: 'Aperçu Braise — /testprofil',
-        header: 'rgba(40, 14, 4, 0.78)',
-        panel: 'rgba(24, 8, 2, 0.68)',
-        stroke: 'rgba(255, 160, 60, 0.55)',
-        text: '#fff8f0',
-        sub: '#fcd9c4',
-        accent: '#fb923c',
-        xpFill: '#ea580c',
-        xpTrack: 'rgba(255, 240, 200, 0.15)',
-    },
-};
-
-async function applyBlzTestBackdrop(ctx, id) {
+async function drawCarminBackdrop(ctx, cw, ch) {
+    const g = ctx.createLinearGradient(0, 0, cw, ch);
+    g.addColorStop(0, '#080204');
+    g.addColorStop(1, '#280610');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, cw, ch);
     const bgImg = await tryLoadBlzBg();
-    const baseGrad = (stops) => {
-        const g = ctx.createLinearGradient(0, 0, W, H);
-        stops.forEach(([t, c]) => g.addColorStop(t, c));
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, W, H);
-    };
-
-    if (id === 'rubis') {
-        baseGrad([
-            [0, '#0c0306'],
-            [0.45, '#240810'],
-            [1, '#080204'],
-        ]);
-        if (bgImg) {
-            ctx.save();
-            ctx.globalAlpha = 0.42;
-            ctx.drawImage(bgImg, 0, 0, W, H);
-            ctx.restore();
-        }
-        const v = ctx.createRadialGradient(W * 0.25, H * 0.25, 0, W * 0.45, H * 0.45, 520);
-        v.addColorStop(0, 'rgba(200, 30, 60, 0.38)');
-        v.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = v;
-        ctx.fillRect(0, 0, W, H);
-    } else if (id === 'carmin') {
-        baseGrad([
-            [0, '#080204'],
-            [1, '#280610'],
-        ]);
-        if (bgImg) {
-            ctx.save();
-            ctx.globalAlpha = 0.38;
-            ctx.drawImage(bgImg, 0, 0, W, H);
-            ctx.restore();
-        }
-        const v = ctx.createRadialGradient(W, 0, 0, W, H * 0.2, 700);
-        v.addColorStop(0, 'rgba(160, 10, 40, 0.45)');
-        v.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = v;
-        ctx.fillRect(0, 0, W, H);
-    } else if (id === 'forge') {
-        baseGrad([
-            [0, '#0a0604'],
-            [1, '#120a08'],
-        ]);
-        if (bgImg) {
-            ctx.save();
-            ctx.globalAlpha = 0.48;
-            ctx.drawImage(bgImg, 0, 0, W, H);
-            ctx.restore();
-        }
-        ctx.strokeStyle = 'rgba(255, 200, 80, 0.06)';
-        ctx.lineWidth = 1;
-        for (let d = -H; d < W + H; d += 44) {
-            ctx.beginPath();
-            ctx.moveTo(d, 0);
-            ctx.lineTo(d + H, H);
-            ctx.stroke();
-        }
-    } else if (id === 'banniere') {
-        baseGrad([
-            [0, '#140608'],
-            [0.35, '#1e0a0c'],
-            [0.65, '#120408'],
-            [1, '#0a0304'],
-        ]);
-        if (bgImg) {
-            ctx.save();
-            ctx.globalAlpha = 0.44;
-            ctx.drawImage(bgImg, 0, 0, W, H);
-            ctx.restore();
-        }
-        ctx.fillStyle = 'rgba(90, 20, 28, 0.28)';
-        ctx.fillRect(0, 0, W, 120);
-        ctx.fillStyle = 'rgba(40, 8, 12, 0.35)';
-        ctx.fillRect(0, H - 100, W, 100);
-    } else if (id === 'monolithe') {
-        baseGrad([
-            [0, '#020102'],
-            [0.5, '#1a0c14'],
-            [1, '#020102'],
-        ]);
-        if (bgImg) {
-            ctx.save();
-            ctx.globalAlpha = 0.35;
-            ctx.drawImage(bgImg, 0, 0, W, H);
-            ctx.restore();
-        }
-        const v = ctx.createRadialGradient(W / 2, H * 0.42, 40, W / 2, H * 0.42, 380);
-        v.addColorStop(0, 'rgba(80, 40, 70, 0.35)');
-        v.addColorStop(1, 'rgba(0, 0, 0, 0.55)');
-        ctx.fillStyle = v;
-        ctx.fillRect(0, 0, W, H);
-    } else if (id === 'vitres') {
-        baseGrad([
-            [0, '#100408'],
-            [1, '#180810'],
-        ]);
-        if (bgImg) {
-            ctx.save();
-            ctx.globalAlpha = 0.58;
-            ctx.drawImage(bgImg, 0, 0, W, H);
-            ctx.restore();
-        }
-        ctx.fillStyle = 'rgba(8, 2, 4, 0.2)';
-        ctx.fillRect(0, 0, W, H);
-    } else if (id === 'braise') {
-        baseGrad([
-            [0, '#120804'],
-            [0.5, '#281008'],
-            [1, '#0c0402'],
-        ]);
-        if (bgImg) {
-            ctx.save();
-            ctx.globalAlpha = 0.4;
-            ctx.drawImage(bgImg, 0, 0, W, H);
-            ctx.restore();
-        }
-        const v = ctx.createRadialGradient(W * 0.75, H, 100, W * 0.55, H * 0.55, 500);
-        v.addColorStop(0, 'rgba(255, 140, 40, 0.22)');
-        v.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = v;
-        ctx.fillRect(0, 0, W, H);
+    if (bgImg) {
+        ctx.save();
+        ctx.globalAlpha = 0.38;
+        ctx.drawImage(bgImg, 0, 0, cw, ch);
+        ctx.restore();
     }
+    const v = ctx.createRadialGradient(cw, 0, 0, cw, ch * 0.2, Math.max(cw, ch) * 0.85);
+    v.addColorStop(0, 'rgba(160, 10, 40, 0.45)');
+    v.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = v;
+    ctx.fillRect(0, 0, cw, ch);
 }
 
-function blzStrokePanel(ctx, x, y, w, h, r, fill, stroke) {
+function panel(ctx, x, y, w, h, r, fill = T.panel) {
     rr(ctx, x, y, w, h, r);
     ctx.fillStyle = fill;
     ctx.fill();
-    ctx.strokeStyle = stroke;
+    ctx.strokeStyle = T.stroke;
     ctx.lineWidth = 2;
     ctx.stroke();
 }
 
-async function renderBlzTestProfileVariant(data, variantId, titleFace, textFace) {
-    const {
-        user,
-        member,
-        rank,
-        nextRank,
-        highestRoleName,
-        rankIconPath,
-        totalDebt,
-        debtTimeRemaining,
-        vocalNerfStatus,
-    } = data;
-    const theme = BLZ_THEMES[variantId];
+function drawCarminFooter(ctx, label, cw, ch) {
+    ctx.fillStyle = 'rgba(255, 200, 140, 0.85)';
+    ctx.font = 'italic 12px Inter, Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText(label, cw - 20, ch - 14);
+    ctx.textAlign = 'left';
+}
+
+async function drawRankIcon(ctx, rankIconPath, x, y, size) {
+    if (!rankIconPath || !fs.existsSync(rankIconPath)) return;
+    try {
+        const ic = await loadImage(fs.readFileSync(rankIconPath));
+        ctx.drawImage(ic, x, y, size, size);
+    } catch {
+        /* ignore */
+    }
+}
+
+function drawDebtVocal(ctx, pad, innerW, startY, totalDebt, debtTimeRemaining, vocalNerfStatus, textFace) {
+    let y = startY;
+    if (totalDebt > 0) {
+        ctx.fillStyle = 'rgba(248, 113, 113, 0.95)';
+        ctx.font = `600 13px ${textFace}, Arial`;
+        ctx.fillText(
+            `Dette : ${totalDebt.toLocaleString('fr-FR')} ⭐${debtTimeRemaining ? ` — ${debtTimeRemaining}` : ''}`,
+            pad,
+            y
+        );
+        y += 18;
+    }
+    if (vocalNerfStatus) {
+        ctx.fillStyle = 'rgba(251, 191, 36, 0.95)';
+        ctx.font = `500 12px ${textFace}, Arial`;
+        ctx.fillText(truncateText(ctx, vocalNerfStatus, innerW), pad, y);
+    }
+}
+
+/** Grille classique (ex-carmin BLZ) — 1200×700 */
+async function renderCarminGrille(data, titleFace, textFace) {
+    const { user, member, rank, nextRank, highestRoleName, rankIconPath, totalDebt, debtTimeRemaining, vocalNerfStatus } =
+        data;
     const displayName = member?.displayName ?? 'Utilisateur';
     const ratioXp = user.xp_needed > 0 ? user.xp / user.xp_needed : 0;
 
     const canvas = createCanvas(W, H);
     const ctx = canvas.getContext('2d');
-    await applyBlzTestBackdrop(ctx, variantId);
+    await drawCarminBackdrop(ctx, W, H);
 
     const pad = 22;
     const gap = 14;
     const innerW = W - pad * 2;
     const y0 = 18;
-    const headerH = variantId === 'banniere' ? 108 : 124;
+    const headerH = 124;
 
-    blzStrokePanel(ctx, pad, y0, innerW, headerH, 26, theme.header, theme.stroke);
+    panel(ctx, pad, y0, innerW, headerH, 26, T.header);
 
     const avImg = await loadAvatar(member);
     const avS = 84;
@@ -351,36 +207,35 @@ async function renderBlzTestProfileVariant(data, variantId, titleFace, textFace)
     }
     ctx.restore();
     rr(ctx, avX, avY, avS, avS, avS / 2);
-    ctx.strokeStyle = theme.stroke;
+    ctx.strokeStyle = T.stroke;
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    ctx.textAlign = 'left';
-    ctx.fillStyle = theme.text;
+    ctx.fillStyle = T.text;
     ctx.font = `800 34px ${titleFace}, Arial`;
     ctx.fillText(truncateText(ctx, displayName, innerW - avS - 160), avX + avS + 18, y0 + 56);
     ctx.font = `600 17px ${textFace}, Arial`;
-    ctx.fillStyle = theme.sub;
+    ctx.fillStyle = T.sub;
     ctx.fillText(truncateText(ctx, highestRoleName, innerW - avS - 160), avX + avS + 18, y0 + 86);
 
     ctx.textAlign = 'right';
-    ctx.fillStyle = theme.accent;
+    ctx.fillStyle = T.accent;
     ctx.font = `800 26px ${titleFace}, Arial`;
     ctx.fillText(`⭐ ${(user.stars ?? 0).toLocaleString('fr-FR')}`, pad + innerW - 16, y0 + 52);
-    ctx.fillStyle = theme.text;
+    ctx.fillStyle = T.text;
     ctx.font = `600 16px ${textFace}, Arial`;
     ctx.fillText(`🏆 ${(user.points ?? 0).toLocaleString('fr-FR')} RP`, pad + innerW - 16, y0 + 82);
     ctx.textAlign = 'left';
 
     const yXp = y0 + headerH + gap;
     const xpH = 36;
-    blzStrokePanel(ctx, pad, yXp, innerW, xpH + 44, 18, theme.panel, theme.stroke);
-    ctx.fillStyle = theme.text;
+    panel(ctx, pad, yXp, innerW, xpH + 44, 18);
+    ctx.fillStyle = T.text;
     ctx.font = `700 18px ${titleFace}, Arial`;
     ctx.fillText(`Niveau ${user.level ?? 1}`, pad + 18, yXp + 26);
-    drawXpBar(ctx, pad + 18, yXp + 36, innerW - 36, 14, ratioXp, theme.xpFill, theme.xpTrack);
+    drawXpBar(ctx, pad + 18, yXp + 36, innerW - 36, 14, ratioXp, T.xpFill, T.xpTrack);
     ctx.font = `600 14px ${textFace}, Arial`;
-    ctx.fillStyle = theme.sub;
+    ctx.fillStyle = T.sub;
     ctx.fillText(
         `${(user.xp ?? 0).toLocaleString('fr-FR')} / ${(user.xp_needed ?? 0).toLocaleString('fr-FR')} XP`,
         pad + 18,
@@ -391,35 +246,33 @@ async function renderBlzTestProfileVariant(data, variantId, titleFace, textFace)
     const cardH = H - yCards - pad - 26;
     const cw = (innerW - gap * 2) / 3;
 
-    const drawCard = (ix, title, drawBody) => {
+    const drawCard = (ix, title, fn) => {
         const x = pad + ix * (cw + gap);
-        blzStrokePanel(ctx, x, yCards, cw, cardH, 16, theme.panel, theme.stroke);
-        ctx.fillStyle = theme.accent;
+        panel(ctx, x, yCards, cw, cardH, 16);
+        ctx.fillStyle = T.accent;
         ctx.font = `700 18px ${titleFace}, Arial`;
         ctx.fillText(title, x + 16, yCards + 30);
-        drawBody(x + 16, yCards + 52, cw - 32);
+        fn(x + 16, yCards + 52, cw - 32);
     };
 
     drawCard(0, 'Progression', (x, yy) => {
-        ctx.fillStyle = theme.text;
+        ctx.fillStyle = T.text;
         ctx.font = `600 16px ${textFace}, Arial`;
-        ctx.fillText(`XP & niveau`, x, yy);
-        ctx.fillStyle = theme.sub;
+        ctx.fillText('XP & niveau', x, yy);
+        ctx.fillStyle = T.sub;
         ctx.font = `500 14px ${textFace}, Arial`;
         ctx.fillText(`Rang actuel : ${rank?.name ?? '—'}`, x, yy + 28);
     });
-
     drawCard(1, 'Économie', (x, yy) => {
-        ctx.fillStyle = theme.text;
+        ctx.fillStyle = T.text;
         ctx.font = `600 17px ${textFace}, Arial`;
-        ctx.fillText(`Starss & points`, x, yy);
+        ctx.fillText('Starss & points', x, yy);
         ctx.font = `600 15px ${textFace}, Arial`;
         ctx.fillText(`⭐ ${(user.stars ?? 0).toLocaleString('fr-FR')}`, x, yy + 30);
         ctx.fillText(`🏆 ${(user.points ?? 0).toLocaleString('fr-FR')} RP`, x, yy + 54);
     });
-
     drawCard(2, 'Rang suivant', (x, yy) => {
-        ctx.fillStyle = theme.sub;
+        ctx.fillStyle = T.sub;
         ctx.font = `500 14px ${textFace}, Arial`;
         if (nextRank) {
             const need = Math.max(0, (nextRank.points ?? 0) - (user.points ?? 0));
@@ -431,402 +284,411 @@ async function renderBlzTestProfileVariant(data, variantId, titleFace, textFace)
     });
 
     const card3Left = pad + 2 * (cw + gap);
-    if (rankIconPath && fs.existsSync(rankIconPath)) {
-        try {
-            const ic = await loadImage(fs.readFileSync(rankIconPath));
-            ctx.drawImage(ic, card3Left + cw - 68, yCards + 38, 52, 52);
-        } catch {
-            /* ignore */
-        }
-    }
+    await drawRankIcon(ctx, rankIconPath, card3Left + cw - 68, yCards + 38, 52);
 
-    let footY = yCards + cardH - 8;
-    if (totalDebt > 0) {
-        ctx.fillStyle = 'rgba(248, 113, 113, 0.95)';
-        ctx.font = `600 13px ${textFace}, Arial`;
-        ctx.fillText(`Dette : ${totalDebt.toLocaleString('fr-FR')} ⭐${debtTimeRemaining ? ` — ${debtTimeRemaining}` : ''}`, pad + 16, footY);
-        footY -= 20;
-    }
-    if (vocalNerfStatus) {
-        ctx.fillStyle = 'rgba(251, 191, 36, 0.95)';
-        ctx.font = `500 12px ${textFace}, Arial`;
-        ctx.fillText(truncateText(ctx, vocalNerfStatus, innerW - 32), pad + 16, footY);
-    }
-
-    ctx.fillStyle = 'rgba(255, 200, 140, 0.85)';
-    ctx.font = `italic 12px ${textFace}, Arial`;
-    ctx.textAlign = 'right';
-    ctx.fillText(theme.footer, W - 28, H - 18);
-    ctx.textAlign = 'left';
-
+    drawDebtVocal(ctx, pad + 16, innerW, yCards + cardH - 28, totalDebt, debtTimeRemaining, vocalNerfStatus, textFace);
+    drawCarminFooter(ctx, 'Carmin — grille — /testprofil', W, H);
     return canvas.toBuffer('image/png');
 }
 
-/**
- * @param {object} data — même forme que les champs utiles de renderProfileCard
- * @param {string} variant — id parmi PROFILE_PREVIEW_VARIANTS
- */
-async function renderProfilePreviewVariant(data, variant) {
-    const {
-        user,
-        member,
-        rank,
-        nextRank,
-        highestRoleName,
-        rankIconPath,
-        totalDebt,
-        debtTimeRemaining,
-        vocalNerfStatus,
-    } = data;
-
-    const titleFace = 'InterBold';
-    const textFace = 'Inter';
+/** Portrait large gauche + pile de panneaux à droite */
+async function renderCarminAtlas(data, titleFace, textFace) {
+    const { user, member, rank, nextRank, highestRoleName, rankIconPath, totalDebt, debtTimeRemaining, vocalNerfStatus } =
+        data;
     const displayName = member?.displayName ?? 'Utilisateur';
     const ratioXp = user.xp_needed > 0 ? user.xp / user.xp_needed : 0;
 
-    if (variant === 'aurora') {
-        const canvas = createCanvas(W, H);
-        const ctx = canvas.getContext('2d');
-        const g = ctx.createLinearGradient(0, 0, W, H);
-        g.addColorStop(0, '#0a1628');
-        g.addColorStop(0.45, '#152238');
-        g.addColorStop(1, '#1e1035');
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, W, H);
-        const bg = await tryLoadBlzBg();
-        if (bg) {
-            ctx.save();
-            ctx.globalAlpha = 0.22;
-            ctx.drawImage(bg, 0, 0, W, H);
-            ctx.restore();
-        }
-
-        const colW = 340;
-        rr(ctx, 28, 28, colW, H - 56, 28);
-        ctx.fillStyle = 'rgba(255,255,255,0.06)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(130,200,255,0.45)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        const avImg = await loadAvatar(member);
-        const avS = 200;
-        const avX = 28 + (colW - avS) / 2;
-        const avY = 60;
-        ctx.save();
-        rr(ctx, avX, avY, avS, avS, avS / 2);
-        ctx.clip();
-        if (avImg) ctx.drawImage(avImg, avX, avY, avS, avS);
-        else {
-            ctx.fillStyle = 'rgba(180,220,255,0.3)';
-            ctx.fillRect(avX, avY, avS, avS);
-        }
-        ctx.restore();
-
-        ctx.fillStyle = '#e8f4ff';
-        ctx.font = `700 32px ${titleFace}, Arial`;
-        ctx.textAlign = 'center';
-        ctx.fillText(truncateText(ctx, displayName, colW - 40), 28 + colW / 2, avY + avS + 36);
-        ctx.font = `400 18px ${textFace}, Arial`;
-        ctx.fillStyle = 'rgba(200,230,255,0.85)';
-        ctx.fillText(truncateText(ctx, highestRoleName, colW - 40), 28 + colW / 2, avY + avS + 64);
-
-        const gx = 400;
-        const gw = W - gx - 40;
-        let y = 48;
-        const panel = (h) => {
-            rr(ctx, gx, y, gw, h, 20);
-            ctx.fillStyle = 'rgba(255,255,255,0.07)';
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(160,210,255,0.35)';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-            const top = y;
-            y += h + 18;
-            return top;
-        };
-
-        const p1 = panel(120);
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#7dd3fc';
-        ctx.font = `700 22px ${titleFace}, Arial`;
-        ctx.fillText('Progression', gx + 24, p1 + 36);
-        ctx.fillStyle = '#f0f9ff';
-        ctx.font = `600 18px ${textFace}, Arial`;
-        ctx.fillText(`Niveau ${user.level ?? 1}`, gx + 24, p1 + 68);
-        drawXpBar(ctx, gx + 24, p1 + 82, gw - 48, 14, ratioXp, '#38bdf8', 'rgba(255,255,255,0.12)');
-        ctx.font = `500 14px ${textFace}, Arial`;
-        ctx.fillStyle = 'rgba(226,232,240,0.9)';
-        ctx.fillText(`${(user.xp ?? 0).toLocaleString('fr-FR')} / ${(user.xp_needed ?? 0).toLocaleString('fr-FR')} XP`, gx + 24, p1 + 108);
-
-        const p2 = panel(100);
-        ctx.fillStyle = '#a5b4fc';
-        ctx.font = `700 22px ${titleFace}, Arial`;
-        ctx.fillText('Économie', gx + 24, p2 + 34);
-        ctx.fillStyle = '#fff';
-        ctx.font = `600 17px ${textFace}, Arial`;
-        ctx.fillText(`⭐ ${(user.stars ?? 0).toLocaleString('fr-FR')} Starss`, gx + 24, p2 + 64);
-        ctx.fillText(`🏆 ${(user.points ?? 0).toLocaleString('fr-FR')} RP — ${rank?.name ?? 'Rang'}`, gx + 24, p2 + 88);
-
-        const p3 = panel(140);
-        ctx.fillStyle = '#c4b5fd';
-        ctx.font = `700 22px ${titleFace}, Arial`;
-        ctx.fillText('Rang suivant', gx + 24, p3 + 32);
-        ctx.fillStyle = '#e2e8f0';
-        ctx.font = `500 15px ${textFace}, Arial`;
-        if (nextRank) {
-            const need = Math.max(0, (nextRank.points ?? 0) - (user.points ?? 0));
-            ctx.fillText(`${nextRank.name} — encore ${need.toLocaleString('fr-FR')} RP`, gx + 24, p3 + 62);
-        } else {
-            ctx.fillText('Rang maximal atteint', gx + 24, p3 + 62);
-        }
-        if (rankIconPath && fs.existsSync(rankIconPath)) {
-            try {
-                const ic = await loadImage(fs.readFileSync(rankIconPath));
-                ctx.drawImage(ic, gx + gw - 88, p3 + 24, 64, 64);
-            } catch {
-                /* ignore */
-            }
-        }
-
-        if (totalDebt > 0) {
-            ctx.fillStyle = 'rgba(254,202,202,0.95)';
-            ctx.font = `600 15px ${textFace}, Arial`;
-            ctx.fillText(`Dette: ${totalDebt.toLocaleString('fr-FR')} ⭐${debtTimeRemaining ? ` — ${debtTimeRemaining}` : ''}`, gx + 24, p3 + 100);
-        }
-        if (vocalNerfStatus) {
-            ctx.fillStyle = 'rgba(251,191,36,0.95)';
-            ctx.font = `500 13px ${textFace}, Arial`;
-            ctx.fillText(truncateText(ctx, vocalNerfStatus, gw - 48), gx + 24, p3 + 122);
-        }
-
-        ctx.fillStyle = 'rgba(148,163,184,0.9)';
-        ctx.font = `italic 13px ${textFace}, Arial`;
-        ctx.textAlign = 'right';
-        ctx.fillText('Aperçu Aurora — /testprofil', W - 32, H - 24);
-        ctx.textAlign = 'left';
-        return canvas.toBuffer('image/png');
-    }
-
-    if (variant === 'nocturne') {
-        const canvas = createCanvas(W, H);
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#050508';
-        ctx.fillRect(0, 0, W, H);
-        ctx.strokeStyle = 'rgba(0,240,255,0.12)';
-        ctx.lineWidth = 1;
-        for (let x = 0; x < W; x += 48) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, H);
-            ctx.stroke();
-        }
-        for (let y = 0; y < H; y += 48) {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(W, y);
-            ctx.stroke();
-        }
-
-        const avImg = await loadAvatar(member);
-        rr(ctx, 40, 40, 320, 320, 24);
-        ctx.strokeStyle = '#00f0ff';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(0,0,0,0.45)';
-        ctx.fill();
-        ctx.save();
-        rr(ctx, 56, 56, 288, 288, 20);
-        ctx.clip();
-        if (avImg) ctx.drawImage(avImg, 56, 56, 288, 288);
-        else ctx.fillRect(56, 56, 288, 288);
-        ctx.restore();
-
-        ctx.fillStyle = '#fff';
-        ctx.font = `800 40px ${titleFace}, Arial`;
-        ctx.fillText(truncateText(ctx, displayName, 500), 400, 100);
-        ctx.fillStyle = '#ff00aa';
-        ctx.font = `700 20px ${textFace}, Arial`;
-        ctx.fillText(highestRoleName, 400, 140);
-
-        const bx = 400;
-        const by = 180;
-        const bw = W - bx - 48;
-        rr(ctx, bx, by, bw, 200, 16);
-        ctx.fillStyle = 'rgba(255,0,170,0.08)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255,0,170,0.5)';
-        ctx.stroke();
-        ctx.fillStyle = '#00f0ff';
-        ctx.font = `700 20px ${titleFace}, Arial`;
-        ctx.fillText('NIVEAU & XP', bx + 20, by + 36);
-        ctx.fillStyle = '#e2e8f0';
-        ctx.font = `600 26px ${textFace}, Arial`;
-        ctx.fillText(`${user.level ?? 1}`, bx + 20, by + 76);
-        drawXpBar(ctx, bx + 80, by + 58, bw - 100, 18, ratioXp, '#00f0ff', 'rgba(255,255,255,0.1)');
-        ctx.font = `500 14px ${textFace}, Arial`;
-        ctx.fillText(`${(user.xp ?? 0).toLocaleString('fr-FR')} / ${(user.xp_needed ?? 0).toLocaleString('fr-FR')} XP`, bx + 80, by + 100);
-
-        rr(ctx, bx, by + 220, bw, 200, 16);
-        ctx.fillStyle = 'rgba(0,240,255,0.06)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(0,240,255,0.45)';
-        ctx.stroke();
-        ctx.fillStyle = '#00f0ff';
-        ctx.font = `700 20px ${titleFace}, Arial`;
-        ctx.fillText('STARSS · RP · RANG', bx + 20, by + 256);
-        ctx.fillStyle = '#fff';
-        ctx.font = `600 18px ${textFace}, Arial`;
-        ctx.fillText(`⭐ ${(user.stars ?? 0).toLocaleString('fr-FR')}`, bx + 20, by + 300);
-        ctx.fillText(`🏆 ${(user.points ?? 0).toLocaleString('fr-FR')} RP`, bx + 260, by + 300);
-        ctx.fillText(`${rank?.name ?? ''}`, bx + 20, by + 340);
-        if (nextRank) {
-            ctx.fillStyle = 'rgba(226,232,240,0.8)';
-            ctx.font = `500 14px ${textFace}, Arial`;
-            const need = Math.max(0, (nextRank.points ?? 0) - (user.points ?? 0));
-            ctx.fillText(`→ ${nextRank.name} (${need.toLocaleString('fr-FR')} RP)`, bx + 20, by + 372);
-        }
-
-        if (totalDebt > 0) {
-            ctx.fillStyle = '#f87171';
-            ctx.font = `600 14px ${textFace}, Arial`;
-            ctx.fillText(`Dette ${totalDebt.toLocaleString('fr-FR')} ⭐`, bx + 20, by + 400);
-        }
-        if (vocalNerfStatus) {
-            ctx.fillStyle = '#fbbf24';
-            ctx.font = `500 12px ${textFace}, Arial`;
-            ctx.fillText(truncateText(ctx, vocalNerfStatus, bw - 40), bx + 20, by + 420);
-        }
-
-        ctx.fillStyle = 'rgba(148,163,184,0.8)';
-        ctx.font = `italic 13px ${textFace}, Arial`;
-        ctx.textAlign = 'right';
-        ctx.fillText('Aperçu Nocturne — /testprofil', W - 32, H - 22);
-        ctx.textAlign = 'left';
-        return canvas.toBuffer('image/png');
-    }
-
-    if (variant === 'parchment') {
     const canvas = createCanvas(W, H);
     const ctx = canvas.getContext('2d');
-    const pg = ctx.createLinearGradient(0, 0, W, H);
-    pg.addColorStop(0, '#f0e6d2');
-    pg.addColorStop(0.5, '#e5d4bc');
-    pg.addColorStop(1, '#d4c4a8');
-    ctx.fillStyle = pg;
-    ctx.fillRect(0, 0, W, H);
+    await drawCarminBackdrop(ctx, W, H);
 
-    rr(ctx, 32, 32, W - 64, H - 64, 20);
-    ctx.fillStyle = 'rgba(255,252,245,0.55)';
-    ctx.fill();
-    ctx.strokeStyle = '#5c4033';
-    ctx.lineWidth = 4;
-    ctx.stroke();
-    ctx.strokeStyle = 'rgba(92,64,51,0.35)';
-    ctx.lineWidth = 1;
-    rr(ctx, 44, 44, W - 88, H - 88, 16);
-    ctx.stroke();
+    const pad = 20;
+    const gap = 16;
+    const leftW = 320;
+    const rx = pad + leftW + gap;
+    const rw = W - rx - pad;
 
+    panel(ctx, pad, pad, leftW, H - pad * 2, 28, T.header);
     const avImg = await loadAvatar(member);
-    const avS = 140;
+    const avS = 220;
+    const avX = pad + (leftW - avS) / 2;
+    const avY = pad + 28;
     ctx.save();
-    rr(ctx, 72, 72, avS, avS, avS / 2);
+    rr(ctx, avX, avY, avS, avS, avS / 2);
     ctx.clip();
-    if (avImg) ctx.drawImage(avImg, 72, 72, avS, avS);
+    if (avImg) ctx.drawImage(avImg, avX, avY, avS, avS);
     else {
-        ctx.fillStyle = '#c4a574';
-        ctx.fillRect(72, 72, avS, avS);
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.fillRect(avX, avY, avS, avS);
     }
     ctx.restore();
-    ctx.strokeStyle = '#4a3020';
+    rr(ctx, avX, avY, avS, avS, avS / 2);
+    ctx.strokeStyle = T.stroke;
     ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(72 + avS / 2, 72 + avS / 2, avS / 2 + 2, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.fillStyle = '#2a1810';
-    ctx.font = `700 38px ${titleFace}, Arial`;
-    ctx.fillText(truncateText(ctx, displayName, 600), 240, 110);
-    ctx.font = `600 20px ${textFace}, Arial`;
-    ctx.fillStyle = '#5c4033';
-    ctx.fillText(highestRoleName, 240, 148);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = T.text;
+    ctx.font = `800 22px ${titleFace}, Arial`;
+    ctx.fillText(truncateText(ctx, displayName, leftW - 24), pad + leftW / 2, avY + avS + 32);
+    ctx.font = `600 14px ${textFace}, Arial`;
+    ctx.fillStyle = T.sub;
+    ctx.fillText(truncateText(ctx, highestRoleName, leftW - 24), pad + leftW / 2, avY + avS + 58);
+    ctx.textAlign = 'left';
 
-    const boxX = 240;
-    const boxY = 190;
-    const boxW = W - boxX - 60;
-    rr(ctx, boxX, boxY, boxW, 120, 14);
-    ctx.fillStyle = 'rgba(74,48,32,0.08)';
-    ctx.fill();
-    ctx.strokeStyle = '#5c4033';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.fillStyle = '#3d2918';
-    ctx.font = `700 18px ${titleFace}, Arial`;
-    ctx.fillText('Niveau & expérience', boxX + 20, boxY + 32);
-    drawXpBar(ctx, boxX + 20, boxY + 48, boxW - 40, 16, ratioXp, '#8b5a2b', 'rgba(74,48,32,0.15)');
-    ctx.font = `600 15px ${textFace}, Arial`;
-    ctx.fillText(`${(user.xp ?? 0).toLocaleString('fr-FR')} / ${(user.xp_needed ?? 0).toLocaleString('fr-FR')} XP`, boxX + 20, boxY + 88);
+    let y = pad;
+    const h1 = 168;
+    const h2 = 158;
+    const h3 = H - pad - y - h1 - h2 - gap * 2;
 
-    const y2 = boxY + 140;
-    rr(ctx, boxX, y2, boxW / 2 - 12, 160, 14);
-    ctx.fillStyle = 'rgba(74,48,32,0.08)';
-    ctx.fill();
-    ctx.strokeStyle = '#5c4033';
-    ctx.stroke();
-    ctx.fillStyle = '#3d2918';
-    ctx.font = `700 17px ${titleFace}, Arial`;
-    ctx.fillText('Fortune', boxX + 18, y2 + 30);
-    ctx.font = `600 22px ${textFace}, Arial`;
-    ctx.fillText(`⭐ ${(user.stars ?? 0).toLocaleString('fr-FR')}`, boxX + 18, y2 + 68);
+    panel(ctx, rx, y, rw, h1, 18);
+    ctx.fillStyle = T.accent;
+    ctx.font = `700 20px ${titleFace}, Arial`;
+    ctx.fillText('Progression', rx + 18, y + 32);
+    ctx.fillStyle = T.text;
+    ctx.font = `700 22px ${textFace}, Arial`;
+    ctx.fillText(`Niveau ${user.level ?? 1}`, rx + 18, y + 68);
+    drawXpBar(ctx, rx + 18, y + 92, rw - 36, 16, ratioXp, T.xpFill, T.xpTrack);
+    ctx.font = `600 13px ${textFace}, Arial`;
+    ctx.fillStyle = T.sub;
+    ctx.fillText(
+        `${(user.xp ?? 0).toLocaleString('fr-FR')} / ${(user.xp_needed ?? 0).toLocaleString('fr-FR')} XP`,
+        rx + 18,
+        y + 128
+    );
+    y += h1 + gap;
 
-    rr(ctx, boxX + boxW / 2 + 12, y2, boxW / 2 - 12, 160, 14);
-    ctx.fillStyle = 'rgba(74,48,32,0.08)';
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = '#3d2918';
-    ctx.font = `700 17px ${titleFace}, Arial`;
-    ctx.fillText('Honneur (RP)', boxX + boxW / 2 + 30, y2 + 30);
-    ctx.font = `600 20px ${textFace}, Arial`;
-    ctx.fillText(`${(user.points ?? 0).toLocaleString('fr-FR')}`, boxX + boxW / 2 + 30, y2 + 68);
-    ctx.font = `500 15px ${textFace}, Arial`;
-    ctx.fillText(rank?.name ?? '', boxX + boxW / 2 + 30, y2 + 98);
+    panel(ctx, rx, y, rw, h2, 18);
+    ctx.fillStyle = T.accent;
+    ctx.font = `700 20px ${titleFace}, Arial`;
+    ctx.fillText('Fortune & honneur', rx + 18, y + 30);
+    ctx.fillStyle = T.text;
+    ctx.font = `600 17px ${textFace}, Arial`;
+    ctx.fillText(`⭐ ${(user.stars ?? 0).toLocaleString('fr-FR')}`, rx + 18, y + 64);
+    ctx.fillText(`🏆 ${(user.points ?? 0).toLocaleString('fr-FR')} RP — ${rank?.name ?? ''}`, rx + 18, y + 94);
+    ctx.fillStyle = T.sub;
+    ctx.font = `500 14px ${textFace}, Arial`;
     if (nextRank) {
         const need = Math.max(0, (nextRank.points ?? 0) - (user.points ?? 0));
-        ctx.font = `500 13px ${textFace}, Arial`;
-        ctx.fillStyle = '#5c4033';
-        ctx.fillText(`Prochain : ${nextRank.name} (${need.toLocaleString('fr-FR')} RP)`, boxX + boxW / 2 + 30, y2 + 128);
+        ctx.fillText(`→ ${nextRank.name} (${need.toLocaleString('fr-FR')} RP)`, rx + 18, y + 124);
     }
+    y += h2 + gap;
 
-    if (totalDebt > 0) {
-        ctx.fillStyle = '#8b2942';
-        ctx.font = `600 14px ${textFace}, Arial`;
-        ctx.fillText(`Dette : ${totalDebt.toLocaleString('fr-FR')} ⭐`, 72, 260);
+    panel(ctx, rx, y, rw, h3, 18);
+    ctx.fillStyle = T.accent;
+    ctx.font = `700 20px ${titleFace}, Arial`;
+    ctx.fillText('Rang & objectif', rx + 18, y + 30);
+    ctx.fillStyle = T.sub;
+    ctx.font = `500 15px ${textFace}, Arial`;
+    if (nextRank) {
+        const need = Math.max(0, (nextRank.points ?? 0) - (user.points ?? 0));
+        ctx.fillText(`Prochain palier : ${nextRank.name}`, rx + 18, y + 64);
+        ctx.fillText(`${need.toLocaleString('fr-FR')} RP à grappiller`, rx + 18, y + 90);
+    } else {
+        ctx.fillText('Rang maximal', rx + 18, y + 64);
     }
-    if (vocalNerfStatus) {
-        ctx.fillStyle = '#7a5c1a';
-        ctx.font = `500 13px ${textFace}, Arial`;
-        ctx.fillText(truncateText(ctx, vocalNerfStatus, boxW), 72, 288);
-    }
+    await drawRankIcon(ctx, rankIconPath, rx + rw - 88, y + 48, 64);
 
-    ctx.fillStyle = 'rgba(60,40,25,0.65)';
-    ctx.font = `italic 13px ${textFace}, Arial`;
-    ctx.textAlign = 'right';
-    ctx.fillText('Aperçu Parchemin — /testprofil', W - 48, H - 40);
-    ctx.textAlign = 'left';
+    drawDebtVocal(ctx, rx + 18, rw - 36, y + h3 - 36, totalDebt, debtTimeRemaining, vocalNerfStatus, textFace);
+    drawCarminFooter(ctx, 'Carmin · Atlas — /testprofil', W, H);
     return canvas.toBuffer('image/png');
+}
+
+/** Bandeau titre + 2 colonnes + bande rang */
+async function renderCarminNaos(data, titleFace, textFace) {
+    const { user, member, rank, nextRank, highestRoleName, rankIconPath, totalDebt, debtTimeRemaining, vocalNerfStatus } =
+        data;
+    const displayName = member?.displayName ?? 'Utilisateur';
+    const ratioXp = user.xp_needed > 0 ? user.xp / user.xp_needed : 0;
+
+    const canvas = createCanvas(W, H);
+    const ctx = canvas.getContext('2d');
+    await drawCarminBackdrop(ctx, W, H);
+
+    const pad = 22;
+    const gap = 14;
+    const innerW = W - pad * 2;
+    const bandH = 88;
+    panel(ctx, pad, pad, innerW, bandH, 20, T.header);
+    ctx.fillStyle = T.text;
+    ctx.font = `800 36px ${titleFace}, Arial`;
+    ctx.fillText(truncateText(ctx, displayName, innerW - 200), pad + 24, pad + 52);
+    ctx.font = `600 16px ${textFace}, Arial`;
+    ctx.fillStyle = T.sub;
+    ctx.fillText(truncateText(ctx, highestRoleName, innerW - 200), pad + 24, pad + 76);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = T.accent;
+    ctx.font = `800 22px ${titleFace}, Arial`;
+    ctx.fillText(`⭐ ${(user.stars ?? 0).toLocaleString('fr-FR')}`, pad + innerW - 8, pad + 44);
+    ctx.fillStyle = T.text;
+    ctx.font = `600 15px ${textFace}, Arial`;
+    ctx.fillText(`🏆 ${(user.points ?? 0).toLocaleString('fr-FR')} RP`, pad + innerW - 8, pad + 72);
+    ctx.textAlign = 'left';
+
+    const avImg = await loadAvatar(member);
+    const avS = 64;
+    const avX = pad + innerW - 92;
+    const avY = pad + 14;
+    ctx.save();
+    rr(ctx, avX, avY, avS, avS, avS / 2);
+    ctx.clip();
+    if (avImg) ctx.drawImage(avImg, avX, avY, avS, avS);
+    else ctx.fillRect(avX, avY, avS, avS);
+    ctx.restore();
+    rr(ctx, avX, avY, avS, avS, avS / 2);
+    ctx.strokeStyle = T.stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    const y0 = pad + bandH + gap;
+    const midH = 260;
+    const colW = (innerW - gap) / 2;
+
+    panel(ctx, pad, y0, colW, midH, 18);
+    ctx.fillStyle = T.accent;
+    ctx.font = `700 20px ${titleFace}, Arial`;
+    ctx.fillText('Niveau & XP', pad + 18, y0 + 34);
+    ctx.fillStyle = T.text;
+    ctx.font = `800 28px ${textFace}, Arial`;
+    ctx.fillText(`${user.level ?? 1}`, pad + 18, y0 + 78);
+    drawXpBar(ctx, pad + 18, y0 + 108, colW - 36, 16, ratioXp, T.xpFill, T.xpTrack);
+    ctx.font = `600 13px ${textFace}, Arial`;
+    ctx.fillStyle = T.sub;
+    ctx.fillText(
+        `${(user.xp ?? 0).toLocaleString('fr-FR')} / ${(user.xp_needed ?? 0).toLocaleString('fr-FR')} XP`,
+        pad + 18,
+        y0 + 148
+    );
+
+    const x2 = pad + colW + gap;
+    panel(ctx, x2, y0, colW, midH, 18);
+    ctx.fillStyle = T.accent;
+    ctx.font = `700 20px ${titleFace}, Arial`;
+    ctx.fillText('Rang actuel', x2 + 18, y0 + 34);
+    ctx.fillStyle = T.text;
+    ctx.font = `700 24px ${textFace}, Arial`;
+    ctx.fillText(rank?.name ?? '—', x2 + 18, y0 + 78);
+    ctx.font = `600 15px ${textFace}, Arial`;
+    ctx.fillStyle = T.sub;
+    if (nextRank) {
+        const need = Math.max(0, (nextRank.points ?? 0) - (user.points ?? 0));
+        ctx.fillText(`Suivant : ${nextRank.name}`, x2 + 18, y0 + 118);
+        ctx.fillText(`${need.toLocaleString('fr-FR')} RP`, x2 + 18, y0 + 144);
+    }
+    await drawRankIcon(ctx, rankIconPath, x2 + colW - 80, y0 + 88, 56);
+
+    const yBot = y0 + midH + gap;
+    const botH = H - yBot - pad - 22;
+    panel(ctx, pad, yBot, innerW, botH, 18);
+    ctx.fillStyle = T.accent;
+    ctx.font = `700 18px ${titleFace}, Arial`;
+    ctx.fillText('Synthèse', pad + 18, yBot + 30);
+    ctx.fillStyle = T.text;
+    ctx.font = `600 15px ${textFace}, Arial`;
+    ctx.fillText(`⭐ Starss · 🏆 Points · 📈 XP — tout sur une ligne lisible.`, pad + 18, yBot + 62);
+    ctx.fillText(
+        `⭐ ${(user.stars ?? 0).toLocaleString('fr-FR')}    🏆 ${(user.points ?? 0).toLocaleString('fr-FR')} RP    Niv.${user.level ?? 1}`,
+        pad + 18,
+        yBot + 92
+    );
+    drawDebtVocal(ctx, pad + 18, innerW - 36, yBot + botH - 36, totalDebt, debtTimeRemaining, vocalNerfStatus, textFace);
+    drawCarminFooter(ctx, 'Carmin · Naos — /testprofil', W, H);
+    return canvas.toBuffer('image/png');
+}
+
+/** 1000×640 — avatar central XXL, stats resserrées */
+async function renderCarminMedalion(data, titleFace, textFace) {
+    const { user, member, rank, nextRank, highestRoleName, rankIconPath, totalDebt, debtTimeRemaining, vocalNerfStatus } =
+        data;
+    const displayName = member?.displayName ?? 'Utilisateur';
+    const ratioXp = user.xp_needed > 0 ? user.xp / user.xp_needed : 0;
+
+    const cW = 1000;
+    const cH = 640;
+    const canvas = createCanvas(cW, cH);
+    const ctx = canvas.getContext('2d');
+    await drawCarminBackdrop(ctx, cW, cH);
+
+    const pad = 24;
+    const avS = 200;
+    const avX = (cW - avS) / 2;
+    const avY = pad + 8;
+    const avImg = await loadAvatar(member);
+    ctx.save();
+    rr(ctx, avX, avY, avS, avS, avS / 2);
+    ctx.clip();
+    if (avImg) ctx.drawImage(avImg, avX, avY, avS, avS);
+    else {
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.fillRect(avX, avY, avS, avS);
+    }
+    ctx.restore();
+    rr(ctx, avX, avY, avS, avS, avS / 2);
+    ctx.strokeStyle = T.stroke;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = T.text;
+    ctx.font = `800 28px ${titleFace}, Arial`;
+    ctx.fillText(truncateText(ctx, displayName, cW - 40), cW / 2, avY + avS + 32);
+    ctx.font = `600 15px ${textFace}, Arial`;
+    ctx.fillStyle = T.sub;
+    ctx.fillText(truncateText(ctx, highestRoleName, cW - 80), cW / 2, avY + avS + 58);
+    ctx.textAlign = 'left';
+
+    const yBar = avY + avS + 78;
+    const barW = cW - pad * 2;
+    panel(ctx, pad, yBar, barW, 52, 16);
+    ctx.fillStyle = T.text;
+    ctx.font = `700 16px ${titleFace}, Arial`;
+    ctx.fillText(`Niveau ${user.level ?? 1}`, pad + 16, yBar + 22);
+    drawXpBar(ctx, pad + 16, yBar + 32, barW - 32, 12, ratioXp, T.xpFill, T.xpTrack);
+
+    const yRow = yBar + 52 + 14;
+    const cellW = (barW - 16) / 3;
+    for (let i = 0; i < 3; i++) {
+        const x = pad + i * (cellW + 8);
+        panel(ctx, x, yRow, cellW, cH - yRow - pad - 20, 14);
+    }
+    ctx.fillStyle = T.accent;
+    ctx.font = `700 14px ${titleFace}, Arial`;
+    ctx.fillText('⭐ Starss', pad + 20, yRow + 28);
+    ctx.fillText('🏆 RP', pad + cellW + 8 + 20, yRow + 28);
+    ctx.fillText('Rang', pad + 2 * (cellW + 8) + 20, yRow + 28);
+    ctx.fillStyle = T.text;
+    ctx.font = `600 20px ${textFace}, Arial`;
+    ctx.fillText(`${(user.stars ?? 0).toLocaleString('fr-FR')}`, pad + 20, yRow + 64);
+    ctx.fillText(`${(user.points ?? 0).toLocaleString('fr-FR')}`, pad + cellW + 8 + 20, yRow + 64);
+    ctx.fillText(`${rank?.name ?? '—'}`, pad + 2 * (cellW + 8) + 20, yRow + 64);
+    ctx.font = `500 12px ${textFace}, Arial`;
+    ctx.fillStyle = T.sub;
+    if (nextRank) {
+        const need = Math.max(0, (nextRank.points ?? 0) - (user.points ?? 0));
+        ctx.fillText(
+            truncateText(ctx, `→ ${nextRank.name} (${need.toLocaleString('fr-FR')} RP)`, cellW - 28),
+            pad + 2 * (cellW + 8) + 20,
+            yRow + 96
+        );
+    }
+    await drawRankIcon(ctx, rankIconPath, pad + 2 * (cellW + 8) + cellW - 72, yRow + 110, 48);
+
+    drawDebtVocal(ctx, pad + 16, barW - 32, yRow + 130, totalDebt, debtTimeRemaining, vocalNerfStatus, textFace);
+    drawCarminFooter(ctx, 'Carmin · Médaillon — /testprofil', cW, cH);
+    return canvas.toBuffer('image/png');
+}
+
+/** Avatar haut droite + 3 « estrades » en bas */
+async function renderCarminTribunal(data, titleFace, textFace) {
+    const { user, member, rank, nextRank, highestRoleName, rankIconPath, totalDebt, debtTimeRemaining, vocalNerfStatus } =
+        data;
+    const displayName = member?.displayName ?? 'Utilisateur';
+    const ratioXp = user.xp_needed > 0 ? user.xp / user.xp_needed : 0;
+
+    const canvas = createCanvas(W, H);
+    const ctx = canvas.getContext('2d');
+    await drawCarminBackdrop(ctx, W, H);
+
+    const pad = 22;
+    const innerW = W - pad * 2;
+    const topH = 200;
+
+    panel(ctx, pad, pad, innerW - 200, topH, 22, T.header);
+    ctx.fillStyle = T.text;
+    ctx.font = `800 40px ${titleFace}, Arial`;
+    ctx.fillText(truncateText(ctx, displayName, innerW - 240), pad + 24, pad + 72);
+    ctx.font = `600 18px ${textFace}, Arial`;
+    ctx.fillStyle = T.sub;
+    ctx.fillText(truncateText(ctx, highestRoleName, innerW - 240), pad + 24, pad + 108);
+    ctx.fillStyle = T.accent;
+    ctx.font = `700 20px ${titleFace}, Arial`;
+    ctx.fillText(`⭐ ${(user.stars ?? 0).toLocaleString('fr-FR')}  ·  🏆 ${(user.points ?? 0).toLocaleString('fr-FR')} RP`, pad + 24, pad + 154);
+
+    const avS = 168;
+    const avX = W - pad - avS - 8;
+    const avY = pad + 16;
+    const avImg = await loadAvatar(member);
+    ctx.save();
+    rr(ctx, avX, avY, avS, avS, avS / 2);
+    ctx.clip();
+    if (avImg) ctx.drawImage(avImg, avX, avY, avS, avS);
+    else ctx.fillRect(avX, avY, avS, avS);
+    ctx.restore();
+    rr(ctx, avX, avY, avS, avS, avS / 2);
+    ctx.strokeStyle = T.stroke;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    const yBase = pad + topH + 20;
+    const cw = (innerW - 28) / 3;
+    const heights = [200, 240, 200];
+    for (let i = 0; i < 3; i++) {
+        const x = pad + i * (cw + 14);
+        const h = heights[i];
+        const y = yBase + (260 - h);
+        panel(ctx, x, y, cw, h, 16);
+        ctx.fillStyle = T.accent;
+        ctx.font = `700 17px ${titleFace}, Arial`;
+        const titles = ['XP', 'Économie', 'Rang'];
+        ctx.fillText(titles[i], x + 14, y + 28);
+        ctx.fillStyle = T.text;
+        ctx.font = `600 15px ${textFace}, Arial`;
+        if (i === 0) {
+            ctx.fillText(`Niv. ${user.level ?? 1}`, x + 14, y + 58);
+            drawXpBar(ctx, x + 14, y + 78, cw - 28, 12, ratioXp, T.xpFill, T.xpTrack);
+            ctx.fillStyle = T.sub;
+            ctx.font = `500 12px ${textFace}, Arial`;
+            ctx.fillText(
+                `${(user.xp ?? 0).toLocaleString('fr-FR')} / ${(user.xp_needed ?? 0).toLocaleString('fr-FR')}`,
+                x + 14,
+                y + 108
+            );
+        } else if (i === 1) {
+            ctx.fillText(`⭐ ${(user.stars ?? 0).toLocaleString('fr-FR')}`, x + 14, y + 60);
+            ctx.fillText(`🏆 ${(user.points ?? 0).toLocaleString('fr-FR')} RP`, x + 14, y + 88);
+        } else {
+            ctx.fillText(rank?.name ?? '—', x + 14, y + 58);
+            if (nextRank) {
+                const need = Math.max(0, (nextRank.points ?? 0) - (user.points ?? 0));
+                ctx.fillStyle = T.sub;
+                ctx.font = `500 13px ${textFace}, Arial`;
+                ctx.fillText(truncateText(ctx, `→ ${nextRank.name}`, cw - 28), x + 14, y + 88);
+                ctx.fillText(`${need.toLocaleString('fr-FR')} RP`, x + 14, y + 110);
+            }
+            await drawRankIcon(ctx, rankIconPath, x + cw - 66, y + 130, 48);
+        }
     }
 
-    if (BLZ_TEST_IDS.has(variant)) {
-        return renderBlzTestProfileVariant(data, variant, titleFace, textFace);
-    }
+    drawDebtVocal(ctx, pad + 12, innerW - 24, H - pad - 36, totalDebt, debtTimeRemaining, vocalNerfStatus, textFace);
+    drawCarminFooter(ctx, 'Carmin · Tribunal — /testprofil', W, H);
+    return canvas.toBuffer('image/png');
+}
 
-    return renderProfilePreviewVariant(data, 'aurora');
+async function renderProfilePreviewVariant(data, variant) {
+    const titleFace = 'InterBold';
+    const textFace = 'Inter';
+
+    switch (variant) {
+        case 'carmin':
+            return renderCarminGrille(data, titleFace, textFace);
+        case 'carmin_atlas':
+            return renderCarminAtlas(data, titleFace, textFace);
+        case 'carmin_naos':
+            return renderCarminNaos(data, titleFace, textFace);
+        case 'carmin_medalion':
+            return renderCarminMedalion(data, titleFace, textFace);
+        case 'carmin_tribunal':
+            return renderCarminTribunal(data, titleFace, textFace);
+        default:
+            return renderCarminGrille(data, titleFace, textFace);
+    }
 }
 
 function normalizeProfileVariant(v) {
+    const resolved = LEGACY_PROFILE_VARIANT[v] || v;
     const allowed = PROFILE_PREVIEW_VARIANTS.map((x) => x.id);
-    if (allowed.includes(v)) return v;
-    return 'aurora';
+    if (allowed.includes(resolved)) return resolved;
+    return 'carmin';
 }
 
 module.exports = {
