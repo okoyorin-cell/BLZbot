@@ -45,8 +45,8 @@ const PROFILE_PREVIEW_VARIANTS = [
     },
     {
         id: 'fiche_2',
-        label: 'Fiche 2 — bois / chocolat (1024×381)',
-        hint: 'Style écran d’origine (chocolat / bois), transparence, barre jaune-or — grille 3×2',
+        label: 'Fiche 2 — fond /profile (1024×381)',
+        hint: 'blz_bg + overlay comme /profile, panneaux noirs semi-transparents, grille 3×2',
     },
 ];
 
