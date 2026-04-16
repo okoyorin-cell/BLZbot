@@ -563,9 +563,9 @@ async function renderFiche2(data) {
         ctx.fill();
     }
 
-    setCondensedBody(ctx, 11, 500);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(`${pct}% vers le niveau ${nextLevel}`, mainX, barY + barH + 15);
+    setCondensedBody(ctx, 13, 500);
+    ctx.fillStyle = 'rgba(235, 228, 228, 0.95)';
+    ctx.fillText(`${pct}% vers le niveau ${nextLevel}`, mainX, barY + barH + 17);
 
     if (totalDebt > 0 || vocalNerfStatus) {
         setCondensedBody(ctx, 9, 600);
