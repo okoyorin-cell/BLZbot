@@ -103,6 +103,29 @@ async function tryLoadBlzBg() {
     }
 }
 
+/** Icônes badges liés aux rôles Discord exclusifs (badge-config), dans l’ordre du fichier. */
+async function loadExclusiveBadgeImages(member) {
+    if (!member?.roles?.cache) return [];
+    const { BADGE_ROLE_MAP } = require('./badge-config');
+    const badgesDir = path.join(__dirname, '..', 'assets', 'badges');
+    const seen = new Set();
+    const out = [];
+    for (const { badgeId, roleIds } of BADGE_ROLE_MAP) {
+        if (seen.has(badgeId)) continue;
+        const has = roleIds.some((id) => member.roles.cache.has(id));
+        if (!has) continue;
+        seen.add(badgeId);
+        const fp = path.join(badgesDir, `${badgeId}.png`);
+        if (!fs.existsSync(fp)) continue;
+        try {
+            out.push(await loadImage(fs.readFileSync(fp)));
+        } catch {
+            /* ignore */
+        }
+    }
+    return out;
+}
+
 async function loadAvatar(member) {
     const url = member?.displayAvatarURL({ extension: 'png', size: 256 });
     if (!url) return null;
