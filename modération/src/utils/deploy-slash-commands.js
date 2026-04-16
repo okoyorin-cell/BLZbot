@@ -33,7 +33,9 @@ async function deployModerationSlashCommands(client, config, opts = {}) {
     const commands = [];
     const panelCommands = [];
 
-    const commandFiles = fs.readdirSync(COMMANDS_DIR).filter((f) => f.endsWith('.js'));
+    const commandFiles = fs
+        .readdirSync(COMMANDS_DIR)
+        .filter((f) => f.endsWith('.js') && !isArchivedSlashCommandFile(f));
     for (const file of commandFiles) {
         const command = require(path.join(COMMANDS_DIR, file));
         if (!command.data) continue;
