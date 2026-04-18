@@ -63,28 +63,29 @@ function buildWelcomeMessage(member, options = {}) {
     const createdAt = member.user.createdAt;
     const avatar = member.user.displayAvatarURL({ extension: 'png', size: 256 });
 
-    /** Ligne du haut + PP du membre à droite (comme l’embed du screen). */
-    const header = new TextDisplayBuilder().setContent(
-        `# 👋 **Bienvenue,** ${member} **!**`
+    /** `##` = sous-titre Discord plus lisible que `#` ; le reste du bloc reste taille « corps ». */
+    const welcomeTitle = new TextDisplayBuilder().setContent(
+        `## 👋 **Bienvenue,** ${member} **!**`
+    );
+    const body = new TextDisplayBuilder().setContent(
+        `➜ Nous sommes ravis de te voir arriver sur le serveur **${serverName}** !\n\n` +
+            `➜ N'hésite pas à aller faire un tour dans <#${regId}> et <#${ticketsId}> si t'as besoin d'aide.\n\n` +
+            `➜ Passe un agréable séjour ici ! 🔥`
     );
     const thumbnail = new ThumbnailBuilder()
         .setURL(avatar)
         .setDescription(`Avatar — ${member.user.username}`);
-    const section = new SectionBuilder().addTextDisplayComponents(header).setThumbnailAccessory(thumbnail);
+    /** Titre + corps à gauche, miniature à droite (comme l’embed du screen). */
+    const mainSection = new SectionBuilder()
+        .addTextDisplayComponents(welcomeTitle, body)
+        .setThumbnailAccessory(thumbnail);
 
-    /** Corps : 3 lignes ➜ (le titre est dans la section au-dessus). */
-    const body = new TextDisplayBuilder().setContent(
-        `➜ Nous sommes ravis de te voir arriver sur Le serveur de **${serverName}** !\n\n` +
-            `➜ N'hésite pas à aller faire un tour dans <#${regId}> et <#${ticketsId}> si t'as besoin d'aide.\n\n` +
-            `➜ Passe un agréable séjour ici ! 🔥`
-    );
-
-    /** Plus petit que le reste (sous-texte Discord). */
+    /** Pied : métadonnées discrètes puis boutons lien (footer visuel). */
     const footerMeta = new TextDisplayBuilder().setContent(
         `-# Compte créé le ${formatFrCompactDate(createdAt)} · Arrivée ${formatFrCompactDateTime(joinedAt)}`
     );
 
-    const row = new ActionRowBuilder().addComponents(
+    const footerButtons = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setStyle(ButtonStyle.Link)
             .setLabel('Règlement')
@@ -97,11 +98,10 @@ function buildWelcomeMessage(member, options = {}) {
 
     const container = new ContainerBuilder()
         .setAccentColor(parseAccentColor(w.ACCENT_COLOR))
-        .addSectionComponents(section)
+        .addSectionComponents(mainSection)
         .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
-        .addTextDisplayComponents(body)
         .addTextDisplayComponents(footerMeta)
-        .addActionRowComponents(row);
+        .addActionRowComponents(footerButtons);
 
     return {
         components: [container],
