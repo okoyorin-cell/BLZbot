@@ -89,7 +89,7 @@ function buildWelcomeMessage(member) {
     const footerButtons = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setStyle(ButtonStyle.Link)
-            .setLabel('Règlement')
+            .setLabel('📋 Règlement')
             .setURL(channelJumpUrl(guildId, regId)),
         new ButtonBuilder()
             .setStyle(ButtonStyle.Link)
