@@ -93,7 +93,7 @@ function buildWelcomeMessage(member) {
             .setURL(channelJumpUrl(guildId, regId)),
         new ButtonBuilder()
             .setStyle(ButtonStyle.Link)
-            .setLabel('Infos / Aide')
+            .setLabel('🪢 Tickets')
             .setURL(channelJumpUrl(guildId, ticketsId))
     );
 
