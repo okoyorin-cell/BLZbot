@@ -62,23 +62,21 @@ function buildWelcomeMessage(member, options = {}) {
     const serverName = member.guild.name;
     const joinedAt = options.joinedAt ?? member.joinedAt ?? new Date();
     const createdAt = member.user.createdAt;
-    const avatar = member.user.displayAvatarURL({ extension: 'png', size: 256 });
+    /** 128px = vignette plus petite, proche du rendu « embed compact » du screen. */
+    const avatar = member.user.displayAvatarURL({ extension: 'png', size: 128 });
 
-    /** `##` = sous-titre Discord plus lisible que `#` ; le reste du bloc reste taille « corps ». */
-    const welcomeTitle = new TextDisplayBuilder().setContent(
-        `## 👋 **Bienvenue,** ${member} **!**`
-    );
-    const body = new TextDisplayBuilder().setContent(
-        `➜ Nous sommes ravis de te voir arriver sur le serveur **${serverName}** !\n\n` +
-            `➜ N'hésite pas à aller faire un tour dans <#${regId}> et <#${ticketsId}> si t'as besoin d'aide.\n\n` +
+    /** Un seul TextDisplay évite l’espace vertical entre deux composants V2. Sauts `\n` simples (pas de `\n\n`). */
+    const mainText = new TextDisplayBuilder().setContent(
+        `## 👋 **Bienvenue,** ${member} **!**\n` +
+            `➜ Nous sommes ravis de te voir arriver sur le serveur **${serverName}** !\n` +
+            `➜ N'hésite pas à aller faire un tour dans <#${regId}> et <#${ticketsId}> si t'as besoin d'aide.\n` +
             `➜ Passe un agréable séjour ici ! 🔥`
     );
     const thumbnail = new ThumbnailBuilder()
         .setURL(avatar)
         .setDescription(`Avatar — ${member.user.username}`);
-    /** Titre + corps à gauche, miniature à droite (comme l’embed du screen). */
     const mainSection = new SectionBuilder()
-        .addTextDisplayComponents(welcomeTitle, body)
+        .addTextDisplayComponents(mainText)
         .setThumbnailAccessory(thumbnail);
 
     /** Pied : métadonnées discrètes puis boutons lien (footer visuel). */
