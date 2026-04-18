@@ -168,4 +168,5 @@ async function handleMemberJoin(member) {
 module.exports = {
     handleMemberJoin,
     buildWelcomeMessage,
+    logWelcomeMemberMeta,
 };

@@ -45,7 +45,7 @@ module.exports = {
 
         let payload;
         try {
-            payload = buildWelcomeMessage(member, { joinedAt: member.joinedAt ?? new Date() });
+            payload = buildWelcomeMessage(member);
         } catch (e) {
             await interaction.reply({
                 content: `❌ Configuration bienvenue invalide : ${e.message}`,
