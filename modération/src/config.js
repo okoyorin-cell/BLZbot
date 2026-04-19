@@ -243,7 +243,7 @@ module.exports = {
         CHANNEL_ID: "1454490890297933944",                               // ID du salon où envoyer les signalements
         PING_ROLE_ID: null,                             // ID du rôle à ping (modérateurs)
         PING_COOLDOWN_MS: 30 * 60 * 1000,              // Cooldown entre les pings (30 minutes)
-        EMBED_COLOR: '#FF6B6B'                          // Couleur des embeds de signalement
+        EMBED_COLOR: BLZ_EMBED_STRIP_HEX                  // Bande latérale des signalements (identité BLZbot)
     },
 
     // ==================== ANTI-RAID ====================
