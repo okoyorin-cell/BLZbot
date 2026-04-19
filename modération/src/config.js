@@ -3,6 +3,7 @@
  */
 const path = require('path');
 const { resolveDotenvPath, PEBBLE_HOST_ENV_PATH } = require(path.join(__dirname, '..', '..', 'blzbot-env.js'));
+const { BLZ_EMBED_STRIP_HEX } = require(path.join(__dirname, '..', '..', 'blz-embed-theme'));
 require('dotenv').config({
     path: resolveDotenvPath(
         path.join(__dirname, '..', '..', '.env'),
