@@ -176,7 +176,7 @@ module.exports = {
             }
 
             const container = new ContainerBuilder()
-                .setAccentColor(0xFFD700); // Gold color
+                .setAccentColor(BLZ_EMBED_STRIP_INT);
 
             const textDisplay = new TextDisplayBuilder()
                 .setContent(`# ${emoji} ${title}\n\n${leaderboardText}`);
