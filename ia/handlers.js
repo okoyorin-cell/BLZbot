@@ -1273,6 +1273,57 @@ function extractTextFromPartialJson(raw) {
     return result;
 }
 
+/** Pendant le stream JSON : pas de JSON brut ni message « vide » tant que le champ text n’est pas lisible. */
+const STREAM_PENDING_LABEL = '▫️ Réponse en cours…';
+
+const DISCORD_SAFE_STREAM_LEN = 1900;
+
+function truncateForDiscordStream(s) {
+    if (!s || s.length <= DISCORD_SAFE_STREAM_LEN) return s;
+    return s.slice(0, DISCORD_SAFE_STREAM_LEN - 1) + '…';
+}
+
+/**
+ * Contenu à afficher pendant le streaming (texte utilisateur extrait du JSON, pas le brut).
+ */
+function buildStreamDisplayContent(raw, thinking) {
+    if (thinking) return '🧠';
+    const visible = String(raw || '').trim();
+    if (!visible) return STREAM_REPLY_PLACEHOLDER;
+    if (!visible.startsWith('{')) return truncateForDiscordStream(visible);
+    const extracted = extractTextFromPartialJson(visible);
+    if (extracted && String(extracted).replace(/\u200B/g, '').trim().length > 0) {
+        return truncateForDiscordStream(String(extracted));
+    }
+    return STREAM_PENDING_LABEL;
+}
+
+/**
+ * Texte réellement destiné à l’utilisateur une fois le stream terminé (parse JSON si besoin).
+ */
+function userFacingTextFromCompletedOutput(responseText) {
+    let s = String(responseText || '').replace(/\u200B/g, '').trim();
+    if (!s) return '';
+    s = s.replace(/<think>[\s\S]*?<\/redacted_thinking>/gi, '').trim();
+    if (!s) return '';
+    try {
+        const jsonMatch = s.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed && typeof parsed.text === 'string' && parsed.text.trim()) {
+                return parsed.text.trim();
+            }
+        }
+    } catch {
+        /* JSON encore invalide ou bruit autour — secours ci-dessous */
+    }
+    if (s.startsWith('{')) {
+        const partial = extractTextFromPartialJson(s);
+        if (partial && String(partial).trim()) return String(partial).trim();
+    }
+    return s.trim();
+}
+
 /** Placeholder invisible pour le premier message (Discord exige du contenu). */
 const STREAM_REPLY_PLACEHOLDER = '\u200B';
 
