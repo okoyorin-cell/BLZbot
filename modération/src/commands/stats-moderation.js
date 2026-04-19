@@ -4,7 +4,7 @@ const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 // Configuration du canvas pour les graphiques
 const chartWidth = 800;
 const chartHeight = 400;
-const chartJSNodeCanvas = new ChartJSNodeCanvas({ width: chartWidth, height: chartHeight, backgroundColour: '#2b2d31' });
+const chartJSNodeCanvas = new ChartJSNodeCanvas({ width: chartWidth, height: chartHeight, backgroundColour: '#1B1725' });
 
 module.exports = {
     data: new SlashCommandBuilder()

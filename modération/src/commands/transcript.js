@@ -209,7 +209,7 @@ function generateHtmlTranscript(channel, messages, guild) {
         .attachment {
             margin-top: 8px;
             padding: 10px;
-            background: #2f3136;
+            background: #1B1725;
             border-radius: 4px;
             border-left: 3px solid #5865f2;
         }
@@ -217,7 +217,7 @@ function generateHtmlTranscript(channel, messages, guild) {
         .embed {
             margin-top: 8px;
             padding: 12px;
-            background: #2f3136;
+            background: #1B1725;
             border-radius: 4px;
             border-left: 4px solid #5865f2;
             max-width: 520px;
@@ -252,7 +252,7 @@ function generateHtmlTranscript(channel, messages, guild) {
         .footer {
             margin-top: 20px;
             padding: 15px;
-            background: #2f3136;
+            background: #1B1725;
             border-radius: 8px;
             text-align: center;
             color: #72767d;
@@ -377,7 +377,7 @@ function formatContent(text) {
     formatted = formatted.replace(/\*([^*]+)\*/g, '<em>$1</em>');
 
     // Code inline
-    formatted = formatted.replace(/`([^`]+)`/g, '<code style="background: #2f3136; padding: 2px 6px; border-radius: 3px;">$1</code>');
+    formatted = formatted.replace(/`([^`]+)`/g, '<code style="background: #1B1725; padding: 2px 6px; border-radius: 3px;">$1</code>');
 
     // Mentions utilisateur
     formatted = formatted.replace(/&lt;@!?(\d+)&gt;/g, '<span style="color: #7289da; background: rgba(114, 137, 218, 0.1); padding: 0 2px; border-radius: 3px;">@User</span>');

@@ -12,7 +12,9 @@ const {
     UserSelectMenuBuilder,
     AttachmentBuilder
 } = require('discord.js');
+const path = require('path');
 const CONFIG = require('../config.js');
+const { BLZ_EMBED_STRIP_HEX } = require(path.join(__dirname, '..', '..', '..', 'blz-embed-theme'));
 const ticketManager = require('../modules/tickets.js');
 
 /**
