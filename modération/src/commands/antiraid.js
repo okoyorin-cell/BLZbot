@@ -379,7 +379,7 @@ module.exports = {
 
         try {
             const container = new ContainerBuilder()
-                .setAccentColor(0x3498db);
+                .setAccentColor(BLZ_EMBED_STRIP_INT);
 
             container.addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(`# 📜 Historique des Incidents de Raid`)
