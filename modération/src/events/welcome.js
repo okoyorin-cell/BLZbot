@@ -175,7 +175,7 @@ async function handleMemberJoin(member) {
 
         logWelcomeMemberMeta(member);
 
-        const payload = buildWelcomeMessage(member);
+        const payload = await buildWelcomeMessage(member);
         await channel.send({
             components: payload.components,
             flags: payload.flags,
