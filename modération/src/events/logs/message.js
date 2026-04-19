@@ -120,6 +120,7 @@ async function handleLogChannelSecurity(client, logger, message) {
 
     // Chercher qui a supprimé
     let executor = await findAuditLogEntry(message.guild, AuditLogEvent.MessageDelete, authorId);
+    if (shouldSkipMessageDeleteLog(executor, message)) return;
 
     const isOwnMessage = client.user && authorId === client.user.id;
     const executorName = executor ? executor.tag : (isOwnMessage ? "Inconnu (suppression externe suspecte)" : "Inconnu");
