@@ -87,10 +87,11 @@ function logWelcomeMemberMeta(member) {
 
 /**
  * @param {import('discord.js').GuildMember} member
- * @returns {{ components: import('discord.js').ContainerBuilder[]; flags: number; allowedMentions: { users: string[] } }}
+ * @returns {Promise<{ components: import('discord.js').ContainerBuilder[]; flags: number; allowedMentions: { users: string[] } }>}
  */
-function buildWelcomeMessage(member) {
+async function buildWelcomeMessage(member) {
     const w = CONFIG.WELCOME;
+    const titleEmoji = await resolveWelcomeTitleEmoji(member.client);
     const regId = w.LINK_REGLEMENT_CHANNEL_ID;
     const ticketsId = w.LINK_TICKETS_CHANNEL_ID;
 
