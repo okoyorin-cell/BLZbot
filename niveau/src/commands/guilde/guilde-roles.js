@@ -1,4 +1,6 @@
+const path = require('path');
 const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { BLZ_EMBED_STRIP_INT } = require(path.join(__dirname, '..', '..', '..', '..', 'blz-embed-theme'));
 const { getGuildOfUser, getGuildMembers, getGuildById } = require('../../utils/db-guilds');
 const { areGuildFeaturesDisabled } = require('../../utils/guild/guild-overstaffing');
 const { getCustomRoles, addOrUpdateCustomRole, deleteCustomRole, assignCustomRoleToUser, getUserCustomRole, revokeCustomRoleFromUser, countMembersWithRole } = require('../../utils/guild/guild-custom-roles');
