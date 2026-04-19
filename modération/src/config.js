@@ -227,7 +227,7 @@ module.exports = {
         LOG_CHANNEL_ID: null,                         // Salon de logs tickets (null = pas de logs)
         MAX_OPEN_TICKETS: 1,                          // Max tickets ouverts par utilisateur
         COOLDOWN_MS: 300000,                          // Cooldown entre tickets (5 minutes)
-        EMBED_COLOR: '#2b2d31'
+        EMBED_COLOR: BLZ_EMBED_STRIP_HEX
     },
 
     // ==================== SYSTÈME D'ABSENCES STAFF ====================
