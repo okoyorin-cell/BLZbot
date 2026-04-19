@@ -1420,7 +1420,8 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
                 utils.deepThinkCache.set(streamMsgId, streamState.thinking);
             }
 
-            if (!String(responseText).replace(/\u200B/g, '').trim()) {
+            const facing = userFacingTextFromCompletedOutput(responseText);
+            if (!facing) {
                 try {
                     await streamReplyMessage.edit({ content: EMPTY_REPLY_FALLBACK, components: [] });
                 } catch { /* ignore */ }
