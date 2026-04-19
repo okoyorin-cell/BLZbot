@@ -21,10 +21,8 @@ const recentJoins = new Map();
 const ANTI_DUPLICATE_MS = 5000;
 
 function parseAccentColor(hex) {
-    if (!hex) return 0x2f3136;
-    const s = String(hex).replace(/^#/, '');
-    const n = parseInt(s, 16);
-    return Number.isNaN(n) ? 0x2f3136 : n;
+    if (!hex) return stripHexToInt();
+    return stripHexToInt(hex);
 }
 
 function channelJumpUrl(guildId, channelId) {
