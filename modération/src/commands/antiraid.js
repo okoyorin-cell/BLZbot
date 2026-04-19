@@ -301,7 +301,7 @@ module.exports = {
                 const embed = new EmbedBuilder()
                     .setTitle('🔓 Lockdown Désactivé')
                     .setDescription('Le lockdown a été désactivé.')
-                    .setColor('#00FF00')
+                    .setColor(BLZ_EMBED_STRIP_INT)
                     .addFields(
                         { name: 'Note', value: 'Les invitations ont été automatiquement réactivées.', inline: false },
                         { name: 'Désactivé par', value: `<@${interaction.user.id}>`, inline: true }
@@ -349,7 +349,7 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setTitle('🧹 Nettoyage Anti-Raid')
                 .setDescription('Le système anti-raid a été réinitialisé.')
-                .setColor('#00FF00')
+                .setColor(BLZ_EMBED_STRIP_INT)
                 .addFields(
                     { name: 'Rôles RAID retirés', value: `${cleared} membres`, inline: true },
                     { name: 'Score réinitialisé', value: 'Oui', inline: true },
@@ -553,7 +553,7 @@ module.exports = {
                 const embed = new EmbedBuilder()
                     .setTitle('🔗 Invitations Réactivées')
                     .setDescription('La création d\'invitations a été réactivée pour @everyone.')
-                    .setColor('#00FF00')
+                    .setColor(BLZ_EMBED_STRIP_INT)
                     .addFields(
                         { name: 'Réactivé par', value: `<@${interaction.user.id}>`, inline: true }
                     )
