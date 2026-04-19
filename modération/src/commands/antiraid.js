@@ -322,7 +322,7 @@ module.exports = {
 
         try {
             const container = new ContainerBuilder()
-                .setAccentColor(0x00FF00);
+                .setAccentColor(BLZ_EMBED_STRIP_INT);
 
             container.addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(`# 🧹 Nettoyage Anti-Raid`)
@@ -530,7 +530,7 @@ module.exports = {
 
             try {
                 const container = new ContainerBuilder()
-                    .setAccentColor(0x00FF00);
+                    .setAccentColor(BLZ_EMBED_STRIP_INT);
 
                 container.addTextDisplayComponents(
                     new TextDisplayBuilder().setContent(`# 🔗 Invitations Réactivées`)
