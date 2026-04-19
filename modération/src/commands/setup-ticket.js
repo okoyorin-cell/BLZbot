@@ -33,7 +33,7 @@ module.exports = {
                 '> ⚠️ **Merci de ne pas ouvrir de ticket pour rien**\n' +
                 '> Les abus seront sanctionnés.'
             )
-            .setColor(CONFIG.TICKETS?.EMBED_COLOR || '#2b2d31')
+            .setColor(CONFIG.TICKETS?.EMBED_COLOR || BLZ_EMBED_STRIP_HEX)
             .setFooter({ text: 'BLZstarss - Système de tickets' });
 
         const row = new ActionRowBuilder().addComponents(

@@ -150,7 +150,7 @@ class Scheduler {
                     { name: '✅ Pour', value: '0', inline: true },
                     { name: '❌ Contre', value: '0', inline: true }
                 )
-                .setColor('#5E81F4')
+                .setColor(BLZ_EMBED_STRIP_INT)
                 .setTimestamp()
                 .setThumbnail(member.user.displayAvatarURL());
 
