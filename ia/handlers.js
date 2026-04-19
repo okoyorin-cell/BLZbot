@@ -1237,7 +1237,7 @@ function extractTextFromPartialJson(raw) {
     const trimmed = raw.trimStart();
     if (!trimmed.startsWith('{')) return raw; // Pas du JSON, afficher tel quel
 
-    // Chercher "text" suivi de : et "
+    // Chercher "text" suivi de : et " (modèles qui respectent le JSON strict)
     const textKeyMatch = trimmed.match(/"text"\s*:\s*"/);
     if (!textKeyMatch) return ''; // JSON en construction, pas encore arrivé au champ text
 
