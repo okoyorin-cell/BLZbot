@@ -106,7 +106,7 @@ async function buildWelcomeMessage(member) {
 
     /** Un seul TextDisplay évite l’espace vertical entre deux composants V2. Sauts `\n` simples (pas de `\n\n`). */
     const mainText = new TextDisplayBuilder().setContent(
-        `## 👋 **Bienvenue,** ${member} **!**\n` +
+        `## ${titleEmoji} **Bienvenue,** ${member} **!**\n` +
             `➜ Nous sommes ravis de te voir arriver sur le serveur **${serverName}** !\n` +
             `➜ N'hésite pas à aller faire un tour dans <#${regId}> et <#${ticketsId}> si t'as besoin d'aide.\n` +
             `➜ Passe un agréable séjour ici ! 🔥`
