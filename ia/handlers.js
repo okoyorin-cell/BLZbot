@@ -1229,51 +1229,10 @@ async function handleInteractionCreate(interaction, client, activeThreads) {
 
 // --- FONCTIONS HELPER STREAMING ---
 
-/**
- * Extrait le champ "text" d'un JSON partiel pour l'affichage temps réel
- */
-function extractTextFromPartialJson(raw) {
-    if (!raw) return raw;
-    const trimmed = raw.trimStart();
-    if (!trimmed.startsWith('{')) return raw; // Pas du JSON, afficher tel quel
+/** Placeholder invisible pour le premier message (Discord exige du contenu non vide). */
+const STREAM_REPLY_PLACEHOLDER = '\u200B';
 
-    // Chercher "text" suivi de : et " (modèles qui respectent le JSON strict)
-    const textKeyMatch = trimmed.match(/"text"\s*:\s*"/);
-    if (!textKeyMatch) return ''; // JSON en construction, pas encore arrivé au champ text
-
-    const startIndex = textKeyMatch.index + textKeyMatch[0].length;
-
-    // Extraire le contenu de la valeur string JSON (gestion des escapes)
-    let result = '';
-    let i = startIndex;
-    let escaped = false;
-
-    while (i < trimmed.length) {
-        const ch = trimmed[i];
-        if (escaped) {
-            switch (ch) {
-                case 'n': result += '\n'; break;
-                case 't': result += '\t'; break;
-                case '"': result += '"'; break;
-                case '\\': result += '\\'; break;
-                case '/': result += '/'; break;
-                default: result += '\\' + ch;
-            }
-            escaped = false;
-        } else if (ch === '\\') {
-            escaped = true;
-        } else if (ch === '"') {
-            break; // Fin de la valeur string
-        } else {
-            result += ch;
-        }
-        i++;
-    }
-
-    return result;
-}
-
-/** Pendant le stream JSON : pas de JSON brut ni message « vide » tant que le champ text n’est pas lisible. */
+/** Libellé affiché pendant le stream tant que le champ "text" du JSON n'est pas encore parseable. */
 const STREAM_PENDING_LABEL = '▫️ Réponse en cours…';
 
 const DISCORD_SAFE_STREAM_LEN = 1900;
@@ -1284,28 +1243,101 @@ function truncateForDiscordStream(s) {
 }
 
 /**
- * Contenu à afficher pendant le streaming (texte utilisateur extrait du JSON, pas le brut).
+ * Extrait (au mieux) le champ "text" d'un JSON partiel/brut — gère les échappements,
+ * les préambules (texte avant le `{`) et les code-fences ```json ... ``` .
+ */
+function extractTextFromPartialJson(raw) {
+    if (!raw) return '';
+    let s = String(raw);
+
+    s = s.replace(/^```(?:json)?\s*/i, '');
+    s = s.replace(/\s*```$/i, '');
+
+    const braceIdx = s.indexOf('{');
+    if (braceIdx < 0) return '';
+    const fromBrace = s.slice(braceIdx);
+
+    const textKeyMatch = fromBrace.match(/"text"\s*:\s*"/);
+    if (!textKeyMatch) return '';
+
+    const startIndex = textKeyMatch.index + textKeyMatch[0].length;
+    let result = '';
+    let i = startIndex;
+    let escaped = false;
+
+    while (i < fromBrace.length) {
+        const ch = fromBrace[i];
+        if (escaped) {
+            switch (ch) {
+                case 'n': result += '\n'; break;
+                case 'r': result += '\r'; break;
+                case 't': result += '\t'; break;
+                case '"': result += '"'; break;
+                case '\\': result += '\\'; break;
+                case '/': result += '/'; break;
+                case 'u': {
+                    const hex = fromBrace.slice(i + 1, i + 5);
+                    if (/^[0-9a-fA-F]{4}$/.test(hex)) {
+                        result += String.fromCharCode(parseInt(hex, 16));
+                        i += 4;
+                    } else {
+                        result += '\\u';
+                    }
+                    break;
+                }
+                default: result += ch;
+            }
+            escaped = false;
+        } else if (ch === '\\') {
+            escaped = true;
+        } else if (ch === '"') {
+            break;
+        } else {
+            result += ch;
+        }
+        i++;
+    }
+
+    return result;
+}
+
+/**
+ * Contenu à afficher pendant le streaming — JAMAIS de JSON brut, jamais d'erreur intermédiaire.
+ * - `thinking` ⇒ 🧠
+ * - rien ⇒ placeholder invisible (inchangé)
+ * - JSON partiel sans "text" ⇒ libellé « en cours »
+ * - texte hors JSON ⇒ texte tel quel (tronqué)
  */
 function buildStreamDisplayContent(raw, thinking) {
     if (thinking) return '🧠';
     const visible = String(raw || '').trim();
     if (!visible) return STREAM_REPLY_PLACEHOLDER;
-    if (!visible.startsWith('{')) return truncateForDiscordStream(visible);
-    const extracted = extractTextFromPartialJson(visible);
-    if (extracted && String(extracted).replace(/\u200B/g, '').trim().length > 0) {
-        return truncateForDiscordStream(String(extracted));
+
+    const looksLikeJson =
+        visible.startsWith('{') ||
+        /^```(?:json)?\s*\{/i.test(visible) ||
+        /"text"\s*:/.test(visible.slice(0, 200));
+
+    if (looksLikeJson) {
+        const extracted = extractTextFromPartialJson(visible);
+        if (extracted && extracted.replace(/\u200B/g, '').trim().length > 0) {
+            return truncateForDiscordStream(extracted);
+        }
+        return STREAM_PENDING_LABEL;
     }
-    return STREAM_PENDING_LABEL;
+
+    return truncateForDiscordStream(visible);
 }
 
 /**
- * Texte réellement destiné à l’utilisateur une fois le stream terminé (parse JSON si besoin).
+ * Texte réellement destiné à l’utilisateur une fois le stream terminé — parse JSON si besoin.
  */
 function userFacingTextFromCompletedOutput(responseText) {
     let s = String(responseText || '').replace(/\u200B/g, '').trim();
     if (!s) return '';
-    s = s.replace(/<think>[\s\S]*?<\/redacted_thinking>/gi, '').trim();
+    s = s.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
     if (!s) return '';
+
     try {
         const jsonMatch = s.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -1315,17 +1347,14 @@ function userFacingTextFromCompletedOutput(responseText) {
             }
         }
     } catch {
-        /* JSON encore invalide ou bruit autour — secours ci-dessous */
+        /* JSON invalide ou bruit autour — secours ci-dessous */
     }
-    if (s.startsWith('{')) {
-        const partial = extractTextFromPartialJson(s);
-        if (partial && String(partial).trim()) return String(partial).trim();
-    }
+
+    const partial = extractTextFromPartialJson(s);
+    if (partial && partial.trim()) return partial.trim();
+
     return s.trim();
 }
-
-/** Placeholder invisible pour le premier message (Discord exige du contenu). */
-const STREAM_REPLY_PLACEHOLDER = '\u200B';
 
 /**
  * Gère le cycle de vie complet d'une réponse en streaming sur Discord
