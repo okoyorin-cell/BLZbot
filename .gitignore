@@ -37,8 +37,7 @@ Thumbs.db
 *.swp
 
 # VSCode : ignorer les paramètres locaux, mais garder les autres fichiers de configuration
-.vscode/
-settings.json
+.vscode/*
 
 # Optionnel : caches
 .cache/
