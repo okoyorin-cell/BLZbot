@@ -37,8 +37,7 @@ Thumbs.db
 *.swp
 
 # VScode
-.vscode/*
-!.vscode/settings.json
+.vscode/
 
 # Optionnel : caches
 .cache/
