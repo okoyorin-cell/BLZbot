@@ -1363,12 +1363,16 @@ async function handleStreamingResponse(message, modelName, queryFunction, existi
     let streamReplyMessage = existingMessage;
     if (!streamReplyMessage) {
         await message.channel.sendTyping().catch(() => {});
-        streamReplyMessage = await message.reply({ content: STREAM_REPLY_PLACEHOLDER });
+        streamReplyMessage = await message.reply({ content: STREAM_PENDING_LABEL });
+    } else {
+        try {
+            await streamReplyMessage.edit({ content: STREAM_PENDING_LABEL, components: [] });
+        } catch { /* ignore */ }
     }
     const streamMsgId = streamReplyMessage.id;
 
     let streamState = { content: '', thinking: '', isThinking: false, done: false };
-    let lastEditContent = '';
+    let lastEditContent = STREAM_PENDING_LABEL;
     let responseText = null;
 
     const inThinkingBlock = () =>
