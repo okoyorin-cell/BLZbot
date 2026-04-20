@@ -28,6 +28,7 @@ channelActivity.json
 npm-debug.log*
 .DS_Store
 Thumbs.db
+settings.json
 
 # Cursor : ignorer le cache local, mais garder hooks.json + hooks/ (auto-sync GitHub)
 .cursor/*
