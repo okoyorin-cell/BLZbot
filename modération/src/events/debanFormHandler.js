@@ -112,17 +112,9 @@ module.exports = {
             await interaction.showModal(modal);
 
         } catch (error) {
-            if (error.code === 10026) { // Unknown Ban - L'utilisateur n'est pas banni
-                return interaction.reply({
-                    content: "❌ Vous n'êtes pas banni du serveur principal.\n\n" +
-                        "Si vous pensez que c'est une erreur, veuillez contacter un modérateur.\n" +
-                        "Si vous souhaitez rejoindre le serveur : https://discord.gg/UJNZxzmmPV",
-                    ephemeral: true
-                });
-            } else {
-                console.error(`Erreur lors de la vérification du bannissement pour ${interaction.user.id}:`, error);
-                return interaction.reply({
-                    content: '❌ Une erreur est survenue lors de la vérification de votre statut de bannissement.',
+            console.error(`Erreur lors de la vérification du bannissement pour ${interaction.user.id}:`, error);
+            return interaction.reply({
+                content: '❌ Une erreur est survenue lors de la vérification de votre statut de bannissement.',
                     ephemeral: true
                 });
             }
