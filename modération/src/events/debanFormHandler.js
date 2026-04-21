@@ -129,9 +129,11 @@ module.exports = {
             await interaction.showModal(modal);
 
         } catch (error) {
-            console.error(`Erreur lors de la vérification du bannissement pour ${interaction.user.id}:`, error);
+            console.error(`[Deban] Erreur handleLaunchForm pour ${interaction.user.id}: code=${error?.code} status=${error?.status} msg=${error?.message}`);
+            console.error(error);
+            if (interaction.replied || interaction.deferred) return;
             return interaction.reply({
-                content: '❌ Une erreur est survenue lors de la vérification de votre statut de bannissement.',
+                content: `❌ Une erreur est survenue (code ${error?.code ?? 'inconnu'}). Détails envoyés dans la console.`,
                 ephemeral: true
             });
         }
