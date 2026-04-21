@@ -28,12 +28,6 @@ module.exports = {
             });
         }
 
-        // Bypass : un Administrateur Test peut soumettre une demande même sans être banni (test du flux)
-        const adminTestRoleId = CONFIG.ADMIN_TEST_ROLE_ID;
-        let isAdminTest = Boolean(
-            adminTestRoleId && interaction.member?.roles?.cache?.has(adminTestRoleId)
-        );
-
         // Vérifier si l'utilisateur est banni du serveur principal
         try {
             const mainGuild = await client.guilds.fetch(CONFIG.DEBAN_GUILD_ID);
@@ -44,24 +38,23 @@ module.exports = {
                 });
             }
 
-            // Le rôle Admin Test vit sur le serveur principal : vérifier aussi là-bas
-            // si le panel est sur un autre serveur (PANEL_GUILD_ID ≠ DEBAN_GUILD_ID).
-            if (!isAdminTest && adminTestRoleId) {
-                try {
-                    const mainMember = await mainGuild.members.fetch(interaction.user.id);
-                    if (mainMember?.roles?.cache?.has(adminTestRoleId)) {
-                        isAdminTest = true;
-                    }
-                } catch { /* user absent du serveur principal : pas admin test */ }
-            }
+            // Bypass : toute personne ayant la permission Administrateur sur le serveur
+            // principal peut soumettre une demande même sans être bannie (test du flux).
+            let isMainAdmin = false;
+            try {
+                const mainMember = await mainGuild.members.fetch(interaction.user.id);
+                isMainAdmin = Boolean(
+                    mainMember?.permissions?.has(PermissionFlagsBits.Administrator)
+                );
+            } catch { /* user absent du serveur principal : pas admin */ }
 
             // Tenter de récupérer le ban de l'utilisateur
             try {
                 await mainGuild.bans.fetch(interaction.user.id);
             } catch (banError) {
                 if (banError.code === 10026) {
-                    // Utilisateur non banni : refus sauf si Admin Test (bypass pour test)
-                    if (!isAdminTest) {
+                    // Utilisateur non banni : refus sauf si admin du serveur principal (bypass test)
+                    if (!isMainAdmin) {
                         return interaction.reply({
                             content: "❌ Vous n'êtes pas banni du serveur principal.\n\n" +
                                 "Si vous pensez que c'est une erreur, veuillez contacter un modérateur.\n" +
@@ -69,13 +62,13 @@ module.exports = {
                             ephemeral: true
                         });
                     }
-                    console.log(`[Deban] Bypass Admin Test : ${interaction.user.tag} (${interaction.user.id}) soumet une demande sans être banni`);
+                    console.log(`[Deban] Bypass admin serveur principal : ${interaction.user.tag} (${interaction.user.id}) soumet une demande sans être banni`);
                 } else {
                     throw banError;
                 }
             }
 
-            // L'utilisateur est banni (ou Admin Test en test), ouvrir le formulaire étape 1
+            // L'utilisateur est banni (ou admin du main en test), ouvrir le formulaire étape 1
             const modal = new ModalBuilder()
                 .setCustomId('deban_form_step1')
                 .setTitle('Débannissement - Étape 1/3');
