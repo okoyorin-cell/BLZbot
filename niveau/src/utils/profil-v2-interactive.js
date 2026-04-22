@@ -407,6 +407,27 @@ async function sendProfilV2WithButtons(interaction, session) {
                         ? [new ContainerBuilder().addMediaGalleryComponents(mg).addActionRowComponents(buildPaginationButtons(p, totalPages, 'a'))]
                         : [new ContainerBuilder().addMediaGalleryComponents(mg).addActionRowComponents(buildButtons(true))];
 
+                currentRender.attachmentName = 'profil-v2-trophies.png';
+                currentRender.buildBuffer = async () => {
+                    const freshQuestsData = getAllUserQuests(targetUser.id);
+                    const freshCompleted = [];
+                    for (const qId in QUESTS) {
+                        const qInfo = QUESTS[qId];
+                        if (qInfo.rarity === 'Halloween' || qInfo.rarity === 'Noël') continue;
+                        const up = freshQuestsData.find((q) => q.quest_id === qId);
+                        if (up && up.completed) {
+                            freshCompleted.push({
+                                name: qInfo.name || 'Trophée',
+                                description: qInfo.description || '',
+                                rarity: qInfo.rarity || 'Commune',
+                            });
+                        }
+                    }
+                    const freshTotal = Math.ceil(freshCompleted.length / ACH) || 1;
+                    const pp = Math.max(0, Math.min(p, freshTotal - 1));
+                    return renderAchievementsCardFiche2({ achievements: freshCompleted.slice(pp * ACH, (pp + 1) * ACH) });
+                };
+
                 await i.editReply({ content: null, files: [aFile], components: comps, flags: MessageFlags.IsComponentsV2 });
             } else if (i.customId.startsWith(`${GUILD}_`)) {
                 const currentGuild = getGuildOfUser(targetUser.id);
