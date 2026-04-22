@@ -568,6 +568,10 @@ async function sendProfilV2WithButtons(interaction, session) {
                 const mainFile = await buildMainFile();
                 const mg = new MediaGalleryBuilder().addItems({ media: { url: 'attachment://profil-v2-main.png' } });
                 const cont = new ContainerBuilder().addMediaGalleryComponents(mg).addActionRowComponents(buildButtons(false));
+
+                currentRender.attachmentName = 'profil-v2-main.png';
+                currentRender.buildBuffer = renderMainPngBuffer;
+
                 await i.editReply({ content: null, files: [mainFile], components: [cont], flags: MessageFlags.IsComponentsV2 });
             }
         } catch (err) {
