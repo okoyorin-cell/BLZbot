@@ -454,6 +454,29 @@ async function sendProfilV2WithButtons(interaction, session) {
                 const gFile = new AttachmentBuilder(png, { name: 'profil-v2-guild.png' });
                 const mg = new MediaGalleryBuilder().addItems({ media: { url: 'attachment://profil-v2-guild.png' } });
                 const cont = new ContainerBuilder().addMediaGalleryComponents(mg).addActionRowComponents(buildButtons(true));
+
+                currentRender.attachmentName = 'profil-v2-guild.png';
+                currentRender.buildBuffer = async () => {
+                    const freshGuild = getGuildOfUser(targetUser.id);
+                    if (!freshGuild) return png;
+                    const freshMembers = getGuildMembersWithDetails(freshGuild.id);
+                    const freshOwner = await i.client.users.fetch(freshGuild.owner_id).catch(() => null);
+                    const freshWar = getOngoingWar(freshGuild.id);
+                    let freshWarInfo = null;
+                    if (freshWar) {
+                        const oppId = freshWar.guild1_id === freshGuild.id ? freshWar.guild2_id : freshWar.guild1_id;
+                        const opp = getGuildById(oppId);
+                        freshWarInfo = { status: 'ongoing', opponent: opp ? opp.name : 'Inconnu', timeRemaining: freshWar.end_time - Date.now() };
+                    }
+                    return renderGuildProfileV2({
+                        guild: freshGuild,
+                        members: freshMembers.slice(0, 10),
+                        owner: freshOwner || { username: 'Inconnu' },
+                        warInfo: freshWarInfo,
+                        totalMembers: freshMembers.length,
+                    });
+                };
+
                 await i.editReply({ content: null, files: [gFile], components: [cont], flags: MessageFlags.IsComponentsV2 });
             } else if (i.customId.startsWith(`${INV}_`)) {
                 const inventory = getUserInventory(targetUser.id);
