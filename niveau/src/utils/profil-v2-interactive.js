@@ -580,8 +580,24 @@ async function sendProfilV2WithButtons(interaction, session) {
         }
     });
 
-    collector.on('end', () => {
-        interaction.editReply({ components: [] }).catch(() => {});
+    collector.on('end', async () => {
+        // Laisse le canvas visible à vie : on régénère la dernière vue, mais sans les boutons.
+        try {
+            const buf = await currentRender.buildBuffer();
+            const persistFile = new AttachmentBuilder(buf, { name: currentRender.attachmentName });
+            const persistGallery = new MediaGalleryBuilder().addItems({
+                media: { url: `attachment://${currentRender.attachmentName}` },
+            });
+            const persistContainer = new ContainerBuilder().addMediaGalleryComponents(persistGallery);
+            await interaction.editReply({
+                content: null,
+                files: [persistFile],
+                components: [persistContainer],
+                flags: MessageFlags.IsComponentsV2,
+            });
+        } catch (err) {
+            logger.warn('profil-v2 collector end (persist canvas) a échoué:', err?.message || err);
+        }
     });
 
     return message;
