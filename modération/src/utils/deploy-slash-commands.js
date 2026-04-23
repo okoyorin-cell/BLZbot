@@ -24,12 +24,8 @@ const COMMANDS_DIR = path.join(__dirname, '..', 'commands');
  */
 const DEFAULT_SUPPORT_GUILD_ID = String(CONFIG.TICKETS?.SUPPORT_GUILD_ID || '1351221530998345828');
 
-const GUILD_ONLY_BY_COMMAND = new Map([
-    [
-        'panel-deban-forum',
-        new Set([String(CONFIG.MAIN_GUILD_ID), DEFAULT_SUPPORT_GUILD_ID]),
-    ],
-]);
+/** Commandes strictement guild-only (aucune pour l’instant — tout passe en global + miroir support). */
+const GUILD_ONLY_BY_COMMAND = new Map();
 
 /**
  * Guildes où on enregistre **toutes** les commandes modération en guild (`commands.set`),
