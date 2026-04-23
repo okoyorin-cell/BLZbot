@@ -732,6 +732,12 @@ class VoteManager {
                     this.debanVotes[uid].threadId = thread.id;
                     this.saveDebanVotes();
                 } else {
+                    const { embed, row } = this._buildDebanVoteComponents(
+                        req.userData,
+                        req.reportContent,
+                        targetChannel,
+                        { name: '⏳ Statut', value: 'Mise en attente expirée — vote automatique lancé.', inline: false }
+                    );
                     sent = await targetChannel.send({
                         content: `<@&${mentionRoleId}> Demande de débannissement — délai d'attente écoulé, vote automatique !`,
                         embeds: [embed],
