@@ -63,52 +63,65 @@ module.exports = {
         ];
 
         try {
-            const mainGuild = await client.guilds.fetch(CONFIG.DEBAN_GUILD_ID).catch(err => {
-                console.error(`[Deban] Impossible de fetch la guild principale (${CONFIG.DEBAN_GUILD_ID}):`, err?.code, err?.message);
-                return null;
-            });
+            // 1. Bypass global : si le panel est sur le serveur de TEST, on saute intégralement
+            //    la vérif de ban (tout le monde peut tester le flow).
+            const isTestServer = String(interaction.guild?.id) === String(TEST_DEBAN_BYPASS_GUILD_ID);
 
-            if (!mainGuild) {
-                return interaction.reply({
-                    content: '❌ Une erreur est survenue lors de la vérification du serveur principal.',
-                    ephemeral: true
-                });
-            }
-
-            // Vérifier les rôles du membre sur le SERVEUR PRINCIPAL (là où vivent les rôles Admin/Owner)
-            let isBypass = false;
-            try {
-                const mainMember = await mainGuild.members.fetch(interaction.user.id);
-                isBypass = Boolean(
-                    mainMember?.roles?.cache?.some(r => BYPASS_ROLE_IDS.includes(r.id))
-                );
-            } catch { /* user absent du serveur principal : pas de bypass */ }
-
-            // Bypass : ouvrir le formulaire direct, sans vérifier le ban
-            if (isBypass) {
-                console.log(`[Deban] Bypass Admin/Owner : ${interaction.user.tag} (${interaction.user.id}) soumet une demande (non banni)`);
+            if (isTestServer) {
+                console.log(`[Deban] Serveur de test (${interaction.guild.id}) : bypass ban check pour ${interaction.user.tag}`);
             } else {
-                // Vérification normale : tenter de récupérer le ban de l'utilisateur
-                try {
-                    await mainGuild.bans.fetch(interaction.user.id);
-                } catch (banError) {
-                    if (banError?.code === 10026) {
-                        // Unknown Ban : l'utilisateur n'est pas banni
-                        return interaction.reply({
-                            content: "❌ Vous n'êtes pas banni du serveur principal.\n\n" +
-                                "Si vous pensez que c'est une erreur, veuillez contacter un modérateur.\n" +
-                                "Si vous souhaitez rejoindre le serveur : https://discord.gg/UJNZxzmmPV",
-                            ephemeral: true
-                        });
-                    }
-                    // Autre erreur API (missing permissions, missing access, etc.) : log détaillé
-                    console.error(`[Deban] Erreur ban fetch pour ${interaction.user.id} sur ${mainGuild.id}: code=${banError?.code} status=${banError?.status} msg=${banError?.message}`);
+                // 2. Vérif normale : sur tous les autres serveurs, on regarde le ban sur le serveur principal BLZ.
+                const mainGuild = await client.guilds.fetch(CONFIG.DEBAN_GUILD_ID).catch(err => {
+                    console.error(`[Deban] Impossible de fetch la guild principale (${CONFIG.DEBAN_GUILD_ID}):`, err?.code, err?.message);
+                    return null;
+                });
+
+                if (!mainGuild) {
                     return interaction.reply({
-                        content: `❌ Impossible de vérifier votre statut de bannissement (code ${banError?.code ?? 'inconnu'}). Contactez un modérateur.`,
+                        content: '❌ Une erreur est survenue lors de la vérification du serveur principal.',
                         ephemeral: true
                     });
                 }
+
+                // Bypass Admin/Owner : on vérifie les rôles du membre sur le SERVEUR PRINCIPAL
+                let isBypass = false;
+                try {
+                    const mainMember = await mainGuild.members.fetch(interaction.user.id);
+                    isBypass = Boolean(
+                        mainMember?.roles?.cache?.some(r => BYPASS_ROLE_IDS.includes(r.id))
+                    );
+                } catch { /* user absent du serveur principal : pas de bypass */ }
+
+                if (isBypass) {
+                    console.log(`[Deban] Bypass Admin/Owner : ${interaction.user.tag} (${interaction.user.id}) soumet une demande (non banni)`);
+                } else {
+                    // Vérification normale : tenter de récupérer le ban de l'utilisateur
+                    try {
+                        await mainGuild.bans.fetch(interaction.user.id);
+                    } catch (banError) {
+                        if (banError?.code === 10026) {
+                            // Unknown Ban : l'utilisateur n'est pas banni
+                            return interaction.reply({
+                                content: "❌ Vous n'êtes pas banni du serveur principal.\n\n" +
+                                    "Si vous pensez que c'est une erreur, veuillez contacter un modérateur.\n" +
+                                    "Si vous souhaitez rejoindre le serveur : https://discord.gg/UJNZxzmmPV",
+                                ephemeral: true
+                            });
+                        }
+                        // Autre erreur API (missing permissions, missing access, etc.) : log détaillé
+                        console.error(`[Deban] Erreur ban fetch pour ${interaction.user.id} sur ${mainGuild.id}: code=${banError?.code} status=${banError?.status} msg=${banError?.message}`);
+                        return interaction.reply({
+                            content: `❌ Impossible de vérifier votre statut de bannissement (code ${banError?.code ?? 'inconnu'}). Contactez un modérateur.`,
+                            ephemeral: true
+                        });
+                    }
+                }
             }
+
+            // Mémorise le salon de deban pour que handleStep3Submit puisse l'utiliser à la soumission.
+            // On utilise un petit cache in-memory — le TTL de formData (30 min) fait le ménage si abandon.
+            voteManager.pendingDebanChannels = voteManager.pendingDebanChannels || new Map();
+            voteManager.pendingDebanChannels.set(interaction.user.id, debanChannelId);
 
             // OK : ouvrir le formulaire étape 1
             const modal = new ModalBuilder()
