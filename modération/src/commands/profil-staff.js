@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, AttachmentBuilder, PermissionFlagsBits } = require('discord.js');
 const CONFIG = require('../config.js');
 const { renderStaffProfileCardV2 } = require('../utils/canvas-staff-v2');
+const { isBotOwner } = require('../utils/bot-owner');
 
 module.exports = {
     data: new SlashCommandBuilder()
