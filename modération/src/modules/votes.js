@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionsBitField } = require('discord.js');
 const CONFIG = require('../config.js');
+const { isBotOwner } = require('../utils/bot-owner');
 
 const _V_COMPACT = process.env.BLZ_COMPACT_LOG === '1';
 
