@@ -61,25 +61,38 @@ function buildPanelPayload(debanChannelId) {
 
 /**
  * Résout un identifiant de salon (string) en objet Channel via le client, tous serveurs confondus.
- * Retourne null si introuvable, non textuel, ou hors des serveurs autorisés.
+ * Retourne null si introuvable, type non autorisé, ou hors des serveurs autorisés.
+ * @param {{ forDebanDestination?: boolean }} [opts] — si true, accepte aussi un salon forum (cible des votes).
  */
-async function resolveAllowedChannel(client, channelId) {
+async function resolveAllowedChannel(client, channelId, opts = {}) {
+    const forDeban = Boolean(opts.forDebanDestination);
     if (!channelId || !/^\d{15,25}$/.test(channelId)) return null;
     const channel = await client.channels.fetch(channelId).catch(() => null);
     if (!channel) return null;
-    if (!ALLOWED_CHANNEL_TYPES.has(channel.type)) return null;
+    const allowed = forDeban ? DEBAN_VOTE_CHANNEL_TYPES : PANEL_DISPLAY_CHANNEL_TYPES;
+    if (!allowed.has(channel.type)) return null;
     if (!ALLOWED_PANEL_GUILD_IDS.includes(String(channel.guild?.id))) return null;
     return channel;
 }
 
 /**
  * Vérifie que le bot peut poster dans un salon cross-guild.
+ * @param {{ forDebanDestination?: boolean }} [opts]
  */
-function botCanPostIn(channel) {
+function botCanPostIn(channel, opts = {}) {
+    const forDeban = Boolean(opts.forDebanDestination);
     const me = channel.guild?.members?.me;
     if (!me) return true; // fallback : on laisse passer, Discord renverra l'erreur à l'usage
     const perms = channel.permissionsFor?.(me);
     if (!perms) return true;
+    if (channel.type === ChannelType.GuildForum) {
+        if (!forDeban) return false;
+        return (
+            perms.has(PermissionFlagsBits.ViewChannel) &&
+            perms.has(PermissionFlagsBits.CreatePublicThreads) &&
+            perms.has(PermissionFlagsBits.SendMessagesInThreads)
+        );
+    }
     return perms.has(PermissionFlagsBits.ViewChannel) && perms.has(PermissionFlagsBits.SendMessages);
 }
 
