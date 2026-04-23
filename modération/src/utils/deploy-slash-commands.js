@@ -151,14 +151,50 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
         }
     }
 
-    // Purge des anciens noms globaux (renommages + commandes retirées)
+    // Purge des anciens noms globaux (renommages + commandes retirées) + commandes strictement guild-only
     for (const cmd of appCommands.values()) {
-        if (LEGACY_COMMAND_NAMES_TO_REMOVE.has(cmd.name) || OBSOLETE_COMMAND_NAMES.has(cmd.name)) {
+        const remove =
+            LEGACY_COMMAND_NAMES_TO_REMOVE.has(cmd.name) ||
+            OBSOLETE_COMMAND_NAMES.has(cmd.name) ||
+            guildOnlyCommandNames.has(cmd.name);
+        if (!remove) continue;
+        try {
+            await cmd.delete();
+            deletedGlobal++;
+            if (!compact) console.log(`🗑️ [GLOBAL] commande supprimée : /${cmd.name}`);
+        } catch (_) { /* noop */ }
+    }
+
+    // ==================== COMMANDES GUILD-ONLY ====================
+    let guildOnlyCreated = 0;
+    let guildOnlyUpdated = 0;
+    for (const name of guildOnlyCommandNames) {
+        const data = localCommands.get(name);
+        if (!data) continue;
+        const targetGuildIds = GUILD_ONLY_BY_COMMAND.get(name) || new Set();
+        const cmdJson = toCmdJson(data);
+        for (const gid of targetGuildIds) {
+            const guild = await client.guilds.fetch(gid).catch(() => null);
+            if (!guild) {
+                if (!compact) console.warn(`[modération/deploy] guild-only /${name} : guilde ${gid} introuvable.`);
+                continue;
+            }
             try {
-                await cmd.delete();
-                deletedGlobal++;
-                if (!compact) console.log(`🗑️ [GLOBAL] ancienne commande supprimée : /${cmd.name}`);
-            } catch (_) { /* noop */ }
+                const existingGuildCmds = await guild.commands.fetch();
+                const hit = [...existingGuildCmds.values()].find((c) => c.name === name);
+                if (hit) {
+                    await guild.commands.edit(hit.id, cmdJson);
+                    guildOnlyUpdated++;
+                    if (!compact) console.log(`🔄 [${guild.name}] /${name} (guild-only) mise à jour`);
+                } else {
+                    await guild.commands.create(cmdJson);
+                    guildOnlyCreated++;
+                    if (!compact) console.log(`✨ [${guild.name}] /${name} (guild-only) créée`);
+                }
+            } catch (e) {
+                console.error(`❌ [${gid}] /${name} guild-only:`, e?.message || e);
+                errorCount++;
+            }
         }
     }
 
