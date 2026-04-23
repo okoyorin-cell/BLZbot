@@ -126,6 +126,7 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
     appCommands.forEach((cmd) => appMap.set(cmd.name, cmd));
 
     for (const [name, data] of localCommands.entries()) {
+        if (guildOnlyCommandNames.has(name)) continue;
         let cmdJson;
         try {
             cmdJson = toCmdJson(data);
