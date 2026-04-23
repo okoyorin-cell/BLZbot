@@ -8,9 +8,10 @@ const {
 const { getEventState: getHalloweenState } = require('./db-halloween');
 const { getEventState: getChristmasState } = require('./db-noel');
 const { getEventState: getValentinState } = require('./db-valentin');
-const { getSlashDeployGuildIds } = require(path.join(__dirname, '..', '..', '..', 'blzbot-env.js'));
 
-// Fonction pour charger les données de commande depuis un fichier
+// Slash obsolètes à retirer (ancienne convention, remplacés par /profil).
+const OBSOLETE_SLASH_NAMES = new Set(['profil-v2', 'profile']);
+
 function loadCommandData(filePath) {
     try {
         const resolved = path.resolve(filePath);
@@ -39,8 +40,7 @@ function loadCommandData(filePath) {
 }
 
 /**
- * Payload stable pour comparer une commande locale (toJSON) et une commande Discord (ApplicationCommand).
- * Évite les « skip » à tort (ordre d’options, champs extra API, objets vs plain JSON).
+ * Payload stable pour comparer une commande locale (toJSON) et une commande Discord.
  */
 function normalizeSlashCommandPayload(cmd) {
     const c = cmd && typeof cmd.toJSON === 'function' ? cmd.toJSON() : cmd;
@@ -82,16 +82,23 @@ function normalizeSlashCommandPayload(cmd) {
     });
 }
 
-// Compare deux commandes pour déterminer si elles sont identiques
 function commandsAreEqual(remote, local) {
     return normalizeSlashCommandPayload(remote) === normalizeSlashCommandPayload(local);
 }
 
+/**
+ * Déploiement GLOBAL des slash commands du bot « niveau ».
+ *
+ * Politique : TOUTES les commandes vont sur l'application globale du bot et deviennent
+ * donc automatiquement disponibles sur chaque serveur où le bot est invité.
+ * Les commandes d'événements (Halloween / Noël / Saint-Valentin) sont publiées seulement
+ * quand l'événement est actif ; sinon elles sont retirées du global.
+ */
 module.exports = async function deployCommands(client) {
     const compact = process.env.BLZ_COMPACT_LOG === '1';
     if (!compact) {
         console.log('\n═══════════════════════════════════════════════════════════════');
-        console.log('[DEPLOY-COMMANDS] Starting command deployment (Safe Mode)...');
+        console.log('[DEPLOY-COMMANDS] Déploiement GLOBAL — disponible sur toutes les guildes.');
         console.log('═══════════════════════════════════════════════════════════════\n');
     }
 
@@ -103,10 +110,9 @@ module.exports = async function deployCommands(client) {
     const isChristmasActive = getChristmasState('noël');
     const isValentinActive = getValentinState('valentin');
 
-    // 1. Déterminer la liste des commandes que ce script est censé gérer
+    // 1. Charger toutes les commandes locales depuis le disque
     const localCommands = new Map();
 
-    // Charger les commandes principales (core, guilde, admin, misc)
     for (const sub of mainCommandSubdirs) {
         const dir = path.join(commandsPath, sub);
         if (!fs.existsSync(dir)) continue;
@@ -136,7 +142,6 @@ module.exports = async function deployCommands(client) {
             });
     }
 
-    // Charger les commandes de Saint-Valentin
     if (fs.existsSync(valentinCommandsPath)) {
         fs.readdirSync(valentinCommandsPath)
             .filter((file) => file.endsWith('.js') && !isArchivedSlashCommandFile(file))
@@ -161,139 +166,140 @@ module.exports = async function deployCommands(client) {
     }
 
     try {
-        const guildIds = getSlashDeployGuildIds();
-        if (guildIds.length === 0) {
-            const msg = 'Aucun GUILD_ID valide pour enregistrer les commandes (vérifie le .env).';
-            console.error(`[DEPLOY] ❌ ${msg}`);
-            logger.error(msg);
-            throw new Error(msg);
-        }
-
-        if (!compact) console.log(`[DEPLOY] Guildes cibles: ${guildIds.join(', ')}`);
-
-        const commandsToCreate = [];
+        // 2. Filtrer : ne garder que les commandes actives (events saisonniers éteints = à retirer)
+        const commandsToDeploy = new Map();
         for (const [name, command] of localCommands.entries()) {
             const shouldBeActive =
                 command.source === 'normal' ||
                 (command.source === 'halloween' && isHalloweenActive) ||
                 (command.source === 'christmas' && isChristmasActive) ||
                 (command.source === 'valentin' && isValentinActive);
-
-            if (shouldBeActive) {
-                const { source, ...cleanCmd } = command;
-                commandsToCreate.push(cleanCmd);
-            }
+            if (!shouldBeActive) continue;
+            const { source, ...cleanCmd } = command;
+            commandsToDeploy.set(name, cleanCmd);
         }
+
+        const forceRefreshNames = new Set(
+            ['testprofil', 'profil']
+                .concat(
+                    String(process.env.BLZ_FORCE_SLASH_REFRESH_NAMES || '')
+                        .split(/[,;]/)
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                )
+        );
+
+        // 3. Déploiement GLOBAL
+        let appCommands;
+        try {
+            appCommands = await client.application.commands.fetch();
+        } catch (fetchError) {
+            throw new Error(`Fetch application commands: ${fetchError.message || fetchError}`);
+        }
+        const appMap = new Map();
+        appCommands.forEach((cmd) => appMap.set(cmd.name, cmd));
 
         let createdCount = 0;
         let updatedCount = 0;
         let skippedCount = 0;
         let errorCount = 0;
-        let anyGuildOk = false;
+        let deletedGlobal = 0;
 
-        for (const gid of guildIds) {
-            const guild = await client.guilds.fetch(gid).catch((err) => {
-                console.error(`[DEPLOY] Guilde ${gid} introuvable ou pas membre: ${err.message || err}`);
-                return null;
-            });
-            if (!guild) continue;
-            anyGuildOk = true;
+        for (const [name, commandData] of commandsToDeploy.entries()) {
+            const existing = appMap.get(name);
+            const forceRefresh = forceRefreshNames.has(name);
 
-            if (!compact) console.log(`\n[DEPLOY] — ${guild.name} (${guild.id})`);
-
-            const existingCommands = await guild.commands.fetch();
-            const existingMap = new Map();
-            existingCommands.forEach((cmd) => existingMap.set(cmd.name, cmd));
-
-            if (!compact) console.log(`[DEPLOY] ${existingMap.size} commandes déjà sur cette guilde`);
-
-            for (let i = 0; i < commandsToCreate.length; i++) {
-                const commandData = commandsToCreate[i];
-                const existing = existingMap.get(commandData.name);
-
-                /* Toujours re-PUT /testprofil : évite les définitions slash obsolètes (option style) si Discord/API skip à tort. */
-                const forceRefresh =
-                    commandData.name === 'testprofil' ||
-                    commandData.name === 'profil' ||
-                    String(process.env.BLZ_FORCE_SLASH_REFRESH_NAMES || '')
-                        .split(/[,;]/)
-                        .map((s) => s.trim())
-                        .filter(Boolean)
-                        .includes(commandData.name);
-
-                if (existing && commandsAreEqual(existing, commandData) && !forceRefresh) {
-                    skippedCount++;
-                    continue;
-                }
-
-                const action = existing ? 'Updating' : 'Creating';
-                try {
-                    if (!compact) {
-                        console.log(`[${createdCount + updatedCount + errorCount + 1}] ${action} /${commandData.name}...`);
-                    }
-                    if (existing) {
-                        await guild.commands.edit(existing.id, commandData);
-                    } else {
-                        await guild.commands.create(commandData);
-                    }
-                    if (!compact) {
-                        console.log(`  ✅ ${action === 'Creating' ? 'Created' : 'Updated'}: /${commandData.name}`);
-                    }
-                    if (existing) updatedCount++;
-                    else createdCount++;
-                } catch (cmdError) {
-                    const errLine = `${cmdError?.message || cmdError}${cmdError?.code ? ` [${cmdError.code}]` : ''}`;
-                    console.error(`[DEPLOY] /${commandData.name}: ${errLine}`);
-                    logger.error(`Erreur commande /${commandData.name}: ${errLine}`);
-                    errorCount++;
-                }
+            if (existing && commandsAreEqual(existing, commandData) && !forceRefresh) {
+                skippedCount++;
+                continue;
             }
 
-            /* Retrait des anciens slash remplacés par /profil (ex-/profil-v2, ex-/profile). */
-            const obsoleteSlashNames = new Set(['profil-v2', 'profile']);
-            for (const cmd of existingMap.values()) {
-                if (!obsoleteSlashNames.has(cmd.name)) continue;
-                try {
-                    await cmd.delete();
-                    if (!compact) console.log(`🗑️ [${guild.name}] Slash obsolète retiré: /${cmd.name}`);
-                    logger.info(`[DEPLOY] Supprimé slash obsolète /${cmd.name} sur ${guild.id}`);
-                } catch (delErr) {
-                    logger.warn(`[DEPLOY] Impossible de supprimer /${cmd.name}: ${delErr?.message || delErr}`);
+            const action = existing ? 'Updating' : 'Creating';
+            try {
+                if (!compact) {
+                    console.log(`[${createdCount + updatedCount + errorCount + 1}] ${action} /${name} (global)…`);
                 }
+                if (existing) {
+                    await client.application.commands.edit(existing.id, commandData);
+                    updatedCount++;
+                    if (!compact) console.log(`  ✅ Updated: /${name}`);
+                } else {
+                    await client.application.commands.create(commandData);
+                    createdCount++;
+                    if (!compact) console.log(`  ✅ Created: /${name}`);
+                }
+            } catch (cmdError) {
+                const errLine = `${cmdError?.message || cmdError}${cmdError?.code ? ` [${cmdError.code}]` : ''}`;
+                console.error(`[DEPLOY] /${name}: ${errLine}`);
+                logger.error(`Erreur commande /${name}: ${errLine}`);
+                errorCount++;
             }
         }
 
-        if (!anyGuildOk) {
-            throw new Error('Aucune guilde accessible pour le déploiement des slash.');
+        // 4. Purge globale : retirer du global les commandes obsolètes + events désactivés + commandes
+        // supprimées côté code. Critère : présente en global mais absente de commandsToDeploy.
+        for (const cmd of appCommands.values()) {
+            if (commandsToDeploy.has(cmd.name)) continue;
+            // On ne touche qu'à ce qu'on connaît (obsolètes, ou commande qui était en local mais désactivée)
+            const isKnownObsolete = OBSOLETE_SLASH_NAMES.has(cmd.name);
+            const wasLocalButDisabled = localCommands.has(cmd.name);
+            if (!isKnownObsolete && !wasLocalButDisabled) continue;
+            try {
+                await cmd.delete();
+                deletedGlobal++;
+                if (!compact) console.log(`🗑️ [GLOBAL] supprimée : /${cmd.name}`);
+            } catch (_) { /* noop */ }
+        }
+
+        // 5. Nettoyage par guilde : supprimer les doublons guild-spécifiques d'anciennes versions.
+        let guildCleanupTotal = 0;
+        let guildsVisited = 0;
+        let guildsInError = 0;
+        for (const [, guild] of client.guilds.cache) {
+            guildsVisited++;
+            try {
+                const existing = await guild.commands.fetch();
+                for (const cmd of existing.values()) {
+                    const shouldDelete =
+                        commandsToDeploy.has(cmd.name) ||
+                        localCommands.has(cmd.name) ||
+                        OBSOLETE_SLASH_NAMES.has(cmd.name);
+                    if (!shouldDelete) continue;
+                    try {
+                        await cmd.delete();
+                        guildCleanupTotal++;
+                        if (!compact) console.log(`🗑️ [${guild.name}] doublon guilde supprimé : /${cmd.name}`);
+                    } catch (_) { /* noop */ }
+                }
+            } catch (guildError) {
+                guildsInError++;
+                if (!compact) {
+                    console.warn(
+                        `[niveau/deploy] nettoyage ${guild.name} (${guild.id}) : ${guildError?.message || guildError}`
+                    );
+                }
+            }
         }
 
         if (compact) {
-            const hasPanelVoc = localCommands.has('panel-voc');
-            const hasStatsVocPanel = localCommands.has('stats-voc-panel');
             console.log(
-                `[niveau] Slash : +${createdCount} ~${updatedCount} skip ${skippedCount} err ${errorCount} · guildes ${guildIds.join(',')} · /panel-voc:${hasPanelVoc} · /stats-voc-panel:${hasStatsVocPanel}`
+                `[niveau] Slash GLOBAL : +${createdCount} ~${updatedCount} skip ${skippedCount} err ${errorCount} · purgeGlobal ${deletedGlobal} · cleanGuilds ${guildCleanupTotal}/${guildsVisited}${guildsInError ? ` (err ${guildsInError})` : ''} · /panel-voc:${hasPanelVoc} · /stats-voc-panel:${hasStatsVocPanel}`
             );
         } else {
             console.log('\n═══════════════════════════════════════════════════════════════');
-            console.log(`[DEPLOY] ✅ Deployment complete (${guildIds.length} guilde(s)):`);
-            console.log(`  📦 ${createdCount} created, 🔄 ${updatedCount} updated, ⏭️ ${skippedCount} unchanged, ❌ ${errorCount} errors`);
+            console.log(`[DEPLOY] ✅ Déploiement GLOBAL terminé`);
+            console.log(`  📦 ${createdCount} créée(s), 🔄 ${updatedCount} MAJ, ⏭️ ${skippedCount} inchangée(s), ❌ ${errorCount} erreur(s)`);
+            console.log(`  🗑️ ${deletedGlobal} retirée(s) du global (obsolètes/désactivées)`);
+            console.log(`  🧹 ${guildCleanupTotal} doublon(s) guilde purgé(s) sur ${guildsVisited} guilde(s)${guildsInError ? ` (${guildsInError} erreur(s))` : ''}`);
             console.log('═══════════════════════════════════════════════════════════════\n');
         }
 
         if (!compact) {
-            logger.info(`Commandes niveau: ${createdCount} new, ${updatedCount} updated, ${skippedCount} skipped, ${errorCount} errors`);
+            logger.info(`Commandes niveau (global): ${createdCount} new, ${updatedCount} updated, ${skippedCount} skipped, ${errorCount} errors`);
         }
     } catch (error) {
-        const code = error && error.code;
-        if (code === 10004) {
-            const hint =
-                '[DEPLOY] Unknown Guild — vérifie GUILD_ID dans le .env à la racine (identique au serveur où le bot est membre).';
-            console.error(hint);
-            logger.warn(hint);
-        } else {
-            console.error('[DEPLOY] ❌', error.message || error);
-            logger.error('Erreur déploiement commandes:', error.message || error);
-        }
+        console.error('[DEPLOY] ❌', error.message || error);
+        logger.error('Erreur déploiement commandes:', error.message || error);
         throw error;
     }
 };
