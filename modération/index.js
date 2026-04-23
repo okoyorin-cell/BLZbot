@@ -430,9 +430,10 @@ client.on('interactionCreate', async interaction => {
         }
 
         // Boutons du formulaire de débannissement
-        else if (customId === 'launch_form' || customId.startsWith('deban_continue_')) {
+        // Accepte `launch_form` (legacy) ET `launch_form_<channelId>` (nouveau /panel-deban)
+        else if (customId === 'launch_form' || customId.startsWith('launch_form_') || customId.startsWith('deban_continue_')) {
             const debanFormHandler = require('./src/events/debanFormHandler');
-            if (customId === 'launch_form') {
+            if (customId === 'launch_form' || customId.startsWith('launch_form_')) {
                 await debanFormHandler.handleLaunchForm(interaction, { voteManager, client });
             } else if (customId === 'deban_continue_step2') {
                 await debanFormHandler.handleContinueStep2(interaction);
