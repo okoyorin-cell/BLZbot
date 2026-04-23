@@ -681,8 +681,9 @@ class VoteManager {
                     || (CONFIG.STAFF_ROLES.find(r => r.name === 'Staff')?.id || '1172237685763608579');
 
                 const targetChannel = await client.channels.fetch(channelId).catch(() => null);
-                if (!targetChannel || !targetChannel.isTextBased?.()) {
-                    console.error(`[Deban] processPending : salon ${channelId} introuvable, on conserve la demande.`);
+                const isForumChannel = targetChannel?.type === ChannelType.GuildForum;
+                if (!targetChannel || (!isForumChannel && !targetChannel.isTextBased?.())) {
+                    console.error(`[Deban] processPending : salon ${channelId} introuvable ou type non supporté, on conserve la demande.`);
                     continue;
                 }
 
