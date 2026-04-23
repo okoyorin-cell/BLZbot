@@ -594,7 +594,7 @@ async function renderFiche2(data) {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    /* PP = membre affiché (cible) ; invokerStaffTitle = légende staff de celui qui lance la commande. */
+    /* PP + légende staff = membre affiché (cible du /profil). */
     const avImg = await loadAvatar(member);
     const avR = Math.min(leftW * 0.36, innerH * 0.34);
     const avCx = x0 + leftW / 2;
