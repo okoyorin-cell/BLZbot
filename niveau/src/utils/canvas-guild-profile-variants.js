@@ -545,7 +545,7 @@ async function renderGuildProfilePreviewVariant(opts, variant) {
         ctx.fillStyle = C.sub;
         ctx.fillText(guild.channel_id ? '💬 Salon actif' : '💬 Salon : U5', bx + 16, yBot + 122);
 
-        drawFooter(ctx, 'Aperçu Brasier — /testprofilguilde');
+        drawFooter(ctx, 'Aperçu Brasier');
         return canvas.toBuffer('image/png');
     }
 
