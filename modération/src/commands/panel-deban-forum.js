@@ -1,36 +1,28 @@
 /**
  * Crée un salon forum de débannissement (tags En cours / Deban / Refuse) sur un serveur
  * où le bot est présent, enregistre la config (clé = guild où la commande est lancée),
- * puis poste le panneau « Lancer le formulaire » dans la réponse.
+ * puis affiche le panneau « Lancer le formulaire » dans la réponse.
  *
- * Utilisable sur le serveur de test **ou** le serveur principal (déploiement guild-only).
+ * Réservé au serveur principal BLZ (slash guild-only).
  */
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const CONFIG = require('../config.js');
-const { TEST_DEBAN_BYPASS_GUILD_ID, buildPanelPayload } = require('./panel');
+const { buildPanelPayload } = require('./panel');
 const { createDebanForum } = require('../modules/debanForum');
-
-/** Serveurs où un admin peut créer le forum de votes deban (test + production). */
-const FORUM_SETUP_GUILD_IDS = new Set([
-    String(TEST_DEBAN_BYPASS_GUILD_ID),
-    String(CONFIG.MAIN_GUILD_ID),
-]);
 
 module.exports = {
     /** Lu par deploy-slash-commands : ne pas publier en global Discord. */
     guildOnly: true,
 
     data: new SlashCommandBuilder()
-        .setName('panel-deban-test')
-        .setDescription(
-            'Crée le forum de débannissement + tags (principal ou test), puis affiche le panneau de demande.'
-        )
+        .setName('panel-deban-forum')
+        .setDescription('Crée le forum de débannissement + tags, puis affiche le panneau de demande.')
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .setDMPermission(false)
         .addStringOption((opt) =>
             opt
                 .setName('serveur')
-                .setDescription('Serveur qui hébergera le salon forum (support, principal, test, …).')
+                .setDescription('Serveur qui hébergera le salon forum (souvent le principal).')
                 .setRequired(true)
                 .setAutocomplete(true)
         )
@@ -60,7 +52,7 @@ module.exports = {
             }
             await interaction.respond(rows);
         } catch (e) {
-            console.error('[panel-deban-test] autocomplete:', e?.message || e);
+            console.error('[panel-deban-forum] autocomplete:', e?.message || e);
             try {
                 await interaction.respond([]);
             } catch {
@@ -72,10 +64,10 @@ module.exports = {
     async execute(interaction, { client } = {}) {
         const cli = client || interaction.client;
 
-        if (!FORUM_SETUP_GUILD_IDS.has(String(interaction.guildId))) {
+        if (String(interaction.guildId) !== String(CONFIG.MAIN_GUILD_ID)) {
             return interaction.reply({
                 content:
-                    '❌ Cette commande n\'est disponible que sur le **serveur principal BLZ** ou le **serveur de test** (configuration forum déban).',
+                    '❌ Cette commande n\'est disponible que sur le **serveur principal BLZ**.',
                 ephemeral: true,
             });
         }
@@ -100,7 +92,7 @@ module.exports = {
         await interaction.deferReply({ ephemeral: false });
 
         try {
-            const { forumChannel, tags } = await createDebanForum(cli, {
+            const { forumChannel } = await createDebanForum(cli, {
                 testGuildId: interaction.guildId,
                 forumGuildId,
                 name: forumName,
@@ -114,11 +106,11 @@ module.exports = {
                     `✅ Forum **${forumChannel.name}** créé sur **${hostGuild.name}**.\n` +
                     `Tags : \`En cours\` / \`Deban\` / \`Refuse\`\n` +
                     `Les demandes créent un **post** dans ce forum. À la fin du vote, le post est **verrouillé** (le staff peut encore écrire).\n` +
-                    `Sur le **principal**, utilisez \`/panel-deban\` avec \`salon-deban\` = l’ID de ce forum pour remplacer l’ancien salon texte.`,
+                    `Utilisez \`/panel-deban\` avec \`salon-deban\` = ce forum pour les panneaux publics.`,
                 ...payload,
             });
         } catch (err) {
-            console.error('[panel-deban-test]', err);
+            console.error('[panel-deban-forum]', err);
             const msg = err?.message || String(err);
             await interaction.editReply({
                 content: `❌ Impossible de créer le forum : ${msg}`,
