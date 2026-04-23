@@ -3,12 +3,17 @@
  * où le bot est présent, enregistre la config (clé = guild où la commande est lancée),
  * puis affiche le panneau « Lancer le formulaire » dans la réponse.
  *
- * Réservé au serveur principal BLZ (slash guild-only).
+ * Slash guild-only : principal BLZ **ou** serveur support (tickets).
  */
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const CONFIG = require('../config.js');
 const { buildPanelPayload } = require('./panel');
 const { createDebanForum } = require('../modules/debanForum');
+
+const PANEL_DEBAN_FORUM_ALLOWED_GUILDS = new Set([
+    String(CONFIG.MAIN_GUILD_ID),
+    String(CONFIG.TICKETS?.SUPPORT_GUILD_ID || '1351221530998345828'),
+]);
 
 module.exports = {
     /** Lu par deploy-slash-commands : ne pas publier en global Discord. */
