@@ -8,7 +8,13 @@ const {
     ChannelType,
 } = require('discord.js');
 
-function buildPanelPayload() {
+/**
+ * Serveur de test où tout le monde peut faire une demande de deban (bypass du check ban).
+ * Sur tous les autres serveurs, la vérif ban normale s'applique.
+ */
+const TEST_DEBAN_BYPASS_GUILD_ID = '1493276404643532810';
+
+function buildPanelPayload(debanChannelId) {
     const embed = new EmbedBuilder()
         .setTitle("📋 Formulaire de débannissement")
         .setDescription(
@@ -20,8 +26,10 @@ function buildPanelPayload() {
         )
         .setColor('#FFD700');
 
+    // Encode le salon de destination directement dans le customId du bouton : pas besoin
+    // de JSON persistant, chaque panel sait où envoyer ses demandes.
     const button = new ButtonBuilder()
-        .setCustomId('launch_form')
+        .setCustomId(`launch_form_${debanChannelId}`)
         .setLabel('🚀 Lancer le formulaire')
         .setStyle(ButtonStyle.Primary);
 
@@ -31,10 +39,21 @@ function buildPanelPayload() {
 }
 
 module.exports = {
+    // Exposé pour d'autres modules (handler) qui ont besoin de connaître le serveur de bypass
+    TEST_DEBAN_BYPASS_GUILD_ID,
+
     data: new SlashCommandBuilder()
-        .setName('panel')
-        .setDescription('Affiche le panneau de débannissement dans le salon courant ou le salon choisi.')
+        .setName('panel-deban')
+        .setDescription('Affiche le panneau de demande de débannissement dans le salon choisi.')
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+        .setDMPermission(false)
+        .addChannelOption(option =>
+            option
+                .setName('salon-deban')
+                .setDescription('Salon où les demandes et votes de débannissement seront envoyés.')
+                .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+                .setRequired(true)
+        )
         .addChannelOption(option =>
             option
                 .setName('salon')
@@ -51,16 +70,39 @@ module.exports = {
         .toJSON(),
 
     async execute(interaction) {
+        const debanChannel = interaction.options.getChannel('salon-deban');
         const target = interaction.options.getChannel('salon') || interaction.channel;
 
         if (!target?.isTextBased?.()) {
             return interaction.reply({
-                content: '❌ Le salon ciblé doit être un salon textuel.',
+                content: '❌ Le salon ciblé pour le panel doit être un salon textuel.',
                 ephemeral: true,
             });
         }
 
-        const payload = buildPanelPayload();
+        if (!debanChannel?.isTextBased?.()) {
+            return interaction.reply({
+                content: '❌ Le salon de destination des demandes (`salon-deban`) doit être un salon textuel.',
+                ephemeral: true,
+            });
+        }
+
+        // Vérifie que le bot peut effectivement envoyer dans le salon de deban choisi, sinon
+        // le flow explosera à la soumission finale (salon inaccessible côté bot).
+        try {
+            const botMember = interaction.guild?.members?.me;
+            if (botMember && debanChannel.permissionsFor) {
+                const perms = debanChannel.permissionsFor(botMember);
+                if (!perms?.has(PermissionFlagsBits.ViewChannel) || !perms?.has(PermissionFlagsBits.SendMessages)) {
+                    return interaction.reply({
+                        content: `❌ Je n'ai pas les permissions pour poster les demandes dans ${debanChannel}. Il me faut **Voir le salon** et **Envoyer des messages**.`,
+                        ephemeral: true,
+                    });
+                }
+            }
+        } catch { /* on laisse passer si on peut pas vérifier — Discord renverra une erreur à l'usage */ }
+
+        const payload = buildPanelPayload(debanChannel.id);
 
         // Cas 1 : poster dans le salon courant → reply direct (plus simple, pas de perm à vérifier)
         if (target.id === interaction.channel?.id) {
@@ -85,7 +127,7 @@ module.exports = {
                 const perms = target.permissionsFor(botMember);
                 if (!perms?.has(PermissionFlagsBits.ViewChannel) || !perms?.has(PermissionFlagsBits.SendMessages)) {
                     return interaction.reply({
-                        content: `❌ Je n'ai pas les permissions pour poster dans ${target}. Il me faut au minimum **Voir le salon** et **Envoyer des messages**.`,
+                        content: `❌ Je n'ai pas les permissions pour poster dans ${target}. Il me faut **Voir le salon** et **Envoyer des messages**.`,
                         ephemeral: true,
                     });
                 }
@@ -93,7 +135,7 @@ module.exports = {
 
             const sent = await target.send(payload);
             await interaction.reply({
-                content: `✅ Panel posté dans ${target} (${sent.url}).`,
+                content: `✅ Panel posté dans ${target} (${sent.url}).\n📬 Les demandes seront envoyées dans ${debanChannel}.`,
                 ephemeral: true,
             });
         } catch (err) {
