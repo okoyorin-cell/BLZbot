@@ -259,6 +259,27 @@ class VoteManager {
     }
 
     /**
+     * Charge les cooldowns post-refus.
+     */
+    loadDebanCooldowns() {
+        const p = path.join(__dirname, '../../deban_cooldowns.json');
+        if (fs.existsSync(p)) {
+            try {
+                return JSON.parse(fs.readFileSync(p, 'utf8'));
+            } catch (e) {
+                console.error('[VoteManager] Erreur parsing deban_cooldowns.json:', e);
+                return {};
+            }
+        }
+        return {};
+    }
+
+    saveDebanCooldowns() {
+        const p = path.join(__dirname, '../../deban_cooldowns.json');
+        fs.writeFileSync(p, JSON.stringify(this.debanCooldowns || {}, null, 2), 'utf8');
+    }
+
+    /**
      * Démarre un vote standard
      */
     async startVote(user, reason, channel, voteType = 'standard') {
