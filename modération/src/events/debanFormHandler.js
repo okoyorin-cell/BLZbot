@@ -9,6 +9,7 @@ const {
 const CONFIG = require('../config.js');
 const { TEST_DEBAN_BYPASS_GUILD_ID } = require('../commands/panel.js');
 const { isBotOwner } = require('../utils/bot-owner');
+const { getForumConfigForGuild } = require('../modules/debanForum');
 
 /**
  * Handler pour le formulaire de débannissement
