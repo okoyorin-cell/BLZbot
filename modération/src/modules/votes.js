@@ -535,8 +535,9 @@ class VoteManager {
      */
     async startDebanVote(client, interaction, userData, reportContent, channelId, mentionRoleId) {
         const targetChannel = await client.channels.fetch(channelId).catch(() => null);
-        if (!targetChannel || !targetChannel.isTextBased?.()) {
-            console.error(`[Deban] Salon de vote introuvable ou non textuel (${channelId}).`);
+        const isForumChannel = targetChannel?.type === ChannelType.GuildForum;
+        if (!targetChannel || (!isForumChannel && !targetChannel.isTextBased?.())) {
+            console.error(`[Deban] Salon de vote introuvable ou type non supporté (${channelId}).`);
             await interaction.followUp({
                 content: '❌ Votre demande a été reçue, mais le vote n\'a pas pu être lancé (salon de vote introuvable). Contactez un administrateur.',
                 ephemeral: true
