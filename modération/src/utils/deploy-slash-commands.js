@@ -286,6 +286,7 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
 
     for (const [, guild] of client.guilds.cache) {
         guildsVisited++;
+        if (mirrorGuildIdSet.has(guild.id)) continue;
         try {
             const existing = await guild.commands.fetch();
             for (const cmd of existing.values()) {
