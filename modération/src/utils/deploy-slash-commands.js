@@ -9,7 +9,7 @@ const { getSlashDeployGuildIds } = require(path.join(__dirname, '..', '..', '..'
 const COMMANDS_DIR = path.join(__dirname, '..', 'commands');
 // Commandes déployées en GLOBAL (accessibles sur tous les serveurs où le bot est présent).
 // Elles ne sont JAMAIS déployées par guilde (évite les doublons).
-const GLOBAL_COMMAND_NAMES = new Set(['panel-deban']);
+const GLOBAL_COMMAND_NAMES = new Set(['panel-deban', 'envoyer-message']);
 // Anciens noms à supprimer proprement (renommages)
 const LEGACY_COMMAND_NAMES_TO_REMOVE = new Set(['panel']);
 
