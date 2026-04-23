@@ -712,25 +712,33 @@ class VoteManager {
                 if (isForumChannel || req.forumMode) {
                     const testGuildId = findTestGuildIdByForumChannelId(channelId);
                     if (!testGuildId) {
+                        delete this.debanVotes[uid];
+                        this.saveDebanVotes();
                         console.error(`[Deban] processPending : forum ${channelId} sans config test, skip ${uid}.`);
                         continue;
                     }
                     const reportWithPending = `${req.reportContent}\n\n**⏳ Statut**\nMise en attente expirée — vote automatique lancé.`;
-                    const { thread, starterMessage } = await createDebanPost(
-                        client,
-                        testGuildId,
-                        req.userData,
-                        reportWithPending,
-                        mentionRoleId
-                    );
-                    sent = starterMessage || (await thread.fetchStarterMessage().catch(() => null));
-                    if (!sent) {
-                        console.error(`[Deban] processPending : pas de starter message forum pour ${uid}.`);
+                    try {
+                        const { thread, starterMessage } = await createDebanPost(
+                            client,
+                            testGuildId,
+                            req.userData,
+                            reportWithPending,
+                            mentionRoleId
+                        );
+                        sent = starterMessage || (await thread.fetchStarterMessage().catch(() => null));
+                        if (!sent) {
+                            throw new Error('Starter message forum introuvable');
+                        }
+                        this.debanVotes[uid].messageId = sent.id;
+                        this.debanVotes[uid].threadId = thread.id;
+                        this.saveDebanVotes();
+                    } catch (e) {
+                        delete this.debanVotes[uid];
+                        this.saveDebanVotes();
+                        console.error(`[Deban] processPending : échec forum pour ${uid}:`, e?.message || e);
                         continue;
                     }
-                    this.debanVotes[uid].messageId = sent.id;
-                    this.debanVotes[uid].threadId = thread.id;
-                    this.saveDebanVotes();
                 } else {
                     const { embed, row } = this._buildDebanVoteComponents(
                         req.userData,
