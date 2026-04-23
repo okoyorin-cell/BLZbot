@@ -75,17 +75,28 @@ function canCreateTicket(userId, config) {
  * @param {string} channelId - ID du salon créé
  * @returns {string} - ID du ticket
  */
-function createTicket(userId, channelId) {
+/**
+ * @param {string} userId
+ * @param {string} channelId - Salon « principal » du ticket (en mode pont : serveur main / staff)
+ * @param {{ supportChannelId?: string|null }} [opts] - Si défini : ticket pont support ↔ main
+ */
+function createTicket(userId, channelId, opts = {}) {
     ticketsData.lastTicketId++;
     const ticketId = ticketsData.lastTicketId.toString().padStart(4, '0');
 
-    ticketsData.mapping[ticketId] = {
+    const entry = {
         channelId,
         owner: userId,
         status: 'open',
         createdAt: new Date().toISOString(),
-        addedUsers: []
+        addedUsers: [],
     };
+    if (opts.supportChannelId) {
+        entry.supportChannelId = opts.supportChannelId;
+        entry.bridge = true;
+    }
+
+    ticketsData.mapping[ticketId] = entry;
 
     ticketsData.cooldowns[userId] = Date.now();
     saveData();
