@@ -711,16 +711,43 @@ class VoteManager {
                     originalUserId: uid,
                     createdAt: new Date().toISOString(),
                     fromPending: true,
+                    forumMode: Boolean(isForumChannel || req.forumMode),
+                    threadId: null,
                 };
                 this.saveDebanVotes();
 
-                const sent = await targetChannel.send({
-                    content: `<@&${mentionRoleId}> Demande de débannissement — délai d'attente écoulé, vote automatique !`,
-                    embeds: [embed],
-                    components: [row]
-                });
-                this.debanVotes[uid].messageId = sent.id;
-                this.saveDebanVotes();
+                let sent;
+                if (isForumChannel || req.forumMode) {
+                    const testGuildId = findTestGuildIdByForumChannelId(channelId);
+                    if (!testGuildId) {
+                        console.error(`[Deban] processPending : forum ${channelId} sans config test, skip ${uid}.`);
+                        continue;
+                    }
+                    const reportWithPending = `${req.reportContent}\n\n**⏳ Statut**\nMise en attente expirée — vote automatique lancé.`;
+                    const { thread, starterMessage } = await createDebanPost(
+                        client,
+                        testGuildId,
+                        req.userData,
+                        reportWithPending,
+                        mentionRoleId
+                    );
+                    sent = starterMessage || (await thread.fetchStarterMessage().catch(() => null));
+                    if (!sent) {
+                        console.error(`[Deban] processPending : pas de starter message forum pour ${uid}.`);
+                        continue;
+                    }
+                    this.debanVotes[uid].messageId = sent.id;
+                    this.debanVotes[uid].threadId = thread.id;
+                    this.saveDebanVotes();
+                } else {
+                    sent = await targetChannel.send({
+                        content: `<@&${mentionRoleId}> Demande de débannissement — délai d'attente écoulé, vote automatique !`,
+                        embeds: [embed],
+                        components: [row],
+                    });
+                    this.debanVotes[uid].messageId = sent.id;
+                    this.saveDebanVotes();
+                }
 
                 delete this.pendingDebanRequests[uid];
                 this.savePendingDebanRequests();
