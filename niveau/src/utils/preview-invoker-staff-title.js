@@ -1,5 +1,5 @@
 /**
- * Titre staff (colonne gauche) sur /profil et /testprofil : rôles d’un utilisateur
+ * Titre staff (colonne gauche) sur /profil : rôles d’un utilisateur
  * sur la guilde principale BLZ (BLZ_MAIN_GUILD_ID ou 1097110036192448656).
  * Priorité : Owner serveur > rôles staff (du plus haut au plus bas) > Membre.
  */
