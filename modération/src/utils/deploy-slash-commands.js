@@ -81,17 +81,21 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
 
     /** Commandes locales à déployer, indexées par nom. */
     const localCommands = new Map();
+    const guildOnlyCommandNames = new Set();
     for (const file of commandFiles) {
         const command = require(path.join(COMMANDS_DIR, file));
         if (!command.data) continue;
         const cmdJson = toCmdJson(command.data);
         if (!cmdJson || !cmdJson.name) continue;
+        if (command.guildOnly === true || GUILD_ONLY_BY_COMMAND.has(cmdJson.name)) {
+            guildOnlyCommandNames.add(cmdJson.name);
+        }
         localCommands.set(cmdJson.name, command.data);
     }
 
     const localNames = [...localCommands.keys()];
     console.log(
-        `[modération/deploy] ${localNames.length} commande(s) locales → déploiement GLOBAL (toutes guildes).`
+        `[modération/deploy] ${localNames.length} commande(s) locales — global sauf guild-only (${guildOnlyCommandNames.size}).`
     );
 
     if (!compact) console.log('🔄 Modération — enregistrement GLOBAL des slash commands…');
