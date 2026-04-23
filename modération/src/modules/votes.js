@@ -468,44 +468,10 @@ class VoteManager {
     }
 
     /**
-     * Démarre un vote de débannissement ou le met en attente
+     * Construit les composants (embed + row) d'un vote de débannissement.
+     * Factorisé pour être réutilisé par startDebanVote et processPendingDebanRequests.
      */
-    async startDebanVote(client, interaction, userData, reportContent, channelId, mentionRoleId) {
-        const targetChannel = await client.channels.fetch(channelId);
-        if (!targetChannel) {
-            console.error(`Le salon de débannissement avec l'ID ${channelId} est introuvable.`);
-            await interaction.followUp({
-                content: 'Votre demande a été soumise, mais le vote n\'a pas pu être lancé (salon introuvable).',
-                ephemeral: true
-            });
-            return;
-        }
-
-        const whenBanned = reportContent.match(/- \*\*Date :\*\* (.+)\n/)?.[1] || userData.whenBanned;
-
-        if (this.isBanLessThan3Months(whenBanned)) {
-            const threeMonthsInMs = 3 * 30 * 24 * 60 * 60 * 1000;
-            const banDate = new Date(whenBanned);
-            const eligibilityDate = new Date(banDate.getTime() + threeMonthsInMs);
-
-            this.pendingDebanRequests[userData.discordId] = {
-                userData,
-                reportContent,
-                banDate: whenBanned,
-                submittedAt: new Date().toISOString(),
-                eligibilityDate: eligibilityDate.toISOString(),
-                status: 'pending'
-            };
-            this.savePendingDebanRequests();
-
-            await interaction.followUp({
-                content: `⏳ Votre demande de débannissement a été mise en attente car votre ban date de moins de 3 mois.\n\nVotre demande sera automatiquement soumise au vote le : **${eligibilityDate.toLocaleDateString('fr-FR')}**\n\nVeuillez patienter jusqu'à cette date.`,
-                ephemeral: true
-            });
-            this.activeDebanRequests.add(userData.discordId);
-            return;
-        }
-
+    _buildDebanVoteComponents(userData, reportContent, targetChannel, extraField = null) {
         const embed = new EmbedBuilder()
             .setTitle(`Demande de débannissement pour ${userData.discordUsername}`)
             .setDescription(reportContent)
@@ -514,6 +480,12 @@ class VoteManager {
                 { name: 'Non', value: '0', inline: true }
             )
             .setColor('#FFD700');
+        if (extraField) embed.addFields(extraField);
+
+        const botMember = targetChannel.guild?.members?.me;
+        const canEnd = botMember
+            ? targetChannel.permissionsFor(botMember)?.has(PermissionsBitField.Flags.Administrator)
+            : false;
 
         const row = new ActionRowBuilder()
             .addComponents(
@@ -529,8 +501,64 @@ class VoteManager {
                     .setCustomId(`fin_deban_vote_${userData.discordId}`)
                     .setLabel('Fin du Vote')
                     .setStyle(ButtonStyle.Secondary)
-                    .setDisabled(!targetChannel.permissionsFor(targetChannel.guild.members.me).has(PermissionsBitField.Flags.Administrator))
+                    .setDisabled(!canEnd)
             );
+
+        return { embed, row };
+    }
+
+    /**
+     * Démarre un vote de débannissement ou le met en attente
+     */
+    async startDebanVote(client, interaction, userData, reportContent, channelId, mentionRoleId) {
+        const targetChannel = await client.channels.fetch(channelId).catch(() => null);
+        if (!targetChannel || !targetChannel.isTextBased?.()) {
+            console.error(`[Deban] Salon de vote introuvable ou non textuel (${channelId}).`);
+            await interaction.followUp({
+                content: '❌ Votre demande a été reçue, mais le vote n\'a pas pu être lancé (salon de vote introuvable). Contactez un administrateur.',
+                ephemeral: true
+            });
+            return { success: false, pending: false };
+        }
+
+        const whenBanned = reportContent.match(/- \*\*Date :\*\* (.+)\n/)?.[1] || userData.whenBanned;
+        const banCheck = this.parseAndCheckBanDate(whenBanned);
+
+        if (!banCheck.ok) {
+            // Date non parsable : on refuse proprement côté formulaire plutôt que d'ignorer silencieusement.
+            await interaction.followUp({
+                content: `❌ La date de ban fournie (\`${whenBanned}\`) est invalide. Formats acceptés : **JJ/MM/AAAA** (ex : 15/08/2022) ou **AAAA-MM-JJ**. Relancez le formulaire.`,
+                ephemeral: true
+            });
+            return { success: false, pending: false };
+        }
+
+        if (banCheck.tooRecent) {
+            const eligibilityDate = new Date(banCheck.banDate.getTime() + BAN_WAIT_MS);
+
+            this.pendingDebanRequests[userData.discordId] = {
+                userData,
+                reportContent,
+                banDate: banCheck.banDate.toISOString(),
+                banDateRaw: whenBanned,
+                submittedAt: new Date().toISOString(),
+                eligibilityDate: eligibilityDate.toISOString(),
+                channelId,
+                mentionRoleId,
+                status: 'pending'
+            };
+            this.savePendingDebanRequests();
+
+            const ts = Math.floor(eligibilityDate.getTime() / 1000);
+            await interaction.followUp({
+                content: `⏳ Votre demande de débannissement a été **mise en attente** car votre ban date de moins de 3 mois.\n\n📅 Elle sera automatiquement soumise au vote : <t:${ts}:F> (<t:${ts}:R>)\n\nVous n'avez rien à faire, vous serez averti automatiquement.`,
+                ephemeral: true
+            });
+            this.activeDebanRequests.add(userData.discordId);
+            return { success: true, pending: true, eligibilityDate };
+        }
+
+        const { embed, row } = this._buildDebanVoteComponents(userData, reportContent, targetChannel);
 
         this.debanVotes[userData.discordId] = {
             oui: 0,
@@ -539,6 +567,7 @@ class VoteManager {
             messageId: null,
             channelId: channelId,
             originalUserId: userData.discordId,
+            createdAt: new Date().toISOString(),
         };
         this.saveDebanVotes();
 
@@ -553,9 +582,97 @@ class VoteManager {
         this.activeDebanRequests.add(userData.discordId);
 
         await interaction.followUp({
-            content: 'Votre demande de débannissement a été envoyée avec succès et un vote a été lancé !',
+            content: '✅ Votre demande de débannissement a été envoyée et un vote a été lancé. Vous serez averti en privé dès que le résultat tombera.',
             ephemeral: true
         });
+        return { success: true, pending: false, messageId: sentMessage.id };
+    }
+
+    /**
+     * Traite les demandes de débannissement en attente dont la date d'éligibilité est atteinte.
+     * Appelé périodiquement par le scheduler (cron).
+     * @param {import('discord.js').Client} client
+     * @returns {Promise<number>} Nombre de demandes traitées
+     */
+    async processPendingDebanRequests(client) {
+        if (!client) return 0;
+        const now = Date.now();
+        const eligibleIds = Object.keys(this.pendingDebanRequests || {}).filter(uid => {
+            const req = this.pendingDebanRequests[uid];
+            const eligibleAt = new Date(req?.eligibilityDate || 0).getTime();
+            return Number.isFinite(eligibleAt) && eligibleAt <= now;
+        });
+
+        if (eligibleIds.length === 0) return 0;
+
+        let processed = 0;
+        for (const uid of eligibleIds) {
+            const req = this.pendingDebanRequests[uid];
+            try {
+                const channelId = req.channelId || CONFIG.DEBAN_CHANNEL_ID;
+                const mentionRoleId = req.mentionRoleId
+                    || (CONFIG.STAFF_ROLES.find(r => r.name === 'Staff')?.id || '1172237685763608579');
+
+                const targetChannel = await client.channels.fetch(channelId).catch(() => null);
+                if (!targetChannel || !targetChannel.isTextBased?.()) {
+                    console.error(`[Deban] processPending : salon ${channelId} introuvable, on conserve la demande.`);
+                    continue;
+                }
+
+                // Si un vote existe déjà pour ce user (bug / relance), on skip.
+                if (this.debanVotes[uid]) {
+                    console.warn(`[Deban] processPending : un vote existe déjà pour ${uid}, suppression de la pending.`);
+                    delete this.pendingDebanRequests[uid];
+                    this.savePendingDebanRequests();
+                    continue;
+                }
+
+                const { embed, row } = this._buildDebanVoteComponents(
+                    req.userData,
+                    req.reportContent,
+                    targetChannel,
+                    { name: '⏳ Statut', value: 'Mise en attente expirée — vote automatique lancé.', inline: false }
+                );
+
+                this.debanVotes[uid] = {
+                    oui: 0,
+                    non: 0,
+                    voters: {},
+                    messageId: null,
+                    channelId,
+                    originalUserId: uid,
+                    createdAt: new Date().toISOString(),
+                    fromPending: true,
+                };
+                this.saveDebanVotes();
+
+                const sent = await targetChannel.send({
+                    content: `<@&${mentionRoleId}> Demande de débannissement — délai d'attente écoulé, vote automatique !`,
+                    embeds: [embed],
+                    components: [row]
+                });
+                this.debanVotes[uid].messageId = sent.id;
+                this.saveDebanVotes();
+
+                delete this.pendingDebanRequests[uid];
+                this.savePendingDebanRequests();
+                this.activeDebanRequests.add(uid);
+
+                // Notifier le user en DM
+                try {
+                    const user = await client.users.fetch(uid);
+                    await user.send(
+                        `🗳️ Votre demande de débannissement mise en attente est maintenant **soumise au vote du staff**. Vous serez averti du résultat.`
+                    ).catch(() => null);
+                } catch { /* user introuvable ou DM fermés */ }
+
+                processed++;
+            } catch (err) {
+                console.error(`[Deban] processPending : erreur sur ${uid}:`, err?.message || err);
+            }
+        }
+
+        return processed;
     }
 }
 
