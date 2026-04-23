@@ -10,9 +10,23 @@ const {
 
 /**
  * Serveur de test où tout le monde peut faire une demande de deban (bypass du check ban).
- * Sur tous les autres serveurs, la vérif ban normale s'applique.
  */
 const TEST_DEBAN_BYPASS_GUILD_ID = '1493276404643532810';
+
+/**
+ * Serveurs dans lesquels on accepte que /panel-deban poste le panel ou envoie les demandes.
+ * On autorise le panel à être posté dans l'un et les demandes à arriver dans l'autre.
+ */
+const ALLOWED_PANEL_GUILD_IDS = [
+    '1351221530998345828', // Serveur de support
+    '1097110036192448656', // Serveur principal BLZ
+];
+
+/** Types de salons acceptés pour poster le panel ou envoyer les demandes. */
+const ALLOWED_CHANNEL_TYPES = new Set([
+    ChannelType.GuildText,
+    ChannelType.GuildAnnouncement,
+]);
 
 function buildPanelPayload(debanChannelId) {
     const embed = new EmbedBuilder()
@@ -38,40 +52,135 @@ function buildPanelPayload(debanChannelId) {
     return { embeds: [embed], components: [row] };
 }
 
+/**
+ * Résout un identifiant de salon (string) en objet Channel via le client, tous serveurs confondus.
+ * Retourne null si introuvable, non textuel, ou hors des serveurs autorisés.
+ */
+async function resolveAllowedChannel(client, channelId) {
+    if (!channelId || !/^\d{15,25}$/.test(channelId)) return null;
+    const channel = await client.channels.fetch(channelId).catch(() => null);
+    if (!channel) return null;
+    if (!ALLOWED_CHANNEL_TYPES.has(channel.type)) return null;
+    if (!ALLOWED_PANEL_GUILD_IDS.includes(String(channel.guild?.id))) return null;
+    return channel;
+}
+
+/**
+ * Vérifie que le bot peut poster dans un salon cross-guild.
+ */
+function botCanPostIn(channel) {
+    const me = channel.guild?.members?.me;
+    if (!me) return true; // fallback : on laisse passer, Discord renverra l'erreur à l'usage
+    const perms = channel.permissionsFor?.(me);
+    if (!perms) return true;
+    return perms.has(PermissionFlagsBits.ViewChannel) && perms.has(PermissionFlagsBits.SendMessages);
+}
+
 module.exports = {
-    // Exposé pour d'autres modules (handler) qui ont besoin de connaître le serveur de bypass
     TEST_DEBAN_BYPASS_GUILD_ID,
+    ALLOWED_PANEL_GUILD_IDS,
 
     data: new SlashCommandBuilder()
         .setName('panel-deban')
-        .setDescription('Affiche le panneau de demande de débannissement dans le salon choisi.')
+        .setDescription('Affiche le panneau de demande de débannissement (salons cross-serveur autorisés).')
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .setDMPermission(false)
-        .addChannelOption(option =>
+        .addStringOption(option =>
             option
                 .setName('salon-deban')
-                .setDescription('Salon où les demandes et votes de débannissement seront envoyés.')
-                .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+                .setDescription('Salon où les demandes/votes de deban seront envoyés (support OU principal).')
                 .setRequired(true)
+                .setAutocomplete(true)
         )
-        .addChannelOption(option =>
+        .addStringOption(option =>
             option
                 .setName('salon')
-                .setDescription('Salon où poster le panel (par défaut : salon courant)')
-                .addChannelTypes(
-                    ChannelType.GuildText,
-                    ChannelType.GuildAnnouncement,
-                    ChannelType.PublicThread,
-                    ChannelType.PrivateThread,
-                    ChannelType.AnnouncementThread,
-                )
+                .setDescription('Salon où poster le panel (support OU principal). Par défaut : salon courant.')
                 .setRequired(false)
+                .setAutocomplete(true)
         )
         .toJSON(),
 
-    async execute(interaction) {
-        const debanChannel = interaction.options.getChannel('salon-deban');
-        const target = interaction.options.getChannel('salon') || interaction.channel;
+    /**
+     * Autocomplete partagé par les deux options : liste les salons textuels des 2 serveurs autorisés.
+     * Filtrage par nom de salon / nom de serveur / ID, tronqué à 25 résultats (limite Discord).
+     */
+    async autocomplete(interaction) {
+        try {
+            const focused = interaction.options.getFocused(true);
+            const query = String(focused.value || '').toLowerCase().trim();
+
+            const suggestions = [];
+            for (const gid of ALLOWED_PANEL_GUILD_IDS) {
+                const guild = interaction.client.guilds.cache.get(gid);
+                if (!guild) continue;
+
+                // Tri : salons par position pour rendre l'autocomplete lisible
+                const channels = [...guild.channels.cache.values()]
+                    .filter(ch => ALLOWED_CHANNEL_TYPES.has(ch.type))
+                    .sort((a, b) => (a.rawPosition ?? 0) - (b.rawPosition ?? 0));
+
+                for (const ch of channels) {
+                    const guildTag = guild.id === '1351221530998345828' ? 'Support' : 'Principal';
+                    const label = `[${guildTag}] #${ch.name}`;
+                    if (query && !label.toLowerCase().includes(query) && !ch.id.includes(query)) continue;
+                    suggestions.push({
+                        name: label.slice(0, 100),
+                        value: ch.id,
+                    });
+                    if (suggestions.length >= 25) break;
+                }
+                if (suggestions.length >= 25) break;
+            }
+
+            await interaction.respond(suggestions);
+        } catch (err) {
+            // L'autocomplete ne doit jamais crash l'interaction — on répond vide en cas de souci.
+            console.error('[Panel] Autocomplete /panel-deban:', err?.message || err);
+            try { await interaction.respond([]); } catch { /* noop */ }
+        }
+    },
+
+    async execute(interaction, { client } = {}) {
+        const cli = client || interaction.client;
+        const debanChannelIdInput = interaction.options.getString('salon-deban');
+        const panelChannelIdInput = interaction.options.getString('salon');
+
+        // Résolution du salon de destination (requis)
+        const debanChannel = await resolveAllowedChannel(cli, debanChannelIdInput);
+        if (!debanChannel) {
+            return interaction.reply({
+                content:
+                    '❌ Salon de demandes (`salon-deban`) invalide. Utilisez l\'autocomplétion pour choisir un salon des serveurs **Support** ou **Principal**.',
+                ephemeral: true,
+            });
+        }
+        if (!botCanPostIn(debanChannel)) {
+            return interaction.reply({
+                content: `❌ Je n'ai pas les permissions pour poster dans ${debanChannel} (serveur **${debanChannel.guild.name}**). Il me faut **Voir le salon** et **Envoyer des messages**.`,
+                ephemeral: true,
+            });
+        }
+
+        // Résolution du salon où poster le panel (optionnel : défaut = salon courant de la commande)
+        let target = interaction.channel;
+        if (panelChannelIdInput) {
+            const resolved = await resolveAllowedChannel(cli, panelChannelIdInput);
+            if (!resolved) {
+                return interaction.reply({
+                    content:
+                        '❌ Salon d\'affichage du panel (`salon`) invalide. Utilisez l\'autocomplétion pour choisir un salon des serveurs **Support** ou **Principal**.',
+                    ephemeral: true,
+                });
+            }
+            if (!botCanPostIn(resolved)) {
+                return interaction.reply({
+                    content: `❌ Je n'ai pas les permissions pour poster dans ${resolved} (serveur **${resolved.guild.name}**).`,
+                    ephemeral: true,
+                });
+            }
+            target = resolved;
+        }
 
         if (!target?.isTextBased?.()) {
             return interaction.reply({
@@ -80,36 +189,14 @@ module.exports = {
             });
         }
 
-        if (!debanChannel?.isTextBased?.()) {
-            return interaction.reply({
-                content: '❌ Le salon de destination des demandes (`salon-deban`) doit être un salon textuel.',
-                ephemeral: true,
-            });
-        }
-
-        // Vérifie que le bot peut effectivement envoyer dans le salon de deban choisi, sinon
-        // le flow explosera à la soumission finale (salon inaccessible côté bot).
-        try {
-            const botMember = interaction.guild?.members?.me;
-            if (botMember && debanChannel.permissionsFor) {
-                const perms = debanChannel.permissionsFor(botMember);
-                if (!perms?.has(PermissionFlagsBits.ViewChannel) || !perms?.has(PermissionFlagsBits.SendMessages)) {
-                    return interaction.reply({
-                        content: `❌ Je n'ai pas les permissions pour poster les demandes dans ${debanChannel}. Il me faut **Voir le salon** et **Envoyer des messages**.`,
-                        ephemeral: true,
-                    });
-                }
-            }
-        } catch { /* on laisse passer si on peut pas vérifier — Discord renverra une erreur à l'usage */ }
-
         const payload = buildPanelPayload(debanChannel.id);
 
-        // Cas 1 : poster dans le salon courant → reply direct (plus simple, pas de perm à vérifier)
+        // Cas 1 : salon cible === salon courant → reply direct (confirme à l'admin que c'est fait)
         if (target.id === interaction.channel?.id) {
             try {
                 await interaction.reply(payload);
             } catch (err) {
-                console.error('[Panel] Erreur lors du reply panel:', err?.code, err?.message);
+                console.error('[Panel] Erreur reply panel:', err?.code, err?.message);
                 if (!interaction.replied && !interaction.deferred) {
                     await interaction.reply({
                         content: `❌ Impossible de poster le panel (code ${err?.code ?? 'inconnu'}).`,
@@ -120,26 +207,18 @@ module.exports = {
             return;
         }
 
-        // Cas 2 : poster dans un autre salon → envoyer via channel.send puis confirmer
+        // Cas 2 : salon cible différent (même serveur OU autre serveur) → channel.send puis confirmation
         try {
-            const botMember = interaction.guild?.members?.me;
-            if (botMember && target.permissionsFor) {
-                const perms = target.permissionsFor(botMember);
-                if (!perms?.has(PermissionFlagsBits.ViewChannel) || !perms?.has(PermissionFlagsBits.SendMessages)) {
-                    return interaction.reply({
-                        content: `❌ Je n'ai pas les permissions pour poster dans ${target}. Il me faut **Voir le salon** et **Envoyer des messages**.`,
-                        ephemeral: true,
-                    });
-                }
-            }
-
             const sent = await target.send(payload);
-            await interaction.reply({
-                content: `✅ Panel posté dans ${target} (${sent.url}).\n📬 Les demandes seront envoyées dans ${debanChannel}.`,
-                ephemeral: true,
-            });
+            const crossGuild = target.guild?.id !== interaction.guild?.id;
+            const crossDeban = debanChannel.guild?.id !== target.guild?.id;
+            const summary = [
+                `✅ Panel posté dans ${target} (${sent.url})${crossGuild ? ` — serveur **${target.guild.name}**` : ''}.`,
+                `📬 Les demandes seront envoyées dans ${debanChannel}${crossDeban ? ` — serveur **${debanChannel.guild.name}**` : ''}.`,
+            ].join('\n');
+            await interaction.reply({ content: summary, ephemeral: true });
         } catch (err) {
-            console.error(`[Panel] Erreur lors de l'envoi dans ${target?.id}:`, err?.code, err?.message, err);
+            console.error(`[Panel] Erreur envoi dans ${target?.id}:`, err?.code, err?.message, err);
             if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({
                     content: `❌ Erreur lors du post du panel (code ${err?.code ?? 'inconnu'} : ${err?.message ?? 'inconnue'}).`,
