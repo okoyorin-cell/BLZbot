@@ -4,7 +4,7 @@
  * Chaque demande crée un **post forum** au lieu d'un embed dans un salon texte.
  * Le post porte le tag « En cours » ; à la fin du vote : « Deban » ou « Refuse », puis le post est verrouillé.
  *
- * Clé JSON = guild où `/panel-deban-forum` a été exécuté (serveur principal).
+ * Clé JSON = guild où `/panel-deban creer-forum` a été exécuté (principal ou support).
  * Fichier : `modération/deban_forum_config.json`
  */
 const fs = require('fs');

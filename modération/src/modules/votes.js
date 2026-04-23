@@ -604,7 +604,7 @@ class VoteManager {
                 this.saveDebanVotes();
                 await interaction.followUp({
                     content:
-                        '❌ Ce salon forum n\'est pas enregistré pour les votes deban. Un admin doit créer le forum avec `/panel-deban-forum` sur le **serveur principal**, puis cibler ce forum dans `/panel-deban`.',
+                        '❌ Ce salon forum n\'est pas enregistré pour les votes deban. Un admin doit créer le forum avec `/panel-deban creer-forum` sur le **principal** ou le **support**, puis cibler ce forum dans `/panel-deban afficher`.',
                     ephemeral: true,
                 });
                 return { success: false, pending: false };
