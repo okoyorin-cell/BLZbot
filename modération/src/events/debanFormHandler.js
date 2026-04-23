@@ -7,7 +7,6 @@ const {
     ButtonStyle
 } = require('discord.js');
 const CONFIG = require('../config.js');
-const { TEST_DEBAN_BYPASS_GUILD_ID } = require('../commands/panel.js');
 const { isBotOwner } = require('../utils/bot-owner');
 const { findTestGuildIdByForumChannelId } = require('../modules/debanForum');
 
