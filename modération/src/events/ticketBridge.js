@@ -67,6 +67,7 @@ async function handleTicketBridgeMessage(message) {
 
     if (!fromSupport && !fromMain) return false;
 
+    // Dans un salon pont : ignorer les messages du bot (relays) pour le reste du pipeline (anti-spam, !snipe, etc.)
     if (message.author.bot) return true;
 
     const text = (message.content || '').trim();
