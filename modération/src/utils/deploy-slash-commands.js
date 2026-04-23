@@ -211,6 +211,37 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
         } catch (_) { /* noop */ }
     }
 
+    // ==================== MIROIR GUILD (ex. support sans scope applications.commands) ====================
+    let mirrorGuildSetOk = 0;
+    for (const gid of mirrorGuildIds) {
+        const guild = await client.guilds.fetch(gid).catch(() => null);
+        if (!guild) {
+            if (!compact) {
+                console.warn(
+                    `[modération/deploy] slash miroir : guilde ${gid} introuvable — bot absent ou ID incorrect.`
+                );
+            }
+            continue;
+        }
+        try {
+            const payload = buildGuildSlashPayloadForMirror(
+                localCommands,
+                guildOnlyCommandNames,
+                guild.id
+            );
+            await guild.commands.set(payload);
+            mirrorGuildSetOk++;
+            if (!compact) {
+                console.log(
+                    `✓ [${guild.name}] slash **miroir guild** : ${payload.length} commande(s) (liste complète).`
+                );
+            }
+        } catch (e) {
+            console.error(`❌ [${gid}] guild.commands.set (miroir):`, e?.message || e);
+            errorCount++;
+        }
+    }
+
     // ==================== COMMANDES GUILD-ONLY ====================
     let guildOnlyCreated = 0;
     let guildOnlyUpdated = 0;
@@ -220,6 +251,7 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
         const targetGuildIds = GUILD_ONLY_BY_COMMAND.get(name) || new Set();
         const cmdJson = toCmdJson(data);
         for (const gid of targetGuildIds) {
+            if (mirrorGuildIdSet.has(String(gid))) continue;
             const guild = await client.guilds.fetch(gid).catch(() => null);
             if (!guild) {
                 if (!compact) console.warn(`[modération/deploy] guild-only /${name} : guilde ${gid} introuvable.`);
