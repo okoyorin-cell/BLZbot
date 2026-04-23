@@ -180,7 +180,7 @@ module.exports = async function deployCommands(client) {
         }
 
         const forceRefreshNames = new Set(
-            ['testprofil', 'profil']
+            ['profil']
                 .concat(
                     String(process.env.BLZ_FORCE_SLASH_REFRESH_NAMES || '')
                         .split(/[,;]/)
