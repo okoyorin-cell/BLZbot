@@ -19,12 +19,28 @@ module.exports = {
      * Gère le clic sur le bouton "Lancer le formulaire"
      */
     async handleLaunchForm(interaction, { voteManager, client }) {
-        // Vérifier si l'utilisateur a déjà une demande en cours
-        if (voteManager.activeDebanRequests?.has(interaction.user.id)) {
-            return interaction.reply({
-                content: "❌ Vous avez déjà une demande de débannissement en cours. Veuillez attendre la fin de votre demande actuelle.",
-                ephemeral: true
-            });
+        // Vérifier si l'utilisateur a déjà une demande en cours (persistant : survit aux redémarrages)
+        const activeCheck = voteManager.hasActiveDebanRequest(interaction.user.id);
+        if (activeCheck.active) {
+            let msg;
+            switch (activeCheck.reason) {
+                case 'vote':
+                    msg = "❌ Vous avez déjà un vote de débannissement en cours. Attendez le verdict du staff.";
+                    break;
+                case 'pending': {
+                    const ts = Math.floor(new Date(activeCheck.data.eligibilityDate).getTime() / 1000);
+                    msg = `⏳ Votre demande est en attente (ban trop récent). Elle sera soumise au vote <t:${ts}:R>.`;
+                    break;
+                }
+                case 'cooldown': {
+                    const ts = Math.floor(Number(activeCheck.data.until) / 1000);
+                    msg = `🚫 Votre précédente demande a été refusée. Vous pourrez resoumettre une demande <t:${ts}:R>.`;
+                    break;
+                }
+                default:
+                    msg = "❌ Vous avez déjà une demande en cours. Attendez la fin pour en soumettre une nouvelle.";
+            }
+            return interaction.reply({ content: msg, ephemeral: true });
         }
 
         // Rôles autorisés à bypasser la vérif de ban (le rôle doit exister sur le serveur principal).
