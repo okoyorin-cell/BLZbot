@@ -23,6 +23,7 @@ const fs = require('fs');
 const path = require('path');
 const {
     ChannelType,
+    ForumLayoutType,
     PermissionFlagsBits,
     EmbedBuilder,
     ButtonBuilder,
