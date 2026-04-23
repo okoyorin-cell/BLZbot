@@ -694,13 +694,6 @@ class VoteManager {
                     continue;
                 }
 
-                const { embed, row } = this._buildDebanVoteComponents(
-                    req.userData,
-                    req.reportContent,
-                    targetChannel,
-                    { name: '⏳ Statut', value: 'Mise en attente expirée — vote automatique lancé.', inline: false }
-                );
-
                 this.debanVotes[uid] = {
                     oui: 0,
                     non: 0,
