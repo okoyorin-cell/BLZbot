@@ -554,7 +554,7 @@ async function endDebanVoteProgrammatically(message, guild, voteManager, client,
         }
     }
 
-    // Mode forum (test) : tag final + embed + verrouillage du post — sinon embed classique
+    // Mode forum : tag final + embed + verrouillage du post — sinon embed classique (salon texte)
     if (vote.forumMode && message.channel?.isThread?.() && resultEmbed && embed) {
         const testGuildId = findTestGuildIdByForumChannelId(vote.channelId);
         if (testGuildId) {

@@ -1,23 +1,11 @@
 /**
- * Deban via forum (mode TEST uniquement).
+ * Débannissement via forum (production ou test).
  *
- * Principe : sur le serveur de test, chaque demande de débannissement crée un POST FORUM
- * au lieu d'un embed dans un salon texte. Le post porte un tag "En cours" ; à la fin du vote,
- * le tag devient "Deban" (accepté) ou "Refuse" (refusé), puis le post est verrouillé.
+ * Chaque demande crée un **post forum** au lieu d'un embed dans un salon texte.
+ * Le post porte le tag « En cours » ; à la fin du vote : « Deban » ou « Refuse », puis le post est verrouillé.
  *
- * Structure config JSON persistée (modération/deban_forum_config.json) :
- * {
- *   "<testGuildId>": {
- *     "forumGuildId": "...",
- *     "forumChannelId": "...",
- *     "tags": {
- *        "enCours": "<tagId>",
- *        "deban":   "<tagId>",
- *        "refuse":  "<tagId>"
- *     },
- *     "createdAt": "2026-..."
- *   }
- * }
+ * Clé JSON = guild où `/panel-deban-test` a été exécuté (souvent le serveur principal).
+ * Fichier : `modération/deban_forum_config.json`
  */
 const fs = require('fs');
 const path = require('path');
