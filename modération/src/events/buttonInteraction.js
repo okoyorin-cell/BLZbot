@@ -541,7 +541,7 @@ async function endDebanVoteProgrammatically(message, guild, voteManager, client,
         console.error('[Deban] Erreur log salon staff:', err);
     }
 
-    // Envoyer un message public dans le salon de vote
+    // Message public dans le salon de vote (thread forum ou salon texte)
     if (message.channel?.isTextBased?.()) {
         if (accepted) {
             await message.channel.send(
@@ -552,6 +552,28 @@ async function endDebanVoteProgrammatically(message, guild, voteManager, client,
         } else {
             await message.channel.send(`❌ La demande de débannissement de <@${targetUserId}> a été refusée.`).catch(() => null);
         }
+    }
+
+    // Mode forum (test) : tag final + embed + verrouillage du post — sinon embed classique
+    if (vote.forumMode && message.channel?.isThread?.() && resultEmbed && embed) {
+        const testGuildId = findTestGuildIdByForumChannelId(vote.channelId);
+        if (testGuildId) {
+            await closeDebanPost({
+                thread: message.channel,
+                starterMessage: message,
+                testGuildId,
+                accepted,
+                resultEmbed,
+            });
+        }
+    } else if (resultEmbed && embed) {
+        const disabledRow = message.components[0];
+        if (disabledRow?.components) {
+            disabledRow.components.forEach((button) => {
+                if (button.data) button.data.disabled = true;
+            });
+        }
+        await message.edit({ embeds: [resultEmbed], components: disabledRow ? [disabledRow] : [] }).catch(() => null);
     }
 
     delete voteManager.debanVotes[targetUserId];
