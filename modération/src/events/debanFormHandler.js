@@ -130,9 +130,17 @@ module.exports = {
             }
 
             // Mémorise le salon de deban pour que handleStep3Submit puisse l'utiliser à la soumission.
-            // On utilise un petit cache in-memory — le TTL de formData (30 min) fait le ménage si abandon.
+            // Sur le serveur de test, si le salon cible est le forum enregistré par /panel-deban-test,
+            // on préfixe `forum:` pour que startDebanVote crée un post plutôt qu'un message texte.
             voteManager.pendingDebanChannels = voteManager.pendingDebanChannels || new Map();
-            voteManager.pendingDebanChannels.set(interaction.user.id, debanChannelId);
+            let storedDebanTarget = debanChannelId;
+            if (String(interaction.guild?.id) === String(TEST_DEBAN_BYPASS_GUILD_ID)) {
+                const fc = getForumConfigForGuild(TEST_DEBAN_BYPASS_GUILD_ID);
+                if (fc?.forumChannelId && String(fc.forumChannelId) === String(debanChannelId)) {
+                    storedDebanTarget = `forum:${debanChannelId}`;
+                }
+            }
+            voteManager.pendingDebanChannels.set(interaction.user.id, storedDebanTarget);
 
             // OK : ouvrir le formulaire étape 1
             const modal = new ModalBuilder()

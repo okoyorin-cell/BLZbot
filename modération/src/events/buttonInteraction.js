@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const CONFIG = require('../config.js');
+const { closeDebanPost, findTestGuildIdByForumChannelId } = require('../modules/debanForum');
 
 // Cache pour les points totaux possibles - évite de recalculer à chaque vote
 const totalPointsCache = new Map();
