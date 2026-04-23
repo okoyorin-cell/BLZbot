@@ -569,6 +569,7 @@ class VoteManager {
                 eligibilityDate: eligibilityDate.toISOString(),
                 channelId,
                 mentionRoleId,
+                forumMode: isForumChannel,
                 status: 'pending'
             };
             this.savePendingDebanRequests();
