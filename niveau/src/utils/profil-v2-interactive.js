@@ -146,7 +146,7 @@ async function loadFiche2ProfileData(interaction) {
         if (dvx >= 15000 || dvp >= 7000) vns = '⛔ Limite vocale journalière (0 gains).';
         else if (dvx >= 10000 || dvp >= 5000) vns = '⚠️ Gains vocaux /5.';
 
-        const invokerStaffTitle = await getPreviewInvokerStaffTitle(interaction.client, interaction.user.id);
+        const invokerStaffTitle = await getPreviewStaffTitleForUser(interaction.client, targetUser.id);
         const r = getDisplayRank(targetUser.id, u.points);
         const ri = RANKS.findIndex((x) => x.name === r.name);
         const nr = ri < RANKS.length - 1 ? RANKS[ri + 1] : null;
