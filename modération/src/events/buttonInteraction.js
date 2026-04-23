@@ -565,6 +565,16 @@ async function endDebanVoteProgrammatically(message, guild, voteManager, client,
                 accepted,
                 resultEmbed,
             });
+        } else {
+            console.warn('[Deban] forumMode sans mapping testGuildId — fallback édition message seule.');
+            const disabledRow = message.components[0];
+            if (disabledRow?.components) {
+                disabledRow.components.forEach((button) => {
+                    if (button.data) button.data.disabled = true;
+                });
+            }
+            await message.edit({ embeds: [resultEmbed], components: disabledRow ? [disabledRow] : [] }).catch(() => null);
+            await message.channel?.setLocked?.(true).catch(() => null);
         }
     } else if (resultEmbed && embed) {
         const disabledRow = message.components[0];
