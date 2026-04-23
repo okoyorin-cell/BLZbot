@@ -340,12 +340,14 @@ module.exports = {
         const additionalInfo = interaction.fields.getTextInputValue('additionalInfo');
 
         // Récupérer et finaliser les données
-        const data = voteManager.formData.get(interaction.user.id) || {};
-        Object.assign(data, {
-            contribution,
-            objectives,
-            additionalInfo
-        });
+        const data = voteManager.formData.get(interaction.user.id);
+        if (!data) {
+            return interaction.reply({
+                content: '⚠️ Votre session de formulaire a expiré (30 min max). Recommencez depuis le début en cliquant sur « 🚀 Lancer le formulaire ».',
+                ephemeral: true
+            });
+        }
+        Object.assign(data, { contribution, objectives, additionalInfo });
 
         // Créer le rapport complet
         const report =
