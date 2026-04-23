@@ -27,6 +27,7 @@ module.exports = {
     PANEL_GUILD_ID: process.env.PANEL_GUILD_ID || process.env.GUILD_ID || '1351221530998345828',
 
     // ==================== SALONS ====================
+    /** Fallback (anciens panneaux / bouton sans ID) : ancien salon **texte** des votes deban. Préférer un forum + `/panel-deban`. */
     DEBAN_CHANNEL_ID: '1382368378613796997',
     RECRUITMENT_ANNOUNCEMENT_CHANNEL_ID: '1454478266416234648',
     RECRUITMENT_CHANNEL_ID: '1343195997869834290',

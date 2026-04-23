@@ -113,7 +113,8 @@ module.exports = {
                 content:
                     `✅ Forum **${forumChannel.name}** créé sur **${hostGuild.name}**.\n` +
                     `Tags : \`En cours\` / \`Deban\` / \`Refuse\`\n` +
-                    `Les demandes créent un **post** dans ce forum. À la fin du vote, le post est **verrouillé** (le staff peut encore écrire).`,
+                    `Les demandes créent un **post** dans ce forum. À la fin du vote, le post est **verrouillé** (le staff peut encore écrire).\n` +
+                    `Sur le **principal**, utilisez \`/panel-deban\` avec \`salon-deban\` = l’ID de ce forum pour remplacer l’ancien salon texte.`,
                 ...payload,
             });
         } catch (err) {

@@ -714,7 +714,7 @@ class VoteManager {
                     if (!testGuildId) {
                         delete this.debanVotes[uid];
                         this.saveDebanVotes();
-                        console.error(`[Deban] processPending : forum ${channelId} sans config test, skip ${uid}.`);
+                        console.error(`[Deban] processPending : forum ${channelId} sans entrée deban_forum_config.json, skip ${uid}.`);
                         continue;
                     }
                     const reportWithPending = `${req.reportContent}\n\n**⏳ Statut**\nMise en attente expirée — vote automatique lancé.`;
