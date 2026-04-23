@@ -145,6 +145,7 @@ class VoteManager {
             this.formData.delete(userId);
             this.formDataTimers.delete(userId);
             this.activeDebanRequests.delete(userId);
+            this.pendingDebanChannels?.delete(userId);
         }, ttlMs);
         // Ne pas maintenir l'event-loop en vie juste pour ce timer
         if (timer.unref) timer.unref();
