@@ -7,6 +7,7 @@ const {
     ButtonStyle
 } = require('discord.js');
 const CONFIG = require('../config.js');
+const { TEST_DEBAN_BYPASS_GUILD_ID } = require('../commands/panel.js');
 
 /**
  * Handler pour le formulaire de débannissement
@@ -16,9 +17,20 @@ module.exports = {
     name: 'debanFormHandler',
 
     /**
-     * Gère le clic sur le bouton "Lancer le formulaire"
+     * Gère le clic sur le bouton "Lancer le formulaire".
+     * Le customId peut être :
+     *   - `launch_form`            (legacy : utilise CONFIG.DEBAN_CHANNEL_ID)
+     *   - `launch_form_<channelId>` (nouveau : salon choisi par l'admin via /panel-deban)
      */
     async handleLaunchForm(interaction, { voteManager, client }) {
+        // Extrait le salon de deban encodé dans le customId du bouton.
+        // Fallback sur CONFIG.DEBAN_CHANNEL_ID si le bouton est issu d'un ancien panel.
+        let debanChannelId = CONFIG.DEBAN_CHANNEL_ID;
+        const cid = interaction.customId || '';
+        if (cid.startsWith('launch_form_')) {
+            const extracted = cid.slice('launch_form_'.length).trim();
+            if (/^\d{15,25}$/.test(extracted)) debanChannelId = extracted;
+        }
         // Vérifier si l'utilisateur a déjà une demande en cours (persistant : survit aux redémarrages)
         const activeCheck = voteManager.hasActiveDebanRequest(interaction.user.id);
         if (activeCheck.active) {
