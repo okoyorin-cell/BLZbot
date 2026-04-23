@@ -584,23 +584,17 @@ async function handleEndVote(interaction, voteManager) {
 }
 
 /**
- * Termine un vote de débannissement
+ * Termine un vote de débannissement (bouton "Fin du Vote")
  */
 async function handleEndDebanVote(interaction, voteManager, client, config) {
     const targetUserId = interaction.customId.split('_')[3];
-    const message = interaction.message;
-    const embed = message.embeds[0];
 
     // Vérifier les permissions (Admin uniquement)
-    const member = interaction.member;
     let voterRolePoints = 0;
-    for (const role of member.roles.cache.values()) {
+    for (const role of interaction.member.roles.cache.values()) {
         const roleData = CONFIG.STAFF_ROLES.find(r => r.id === role.id);
-        if (roleData && roleData.points > voterRolePoints) {
-            voterRolePoints = roleData.points;
-        }
+        if (roleData && roleData.points > voterRolePoints) voterRolePoints = roleData.points;
     }
-
     const adminRole = CONFIG.STAFF_ROLES.find(r => r.name === 'Administrateur');
     const minPointsToEnd = adminRole ? adminRole.points : 5;
 
@@ -615,36 +609,21 @@ async function handleEndDebanVote(interaction, voteManager, client, config) {
         return interaction.reply({ content: 'Vote de débannissement introuvable.', ephemeral: true });
     }
 
-    const vote = voteManager.debanVotes[targetUserId];
-    const result = vote.oui > vote.non ? '✅ ACCEPTÉ' : '❌ REFUSÉ';
+    // Defer d'abord pour éviter les timeouts (l'API Discord peut être lente lors du ban remove + DM)
+    await interaction.deferReply({ ephemeral: true });
 
-    const resultEmbed = EmbedBuilder.from(embed)
-        .setColor(vote.oui > vote.non ? '#00FF00' : '#FF0000')
-        .setFooter({ text: `Résultat: ${result}` });
+    const res = await endDebanVoteProgrammatically(
+        interaction.message,
+        interaction.guild,
+        voteManager,
+        client,
+        targetUserId
+    );
 
-    // Désactiver tous les boutons
-    const disabledRow = message.components[0];
-    disabledRow.components.forEach(button => button.data.disabled = true);
-
-    await message.edit({ embeds: [resultEmbed], components: [disabledRow] });
-
-    // Si accepté, débannir l'utilisateur
-    if (vote.oui > vote.non) {
-        try {
-            const guild = await client.guilds.fetch(CONFIG.DEBAN_GUILD_ID);
-            await guild.bans.remove(targetUserId, 'Débannissement accepté par vote');
-            await interaction.channel.send(`✅ L'utilisateur <@${targetUserId}> a été débanni avec succès.`);
-        } catch (error) {
-            console.error('Erreur lors du débannissement:', error);
-            await interaction.channel.send(`⚠️ Erreur lors du débannissement de <@${targetUserId}>.`);
-        }
+    if (!res.success) {
+        return interaction.editReply({ content: `⚠️ Impossible de terminer le vote (${res.reason ?? 'erreur inconnue'}).` });
     }
-
-    delete voteManager.debanVotes[targetUserId];
-    voteManager.saveDebanVotes();
-    voteManager.activeDebanRequests.delete(targetUserId);
-
-    await interaction.reply({ content: `Le vote de débannissement a été terminé. Résultat: ${result}`, ephemeral: true });
+    await interaction.editReply({ content: `✅ Vote terminé. Résultat : **${res.result}**.` });
 }
 
 /**
