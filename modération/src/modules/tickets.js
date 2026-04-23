@@ -223,6 +223,7 @@ module.exports = {
     getTicket,
     getTicketIdFromChannel,
     isTicketChannel,
+    findOpenBridgedTicketByChannelId,
     addUserToTicket,
     removeUserFromTicket,
     deleteTicket,
