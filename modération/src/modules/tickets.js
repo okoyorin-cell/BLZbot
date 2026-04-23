@@ -148,6 +148,22 @@ function isTicketChannel(channel) {
 }
 
 /**
+ * Trouve un ticket ouvert dont le salon principal OU le salon miroir support correspond à channelId.
+ * @param {string} channelId
+ * @returns {{ ticketId: string } & object|null}
+ */
+function findOpenBridgedTicketByChannelId(channelId) {
+    if (!channelId) return null;
+    for (const [ticketId, t] of Object.entries(ticketsData.mapping)) {
+        if (!t || t.status !== 'open' || !t.bridge) continue;
+        if (String(t.channelId) === String(channelId) || String(t.supportChannelId) === String(channelId)) {
+            return { ticketId, ...t };
+        }
+    }
+    return null;
+}
+
+/**
  * Ajoute un utilisateur à un ticket
  * @param {string} ticketId - ID du ticket
  * @param {string} userId - ID de l'utilisateur
