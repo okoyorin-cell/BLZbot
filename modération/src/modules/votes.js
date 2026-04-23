@@ -77,6 +77,9 @@ class VoteManager {
         this.activeDebanRequests = new Set();
         this.formData = new Map();
         this.formDataTimers = new Map();
+        // Salon de destination choisi par /panel-deban, indexé par userId en cours de formulaire.
+        // Vidé en fin de submission ou quand le TTL formData expire.
+        this.pendingDebanChannels = new Map();
     }
 
     /**
