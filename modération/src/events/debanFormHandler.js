@@ -250,18 +250,40 @@ module.exports = {
      * Gère la soumission du modal Étape 1
      */
     async handleStep1Submit(interaction, { voteManager }) {
-        const whyBanned = interaction.fields.getTextInputValue('whyBanned');
-        const whenBanned = interaction.fields.getTextInputValue('whenBanned');
-        const whoBanned = interaction.fields.getTextInputValue('whoBanned');
+        const whyBanned = interaction.fields.getTextInputValue('whyBanned')?.trim();
+        const whenBanned = interaction.fields.getTextInputValue('whenBanned')?.trim();
+        const whoBanned = interaction.fields.getTextInputValue('whoBanned')?.trim();
 
-        // Stocker les données temporairement
-        voteManager.formData.set(interaction.user.id, {
+        // Validation immédiate de la date pour éviter qu'un user investisse 3 étapes
+        // pour voir sa demande refusée pour un format invalide à la fin.
+        const { parseAndCheckBanDate } = require('../modules/votes').prototype
+            ? {} : {};
+        // parseAndCheckBanDate est une méthode d'instance — on passe par voteManager
+        const banCheck = voteManager.parseAndCheckBanDate(whenBanned);
+        if (!banCheck.ok) {
+            return interaction.reply({
+                content: `❌ Date de ban invalide : \`${whenBanned}\`.\n\nFormats acceptés :\n• **JJ/MM/AAAA** (ex : 15/08/2022)\n• **AAAA-MM-JJ** (ex : 2022-08-15)\n\nRelancez le formulaire avec une date correcte.`,
+                ephemeral: true
+            });
+        }
+        // Date dans le futur : refus immédiat
+        if (banCheck.banDate.getTime() > Date.now() + 24 * 60 * 60 * 1000) {
+            return interaction.reply({
+                content: `❌ La date de ban \`${whenBanned}\` est dans le futur. Vérifiez votre saisie.`,
+                ephemeral: true
+            });
+        }
+
+        // Stocker les données temporairement (avec TTL 30 min → auto-cleanup si abandon)
+        voteManager.setFormData(interaction.user.id, {
             whyBanned,
             whenBanned,
             whoBanned,
             discordUsername: interaction.user.username,
-            discordId: interaction.user.id
+            discordId: interaction.user.id,
+            startedAt: new Date().toISOString(),
         });
+        voteManager.activeDebanRequests.add(interaction.user.id);
 
         const continueBtn = new ButtonBuilder()
             .setCustomId('deban_continue_step2')
@@ -271,7 +293,7 @@ module.exports = {
         const row = new ActionRowBuilder().addComponents(continueBtn);
 
         await interaction.reply({
-            content: '✅ **Étape 1 complétée !**\n\nCliquez sur le bouton ci-dessous pour passer à l\'étape 2.',
+            content: '✅ **Étape 1 complétée !**\n\nCliquez sur le bouton ci-dessous pour passer à l\'étape 2.\n\n⏱️ Vous avez 30 minutes pour compléter le formulaire.',
             ephemeral: true,
             components: [row]
         });
