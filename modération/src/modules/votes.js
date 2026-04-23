@@ -583,8 +583,6 @@ class VoteManager {
             return { success: true, pending: true, eligibilityDate };
         }
 
-        const { embed, row } = this._buildDebanVoteComponents(userData, reportContent, targetChannel);
-
         this.debanVotes[userData.discordId] = {
             oui: 0,
             non: 0,
