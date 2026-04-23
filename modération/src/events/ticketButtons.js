@@ -696,9 +696,16 @@ async function handleDeleteConfirm(interaction, client) {
         }
     }
 
-    // Supprimer le canal après un court délai
-    setTimeout(() => {
-        interaction.channel.delete().catch(err => {
+    // Supprimer le canal (et le salon jumelé si ticket pont) après un court délai
+    setTimeout(async () => {
+        try {
+            if (ticket?.bridge) {
+                await deleteBridgeSibling(client, ticket, interaction.channel.id);
+            }
+        } catch (e) {
+            console.warn('[Tickets] Suppression salon jumelé:', e?.message || e);
+        }
+        interaction.channel.delete().catch((err) => {
             console.error('[Tickets] Erreur suppression canal:', err);
         });
     }, 2000);
