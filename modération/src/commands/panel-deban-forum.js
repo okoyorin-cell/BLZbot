@@ -101,10 +101,7 @@ module.exports = {
 
             const payload = buildPanelPayload(forumChannel.id);
 
-            await interaction.editReply({
-                content: null,
-                ...payload,
-            });
+            await interaction.editReply(payload);
         } catch (err) {
             console.error('[panel-deban-forum]', err);
             const msg = err?.message || String(err);
