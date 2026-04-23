@@ -35,6 +35,7 @@ const RecruitmentManager = require('./src/modules/recruitment');
 const Scheduler = require('./src/modules/scheduler');
 const AntiRaidManager = require('./src/modules/antiraid');
 const { deployModerationSlashCommands } = require('./src/utils/deploy-slash-commands');
+const { handleTicketBridgeMessage } = require('./src/events/ticketBridge');
 
 // Création du client Discord
 const client = new Client({
