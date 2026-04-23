@@ -5,6 +5,53 @@ const CONFIG = require('../config.js');
 
 const _V_COMPACT = process.env.BLZ_COMPACT_LOG === '1';
 
+// Délai minimum avant qu'un ban soit éligible à une demande (≈ 3 mois)
+const BAN_WAIT_MS = 3 * 30 * 24 * 60 * 60 * 1000;
+// Cooldown entre deux demandes après un refus (30 jours)
+const DEBAN_REFUSAL_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
+// TTL des données de formulaire en mémoire (30 min) : empêche une fuite si le user abandonne
+const FORM_DATA_TTL_MS = 30 * 60 * 1000;
+
+/**
+ * Parse robuste d'une date de ban saisie dans le formulaire.
+ * Accepte : JJ/MM/AAAA, JJ-MM-AAAA, JJ.MM.AAAA, AAAA-MM-JJ, AAAA/MM/JJ, timestamp ISO.
+ * Retourne un objet Date ou null si la saisie est invalide / non parsable.
+ */
+function parseBanDate(input) {
+    if (!input || typeof input !== 'string') return null;
+    const s = input.trim();
+    if (!s) return null;
+
+    // Format FR : JJ/MM/AAAA ou JJ-MM-AAAA ou JJ.MM.AAAA (année 2 ou 4 chiffres)
+    const frMatch = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2}|\d{4})$/);
+    if (frMatch) {
+        let [, d, m, y] = frMatch;
+        d = parseInt(d, 10);
+        m = parseInt(m, 10);
+        y = parseInt(y, 10);
+        if (y < 100) y += y >= 70 ? 1900 : 2000; // 22 → 2022, 99 → 1999
+        if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+        const dt = new Date(Date.UTC(y, m - 1, d));
+        if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
+        return dt;
+    }
+
+    // Format ISO : AAAA-MM-JJ ou AAAA/MM/JJ
+    const isoMatch = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if (isoMatch) {
+        const [, y, m, d] = isoMatch.map((v, i) => i === 0 ? v : parseInt(v, 10));
+        if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+        const dt = new Date(Date.UTC(Number(y), m - 1, d));
+        if (dt.getUTCFullYear() !== Number(y) || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
+        return dt;
+    }
+
+    // Dernier recours : Date.parse (accepte ISO 8601 complet, RFC 2822, etc.)
+    const fallback = new Date(s);
+    if (!Number.isNaN(fallback.getTime())) return fallback;
+    return null;
+}
+
 /**
  * Module de gestion des votes (débannissement, promotions, candidatures, votes personnalisés)
  */
