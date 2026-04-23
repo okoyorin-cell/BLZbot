@@ -445,20 +445,26 @@ class VoteManager {
     }
 
     /**
-     * Vérifie si un ban date de moins de 3 mois
+     * Vérifie si un ban date de moins de 3 mois.
+     * @param {string} banDateString Date saisie par l'utilisateur (format FR ou ISO)
+     * @returns {{ ok: boolean, banDate: Date|null, tooRecent: boolean }}
+     *   - ok: true si la date a pu être parsée
+     *   - tooRecent: true si le ban date de moins de 3 mois
+     */
+    parseAndCheckBanDate(banDateString) {
+        const banDate = parseBanDate(banDateString);
+        if (!banDate) return { ok: false, banDate: null, tooRecent: false };
+        const timeSinceBan = Date.now() - banDate.getTime();
+        return { ok: true, banDate, tooRecent: timeSinceBan < BAN_WAIT_MS };
+    }
+
+    /**
+     * @deprecated Utiliser parseAndCheckBanDate qui renvoie la date parsée ET l'info d'erreur.
      */
     isBanLessThan3Months(banDateString) {
-        const banDate = new Date(banDateString);
-        const now = new Date();
-        const threeMonthsInMs = 3 * 30 * 24 * 60 * 60 * 1000;
-
-        if (isNaN(banDate.getTime())) {
-            console.warn(`Date de ban invalide pour: ${banDateString}`);
-            return false;
-        }
-
-        const timeSinceBan = now - banDate;
-        return timeSinceBan < threeMonthsInMs;
+        const { ok, tooRecent } = this.parseAndCheckBanDate(banDateString);
+        if (!ok) return false; // compat legacy : date invalide → pas "trop récent"
+        return tooRecent;
     }
 
     /**
