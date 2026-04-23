@@ -23,7 +23,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('panel-deban-test')
         .setDescription(
-            '[TEST uniquement] Crée le forum de débannissement + tags, puis affiche le panneau de demande.'
+            'Crée le forum de débannissement + tags (principal ou test), puis affiche le panneau de demande.'
         )
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .setDMPermission(false)
