@@ -242,7 +242,17 @@ module.exports = {
         LOG_CHANNEL_ID: null,                         // Salon de logs tickets (null = pas de logs)
         MAX_OPEN_TICKETS: 1,                          // Max tickets ouverts par utilisateur
         COOLDOWN_MS: 300000,                          // Cooldown entre tickets (5 minutes)
-        EMBED_COLOR: BLZ_EMBED_STRIP_HEX
+        EMBED_COLOR: BLZ_EMBED_STRIP_HEX,
+        /**
+         * Serveur support : ticket = salon avec uniquement le membre + le bot.
+         * Les messages sont relayés vers un salon « vrai » ticket sur MAIN_GUILD_ID.
+         */
+        SUPPORT_GUILD_ID: '1351221530998345828',
+        BRIDGE: {
+            ENABLED: true,
+            /** Catégorie sur le serveur PRINCIPAL pour les tickets staff (null = racine du serveur) */
+            MAIN_CATEGORY_ID: process.env.TICKET_BRIDGE_MAIN_CATEGORY_ID || null,
+        },
     },
 
     // ==================== SYSTÈME D'ABSENCES STAFF ====================
