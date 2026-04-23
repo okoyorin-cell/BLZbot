@@ -319,7 +319,7 @@ async function deployModerationSlashCommands(client, _config, opts = {}) {
 
     if (compact) {
         console.log(
-            `[modération] Slash GLOBAL : +${createdCount} maj ${updatedCount} skip ${skippedCount} err ${errorCount} · legacyGlobal ${deletedGlobal} · guildOnly +${guildOnlyCreated}/~${guildOnlyUpdated} · cleanGuilds ${guildCleanupTotal}/${guildsVisited}${guildsInError ? ` (err ${guildsInError})` : ''}`
+            `[modération] Slash GLOBAL : +${createdCount} maj ${updatedCount} skip ${skippedCount} err ${errorCount} · legacyGlobal ${deletedGlobal} · mirrorGuild ok=${mirrorGuildSetOk}/${mirrorGuildIds.length} · guildOnly +${guildOnlyCreated}/~${guildOnlyUpdated} · cleanGuilds ${guildCleanupTotal}/${guildsVisited}${guildsInError ? ` (err ${guildsInError})` : ''}`
         );
     } else {
         console.log(
