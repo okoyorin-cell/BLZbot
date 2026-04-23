@@ -7,14 +7,11 @@
  */
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const { TEST_DEBAN_BYPASS_GUILD_ID, buildPanelPayload } = require('./panel');
-const { createDebanForum, getForumConfigForGuild } = require('../modules/debanForum');
-
-/** Marqueur lu par le déployeur : ne pas publier cette commande en global. */
-module.exports.guildOnly = true;
+const { createDebanForum } = require('../modules/debanForum');
 
 module.exports = {
+    /** Lu par deploy-slash-commands : ne pas publier en global Discord. */
     guildOnly: true,
-    TEST_DEBAN_BYPASS_GUILD_ID,
 
     data: new SlashCommandBuilder()
         .setName('panel-deban-test')
@@ -108,8 +105,8 @@ module.exports = {
             await interaction.editReply({
                 content:
                     `✅ Forum **${forumChannel.name}** créé sur **${hostGuild.name}**.\n` +
-                    `Tags : \`En cours\` / \`Deban\` / \`Refuse\` → IDs : \`${tags.enCours || '?'}\` / \`${tags.deban || '?'}\` / \`${tags.refuse || '?'}\`\n` +
-                    `Les demandes créeront un **post** dans ce forum. À la fin du vote, le post est **verrouillé** (staff peut encore discuter).`,
+                    `Tags : \`En cours\` / \`Deban\` / \`Refuse\`\n` +
+                    `Les demandes créent un **post** dans ce forum. À la fin du vote, le post est **verrouillé** (le staff peut encore écrire).`,
                 ...payload,
             });
         } catch (err) {
