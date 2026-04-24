@@ -4,8 +4,9 @@ const localEnv = path.join(__dirname, '..', '.env');
 const monorepoRootEnv = path.join(__dirname, '..', '..', '.env');
 
 require('dotenv').config({ path: localEnv });
-/** Token vide dans `reborn-test-bot/.env` : on relit le `.env` racine du monorepo en écrasant (override). */
+/** Token absent ou vide : compléter depuis le `.env` racine du monorepo (une ligne `TOKEN=` vide bloquerait sinon). */
 if (!String(process.env.REBORN_TEST_BOT_TOKEN || '').trim()) {
+  delete process.env.REBORN_TEST_BOT_TOKEN;
   require('dotenv').config({ path: monorepoRootEnv, override: true });
 }
 
