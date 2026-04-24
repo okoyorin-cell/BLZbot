@@ -14,6 +14,7 @@ const { refreshApplicationOwners, isOwner } = require('./lib/owners');
 const { registerEarn } = require('./services/earn');
 const { handlePurchase } = require('./services/purchase');
 const { deploySlashCommands } = require('./slashDeploy');
+const { tickSeparations } = require('./services/separation');
 
 cfg.assertToken();
 
