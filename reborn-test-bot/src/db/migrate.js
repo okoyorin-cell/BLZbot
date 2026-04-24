@@ -190,6 +190,34 @@ function migrate(db) {
   addColumnIfMissing(db, 'users', 'temple_unlocked', 'INTEGER NOT NULL DEFAULT 0');
   addColumnIfMissing(db, 'trades', 'from_event', "TEXT NOT NULL DEFAULT '0'");
   addColumnIfMissing(db, 'trades', 'to_event', "TEXT NOT NULL DEFAULT '0'");
+
+  /** Recaler xp_total si colonne ajoutée à une base existante (approx. depuis level + ancien xp). */
+  try {
+    function minTotalForLevel(targetLevel) {
+      const tl = Math.max(1, Math.floor(Number(targetLevel) || 1));
+      let lo = 0;
+      let hi = 50_000_000;
+      let ans = 0;
+      while (lo <= hi) {
+        const mid = Math.floor((lo + hi) / 2);
+        if (totalToLevelState(mid).level >= tl) {
+          ans = mid;
+          hi = mid - 1;
+        } else lo = mid + 1;
+      }
+      return ans;
+    }
+    const rows = db.prepare('SELECT id, level, xp FROM users WHERE COALESCE(xp_total, 0) = 0').all();
+    const upd = db.prepare('UPDATE users SET xp_total = ?, xp = ?, level = ? WHERE id = ?');
+    for (const r of rows) {
+      const lv = Math.max(1, r.level || 1);
+      const t = minTotalForLevel(lv) + Math.max(0, Math.floor(r.xp || 0));
+      const st = totalToLevelState(t);
+      upd.run(t, st.xpInto, st.level, r.id);
+    }
+  } catch (e) {
+    console.warn('[migrate] xp_total backfill:', e?.message || e);
+  }
 }
 
 module.exports = { migrate };
