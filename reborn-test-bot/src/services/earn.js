@@ -13,13 +13,6 @@ function gxpMultForUser(userId) {
   return Date.now() < (u.gxp_boost_ms || 0) ? 2n : 1n;
 }
 
-function grpMultForUser(hubId, userId) {
-  const raw = require('./meta').get(`grp_half:${hubId}:${userId}`);
-  if (!raw) return 1n;
-  if (Date.now() < Number(raw)) return 1n; // placeholder: could be /2
-  return 1n;
-}
-
 function grantVoiceMinutes(guildId, userId, minutes) {
   if (minutes <= 0n) return;
   users.getOrCreate(userId, '');
