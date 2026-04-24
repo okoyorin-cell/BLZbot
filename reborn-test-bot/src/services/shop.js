@@ -7,6 +7,35 @@ function utcDateKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** Jour + vague minuit / midi (Europe/Paris) si branche boutique étape ≥ 3 (doc REBORN). */
+function parisClock() {
+  const parts = new Intl.DateTimeFormat('fr-FR', {
+    timeZone: 'Europe/Paris',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date());
+  const g = (t) => parts.find((p) => p.type === t)?.value || '';
+  const ymd = `${g('year')}-${g('month')}-${g('day')}`;
+  const hour = parseInt(g('hour') || '0', 10) || 0;
+  return { ymd, hour };
+}
+
+function effectiveShopDateKey(userId) {
+  const { ymd, hour } = parisClock();
+  try {
+    const skillTree = require('./skillTree');
+    if (skillTree.step(userId, 'shop') >= 3) {
+      return `${ymd}_${hour >= 12 ? 'pm' : 'am'}`;
+    }
+  } catch {
+    /* ignore */
+  }
+  return ymd;
+}
+
 function rollRarity() {
   const total = SHOP_ROW1_RARITY_WEIGHTS.reduce((a, [, w]) => a + w, 0);
   let r = Math.random() * total;
@@ -28,7 +57,7 @@ function pickShopItemExcludingDiamondConflict() {
 }
 
 function ensureShopSlots(userId) {
-  const day = utcDateKey();
+  const day = effectiveShopDateKey(userId);
   const rows = db.prepare('SELECT slot FROM user_shop WHERE user_id = ? AND shop_date = ?').all(userId, day);
   const taken = new Set(rows.map((r) => r.slot));
   const ins = db.prepare(
@@ -44,19 +73,18 @@ function ensureShopSlots(userId) {
 
 function getTodaySlots(userId) {
   ensureShopSlots(userId);
-  return db
-    .prepare('SELECT slot, item_id, price FROM user_shop WHERE user_id = ? AND shop_date = ? ORDER BY slot')
-    .all(userId, utcDateKey());
+  const day = effectiveShopDateKey(userId);
+  return db.prepare('SELECT slot, item_id, price FROM user_shop WHERE user_id = ? AND shop_date = ? ORDER BY slot').all(userId, day);
 }
 
 function getSlot(userId, slot) {
-  return db
-    .prepare('SELECT * FROM user_shop WHERE user_id = ? AND shop_date = ? AND slot = ?')
-    .get(userId, utcDateKey(), slot);
+  const day = effectiveShopDateKey(userId);
+  return db.prepare('SELECT * FROM user_shop WHERE user_id = ? AND shop_date = ? AND slot = ?').get(userId, day, slot);
 }
 
 function removeSlot(userId, slot) {
-  db.prepare('DELETE FROM user_shop WHERE user_id = ? AND shop_date = ? AND slot = ?').run(userId, utcDateKey(), slot);
+  const day = effectiveShopDateKey(userId);
+  db.prepare('DELETE FROM user_shop WHERE user_id = ? AND shop_date = ? AND slot = ?').run(userId, day, slot);
 }
 
-module.exports = { utcDateKey, ensureShopSlots, getTodaySlots, getSlot, removeSlot, rollRarity };
+module.exports = { utcDateKey, effectiveShopDateKey, ensureShopSlots, getTodaySlots, getSlot, removeSlot, rollRarity };
