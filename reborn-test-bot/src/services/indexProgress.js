@@ -44,10 +44,9 @@ function claimNext(userId, usersSvc) {
   const r = db.prepare('SELECT * FROM user_item_index WHERE user_id = ?').get(userId);
   const claimed = parseClaimed(r.claimed_json);
   const pct = r.completion_pct || 0;
-  const next = STEPS.find((s) => s.pct <= pct && !claimed.includes(s.pct));
-  if (!next) return { ok: false, error: 'Aucune étape réclamable (monte ton % ou tout est pris).' };
-  if (pct < next.pct) {
-    return { ok: false, error: `Complète au moins **${next.pct} %** de l’index (actuel : **${pct}**).` };
+  const next = STEPS.find((s) => !claimed.includes(s.pct) && pct >= s.pct);
+  if (!next) {
+    return { ok: false, error: 'Aucune étape réclamable (augmente ton % d’index ou tout est déjà pris).' };
   }
   claimed.push(next.pct);
   usersSvc.addStars(userId, next.stars);
