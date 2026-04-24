@@ -25,8 +25,6 @@ module.exports = {
       `# Temple\n**Points** : **${r.points}** / 11+\n${unlocked}\n\n**Sources détectées** : ${r.keys.length ? r.keys.map((k) => `\`${k}\``).join(', ') : '—'}\n\n*Défense / séparation / rôle Hacker / index event : à brancher sur les vrais événements Discord.*`,
     );
     const c = new ContainerBuilder().addTextDisplayComponents(txt);
-    if (sub === 'sync' || sub === 'voir') {
-      return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2, ephemeral: true });
-    }
+    return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2, ephemeral: true });
   },
 };
