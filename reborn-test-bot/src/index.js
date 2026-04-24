@@ -43,7 +43,7 @@ for (const file of fs.readdirSync(commandsDir)) {
   if (cmd.data?.name) client.commands.set(cmd.data.name, cmd);
 }
 
-client.once('clientReady', async () => {
+client.once(Events.ClientReady, async () => {
   await refreshApplicationOwners(client);
   console.log(
     `[reborn-test-bot] Connecté en tant que ${client.user?.tag} — TEST_NO_LIMITS=${cfg.TEST_NO_LIMITS}`,
