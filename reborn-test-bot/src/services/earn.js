@@ -23,8 +23,7 @@ function grantVoiceMinutes(guildId, userId, minutes) {
   const gr = C.gxpRatesForPlayerLevel(row?.level || 1);
   const mult = gxpMultForUser(userId);
   gm.addGxp(guildId, userId, gr.vocMin * minutes * mult);
-  const gmult = grpMultForUser(guildId, userId);
-  gm.addGrp(guildId, userId, C.grpRatesForMessage().vocMin * minutes * gmult);
+  gm.addGrp(guildId, userId, C.grpRatesForMessage().vocMin * minutes);
   grpSeason.maybeResetMonthlyGrp(guildId);
   const after = gm.getMemberRow(guildId, userId);
   grpSeason.recordGrpPeaksIfNeeded(guildId, userId, after.grp);
