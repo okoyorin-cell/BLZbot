@@ -11,6 +11,14 @@ const { rollChest } = require('../reborn/chestLoot');
 const users = require('./users');
 const shop = require('./shop');
 const meta = require('./meta');
+const skillTree = require('./skillTree');
+
+function discountedPrice(userId, base) {
+  const b = typeof base === 'bigint' ? base : BigInt(base);
+  const d = skillTree.shopDiscountFrac(userId);
+  const mult = BigInt(Math.round((1 - d) * 10000));
+  return (b * mult) / 10000n;
+}
 
 const HOUR_MS = 60 * 60 * 1000;
 
