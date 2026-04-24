@@ -64,15 +64,6 @@ function syncDayWeek(row) {
   return row;
 }
 
-function bumpSelectionProgress(userId, row) {
-  const sid = row.selection_id || '';
-  if (!sid || row.selection_claimed) return;
-  const def = SELECTIONS[sid];
-  if (!def || def.kind !== 'msgs') return;
-  const p = (row.selection_progress || 0) + 1;
-  db.prepare('UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?').run(p, userId);
-}
-
 /** Compteur messages + progression (appelé depuis earn). */
 function onMessage(userId) {
   users.getOrCreate(userId, '');
@@ -88,7 +79,11 @@ function onMessage(userId) {
     userId,
   );
   row = { ...row, msgs_today: msgs, week_points: wp, lifetime_msgs: life };
-  bumpSelectionProgress(userId, row);
+  const sid = row.selection_id || '';
+  if (sid && !row.selection_claimed && SELECTIONS[sid]?.kind === 'msgs') {
+    const p = (row.selection_progress || 0) + 1;
+    db.prepare('UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?').run(p, userId);
+  }
   return { msgs_today: msgs, week_points: wp, day_key: row.day_key, lifetime_msgs: life };
 }
 
