@@ -188,7 +188,7 @@ function tryBuyNextGrade(hubDiscordId, userId) {
     }
   }
   users.addStars(userId, -req.stars);
-  const anti = nxt === 'star' ? 1 : g.anti_separation;
+  const anti = nxt === 'star' ? 1 : g.anti_separation || 0;
   db.prepare('UPDATE player_guilds SET grade = ?, anti_separation = ? WHERE id = ?').run(nxt, anti, g.id);
   return { ok: true, grade: nxt, label: label(nxt) };
 }
