@@ -124,10 +124,51 @@ async function handlePurchase(interaction, parts) {
     }
     users.addStars(uid, -price);
     if (sub === 'catm') users.bumpCatm(uid, shop.utcDateKey());
-    const bonus = BigInt(10_000 + Math.floor(Math.random() * 490_000));
-    users.addStars(uid, bonus);
+
+    const lines = [];
+    let totalStars = 0n;
+    let totalXp = 0;
+    const allItems = [];
+    let loot = rollChest(sub, meta, uid);
+    const maxRollAgain = 2;
+    let depth = 0;
+    while (loot.rollAgain && depth < maxRollAgain) {
+      depth += 1;
+      const extra = rollChest(sub, meta, uid);
+      loot = {
+        lines: [...loot.lines, ...extra.lines],
+        stars: loot.stars + extra.stars,
+        xp: loot.xp + extra.xp,
+        items: [...loot.items, ...extra.items],
+        rollAgain: extra.rollAgain,
+      };
+    }
+    totalStars += loot.stars;
+    totalXp += loot.xp;
+    for (const it of loot.items) allItems.push(it);
+    lines.push(...loot.lines);
+    if (totalStars > 0n) users.addStars(uid, totalStars);
+    if (totalXp > 0) users.addXp(uid, totalXp);
+    for (const { id, qty } of allItems) {
+      if (id === 'diamant') {
+        const h = meta.diamondHolder();
+        if (h && h !== uid) {
+          users.addStars(uid, 5_000_000n);
+          lines.push('*(Diamant déjà pris — 5M starss)*');
+          continue;
+        }
+        meta.setDiamondHolder(uid);
+      }
+      users.addInventory(uid, id, qty);
+    }
+
+    const starLine =
+      totalStars > 0n ? `+**${totalStars.toLocaleString('fr-FR')}** starss` : '';
+    const xpLine = totalXp > 0 ? `+**${totalXp}** XP` : '';
+    const head = [starLine, xpLine].filter(Boolean).join(' · ');
+    const body = lines.length ? `\n${lines.map((l) => `• ${l}`).join('\n')}` : '';
     await interaction.reply({
-      content: `**${label}** ouvert — +**${bonus.toLocaleString('fr-FR')}** starss (loot test, à remplacer par table officielle).`,
+      content: `**${label}** ouvert${head ? ` — ${head}` : ''}.${body}`.slice(0, 1900),
       ephemeral: true,
     });
   }
