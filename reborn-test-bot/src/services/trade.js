@@ -44,8 +44,8 @@ function genId() {
 }
 
 function createTrade(hubDiscordId, fromUser, toUser, fromStars, toStars) {
-  const aInv = users.getInventory(fromUser);
-  const bInv = users.getInventory(toUser);
+  users.getOrCreate(fromUser, '');
+  users.getOrCreate(toUser, '');
   const chk = tradeAllowed(fromStars, [], toStars, []);
   if (!chk.ok) return chk;
   const id = genId();
