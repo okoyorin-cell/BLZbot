@@ -46,10 +46,6 @@ module.exports = {
     const g = pg.getGuild(gRow.id);
     if (!g || g.hub_discord_id !== hub) return interaction.reply({ content: 'Guilde invalide.', ephemeral: true });
 
-    const members = pg.db
-      ? null
-      : null;
-    const db = require('../db');
     const memRows = db.prepare('SELECT user_id, joined_ms FROM player_guild_members WHERE guild_id = ? ORDER BY joined_ms').all(g.id);
     const n = memRows.length;
     const lines = [];
