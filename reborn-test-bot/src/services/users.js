@@ -138,6 +138,18 @@ function getUser(userId) {
   return getStmt.get(userId);
 }
 
+function setModTestsScore(userId, score) {
+  getOrCreate(userId, '');
+  const n = Math.max(0, Math.min(100, Number(score) || 0));
+  db.prepare('UPDATE users SET mod_tests_score = ? WHERE id = ?').run(n, userId);
+}
+
+function setCandidatureStatus(userId, status) {
+  getOrCreate(userId, '');
+  const s = String(status || 'aucune').slice(0, 80);
+  db.prepare('UPDATE users SET candidature_status = ? WHERE id = ?').run(s, userId);
+}
+
 module.exports = {
   getUser,
   getOrCreate,
