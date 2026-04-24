@@ -81,7 +81,7 @@ module.exports = {
         },
         {
           name: 'Gains passifs (doc REBORN)',
-          value: `**${STARSS_PER_MESSAGE}** starss / msg · **${STARSS_PER_VOICE_MINUTE}** starss / min voc (hors boosts).`,
+          value: `**${STARSS_PER_MESSAGE}** starss / msg · **${STARSS_PER_VOICE_MINUTE}** starss / min voc · **${XP_PER_MESSAGE}** XP/msg · **${XP_PER_VOICE_MINUTE}** XP/min voc (hors boosts).`,
           inline: false,
         },
       );
