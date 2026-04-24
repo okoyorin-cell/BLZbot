@@ -120,7 +120,8 @@ function memberCount(guildId) {
 
 function createGuild(hubDiscordId, leaderId, leaderName, name) {
   const u = users.getOrCreate(leaderId, leaderName);
-  if ((u.level || 1) < 15) {
+  const canCreate = cfg.TEST_NO_LIMITS || (u.level || 1) >= 15;
+  if (!canCreate) {
     return { ok: false, error: 'Niveau 15 minimum pour créer une guilde.' };
   }
   if (getMembershipInHub(leaderId, hubDiscordId)) {
