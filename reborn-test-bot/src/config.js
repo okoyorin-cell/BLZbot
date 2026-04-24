@@ -15,6 +15,9 @@ const ownerIds = new Set(
     .filter(Boolean),
 );
 
+/** À chaque démarrage du bot : enregistrer les slash commands (sauf si =0). */
+const autoDeploySlashOnReady = String(process.env.REBORN_AUTO_DEPLOY_SLASH || '1').trim() !== '0';
+
 function assertToken() {
   if (!token) {
     console.error(
