@@ -1,16 +1,17 @@
 const db = require('../db');
 
+/** Paliers doc + coffres catalogue REBORN (rôle Discord 100 % : hors scope bot → message). */
 const STEPS = [
-  { pct: 10, stars: 10_000n, label: '10 %' },
-  { pct: 20, stars: 50_000n, label: '20 %' },
-  { pct: 30, stars: 100_000n, label: '30 %' },
-  { pct: 40, stars: 200_000n, label: '40 %' },
-  { pct: 50, stars: 300_000n, label: '50 %' },
-  { pct: 60, stars: 500_000n, label: '60 %' },
-  { pct: 70, stars: 750_000n, label: '70 %' },
-  { pct: 80, stars: 1_000_000n, label: '80 %' },
-  { pct: 90, stars: 1_500_000n, label: '90 %' },
-  { pct: 100, stars: 2_000_000n, label: '100 %' },
+  { pct: 10, stars: 10_000n, chests: [] },
+  { pct: 20, stars: 50_000n, chests: [{ id: 'coffre_classique', qty: 1 }] },
+  { pct: 30, stars: 100_000n, chests: [{ id: 'coffre_classique', qty: 1 }] },
+  { pct: 40, stars: 200_000n, chests: [{ id: 'coffre_catm', qty: 1 }] },
+  { pct: 50, stars: 300_000n, chests: [{ id: 'coffre_catm', qty: 1 }] },
+  { pct: 60, stars: 500_000n, chests: [{ id: 'coffre_catl', qty: 1 }] },
+  { pct: 70, stars: 750_000n, chests: [{ id: 'coffre_catl', qty: 1 }] },
+  { pct: 80, stars: 1_000_000n, chests: [{ id: 'coffre_catl', qty: 2 }] },
+  { pct: 90, stars: 1_500_000n, chests: [{ id: 'coffre_cats', qty: 1 }] },
+  { pct: 100, stars: 2_000_000n, chests: [{ id: 'coffre_cats', qty: 1 }], roleNote: 'pipelette ultime (rôle Discord à attribuer côté serveur)' },
 ];
 
 function getRow(userId) {
@@ -50,6 +51,9 @@ function claimNext(userId, usersSvc) {
   }
   claimed.push(next.pct);
   usersSvc.addStars(userId, next.stars);
+  for (const c of next.chests || []) {
+    usersSvc.addInventory(userId, c.id, c.qty || 1);
+  }
   db.prepare('UPDATE user_item_index SET claimed_json = ? WHERE user_id = ?').run(JSON.stringify(claimed.sort((a, b) => a - b)), userId);
   return { ok: true, step: next };
 }
