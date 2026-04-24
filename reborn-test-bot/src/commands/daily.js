@@ -174,7 +174,7 @@ module.exports = {
           users.addStars(userId, amount);
           rewardEmoji = '⭐';
           rewardLine = {
-            title: `${reward.name} → **+${amount.toLocaleString('fr-FR')}** (boost starss appliqué si actif)`,
+            title: `**+${amount.toLocaleString('fr-FR')}** starss — ${reward.name}`,
             emoji: rewardEmoji,
           };
           break;
