@@ -116,7 +116,7 @@ function pickSelection(userId, selectionKey) {
   let row = syncDayWeek(getState(userId));
   if (!SELECTIONS[selectionKey]) return { ok: false, error: 'Choix inconnu.' };
   if (row.selection_claimed) return { ok: false, error: 'Tu as déjà terminé ta quête à choix cette semaine.' };
-  if (row.selection_id && row.selection_id === selectionKey) {
+  if (row.selection_id === selectionKey && !row.selection_claimed) {
     return { ok: false, error: 'Tu as déjà ce choix actif.' };
   }
   db.prepare(
