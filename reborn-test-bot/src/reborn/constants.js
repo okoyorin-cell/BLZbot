@@ -46,11 +46,8 @@ function gxpRatesForPlayerLevel(level) {
   if (lv < 40) return { msg: 3n, vocMin: 6n };
   if (lv < 50) return { msg: 4n, vocMin: 8n };
   if (lv < 60) return { msg: 5n, vocMin: 10n };
-  if (lv < 70) return { msg: 6n, vocMin: 12n };
-  if (lv < 80) return { msg: 7n, vocMin: 14n };
-  if (lv < 90) return { msg: 8n, vocMin: 16n };
-  if (lv < 100) return { msg: 9n, vocMin: 18n };
-  return { msg: 10n, vocMin: 20n };
+  if (lv >= 70) return { msg: 6n, vocMin: 12n };
+  return { msg: 6n, vocMin: 12n };
 }
 
 /** GRP ranked : 1/10 du ranked « normal » (doc) — ici 1/msg et 3/min voc si ranked normal = 10/msg 30/min. */
