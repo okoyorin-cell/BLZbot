@@ -59,6 +59,8 @@ function acceptTrade(tradeId, userId) {
   const t = db.prepare('SELECT * FROM trades WHERE id = ?').get(tradeId);
   if (!t || t.status !== 'pending') return { ok: false, error: 'Trade introuvable.' };
   if (t.to_user !== userId) return { ok: false, error: 'Pas le destinataire.' };
+  users.getOrCreate(t.from_user, '');
+  users.getOrCreate(t.to_user, '');
   const fs = BigInt(t.from_stars || '0');
   const ts = BigInt(t.to_stars || '0');
   const chk = tradeAllowed(fs, [], ts, []);
