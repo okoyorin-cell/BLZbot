@@ -1,0 +1,19 @@
+{
+  "name": "blz-reborn-test-bot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bot de test sandbox (hors BLZbot) pour la MAJ REBORN — pas de limitations artificielles côté code.",
+  "type": "commonjs",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "deploy": "node src/deploy.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "discord.js": "^14.25.1",
+    "dotenv": "^17.2.1"
+  }
+}
