@@ -82,7 +82,7 @@ async function handlePurchase(interaction, parts) {
   }
 
   if (kind === 'b') {
-    const price = BOOST_ROW_PRICE;
+    const price = discountedPrice(uid, BOOST_ROW_PRICE);
     if (users.getStars(uid) < price) {
       await interaction.reply({ content: 'Pas assez de starss pour ce boost.', ephemeral: true });
       return;
