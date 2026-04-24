@@ -253,6 +253,7 @@ module.exports = {
           });
         } else if (i.customId.startsWith('rb_pg_careers_')) {
           await i.deferUpdate();
+          const nMem = db.prepare('SELECT COUNT(*) AS c FROM player_guild_members WHERE guild_id = ?').get(gFresh.id).c;
           const { grp } = gm.getMemberRow(hub, gFresh.leader_id);
           const rk = grpRankFromTotal(grp);
           const treasuryB = BigInt(gFresh.treasury || '0');
@@ -262,7 +263,7 @@ module.exports = {
             '### REBORN (guilde joueur)',
             `• **ID** \`${gFresh.id}\` · **Grade** ${label(gFresh.grade || '') || '—'}`,
             `• **GXP (guilde)** ${gxpB.toLocaleString('fr-FR')} · **Trésorerie** ${treasuryB.toLocaleString('fr-FR')} starss`,
-            `• **Niveau guilde** ${gFresh.guild_level} · **Membres** ${totalMembers} / **${gFresh.member_cap}**`,
+            `• **Niveau guilde** ${gFresh.guild_level} · **Membres** ${nMem} / **${gFresh.member_cap}**`,
             `• **Anti-séparation** : ${gFresh.anti_separation ? 'oui' : 'non'} · Dernier focus (ms) : \`${gFresh.last_focus_ms || 0}\``,
             `• **GRP chef** (indicatif serveur) : ${rk || '—'}`,
             '',
