@@ -57,7 +57,7 @@ async function handlePurchase(interaction, parts) {
       await interaction.reply({ content: 'Item inconnu.', ephemeral: true });
       return;
     }
-    const price = BigInt(row.price);
+    const price = discountedPrice(uid, BigInt(row.price));
     if (users.getStars(uid) < price) {
       await interaction.reply({ content: `Pas assez de starss (besoin **${price.toLocaleString('fr-FR')}**).`, ephemeral: true });
       return;
