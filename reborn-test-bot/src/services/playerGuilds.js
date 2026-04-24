@@ -145,7 +145,12 @@ function joinGuild(hubDiscordId, userId, username, guildId) {
   const cap = g.member_cap || memberCapForGuildLevel(g.guild_level || 1);
   if (n >= cap) return { ok: false, error: 'Guilde pleine.' };
   users.getOrCreate(userId, username);
-  db.prepare('INSERT INTO player_guild_members (guild_id, user_id, joined_ms) VALUES (?, ?, ?)').run(guildId, userId, Date.now());
+  db.prepare('INSERT INTO player_guild_members (guild_id, user_id, joined_ms, perms_json) VALUES (?, ?, ?, ?)').run(
+    guildId,
+    userId,
+    Date.now(),
+    permsJsonString(DEFAULT_PERMS),
+  );
   return { ok: true };
 }
 
