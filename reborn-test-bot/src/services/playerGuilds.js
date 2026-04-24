@@ -152,6 +152,7 @@ function treasuryView(guildId) {
 
 function treasuryDeposit(guildId, userId, amount) {
   if (amount <= 0n) return { ok: false, error: 'Montant invalide.' };
+  if (!canDepositToTreasury(guildId, userId)) return { ok: false, error: 'Pas autorisé à déposer (permission « dépôt »).' };
   const m = db.prepare('SELECT * FROM player_guild_members WHERE guild_id = ? AND user_id = ?').get(guildId, userId);
   if (!m) return { ok: false, error: 'Pas membre.' };
   if (users.getStars(userId) < amount) return { ok: false, error: 'Pas assez de starss.' };
