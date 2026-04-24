@@ -111,7 +111,7 @@ async function buildMemberRowsForCanvas(interaction, memRows, leaderId) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('profil-guilde')
-    .setDescription('Fiche guilde joueur — même rendu visuel que BLZbot + infos REBORN.')
+    .setDescription("Affiche les informations d'une guilde (canvas BLZbot + champs REBORN).")
     .addStringOption((o) =>
       o
         .setName('nom')
