@@ -182,19 +182,24 @@ module.exports = {
     });
     const container = new ContainerBuilder().addMediaGalleryComponents(mediaGallery);
 
-    const row = new ActionRowBuilder().addComponents(
+    const row1 = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(`rb_pg_list_${g.id}`)
         .setLabel('Liste complète')
         .setEmoji('📋')
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
-        .setCustomId(`rb_pg_stats_${g.id}`)
-        .setLabel('Stats REBORN')
-        .setEmoji('🛡️')
+        .setCustomId(`rb_pg_careers_${g.id}`)
+        .setLabel('Carrières')
+        .setEmoji('🎓')
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId(`rb_pg_quests_${g.id}`)
+        .setLabel('Quêtes')
+        .setEmoji('📜')
         .setStyle(ButtonStyle.Success),
     );
-    container.addActionRowComponents(row);
+    container.addActionRowComponents(row1);
 
     await interaction.editReply({
       files: [file],
