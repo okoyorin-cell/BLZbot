@@ -18,22 +18,30 @@ function writeAll(data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
 }
 
+/** @returns {string} entier décimal sans limite pratique */
 function getBalance(userId) {
   const all = readAll();
-  const n = Number(all[userId]);
-  return Number.isFinite(n) ? n : 0;
+  const s = all[userId];
+  if (s === undefined || s === null || s === '') return '0';
+  try {
+    return BigInt(String(s).replace(/\s/g, '')).toString(10);
+  } catch {
+    return '0';
+  }
 }
 
-/** Pas de plafond : montant arbitraire accepté. */
 function setBalance(userId, amount) {
   const all = readAll();
-  all[userId] = String(Math.trunc(Number(amount)));
+  const v = BigInt(typeof amount === 'bigint' ? amount : String(amount).replace(/\s/g, ''));
+  all[userId] = v.toString(10);
   writeAll(all);
   return getBalance(userId);
 }
 
 function addBalance(userId, delta) {
-  return setBalance(userId, getBalance(userId) + Number(delta));
+  const cur = BigInt(getBalance(userId));
+  const d = BigInt(typeof delta === 'bigint' ? delta : String(delta).replace(/\s/g, ''));
+  return setBalance(userId, cur + d);
 }
 
 module.exports = { getBalance, setBalance, addBalance };
