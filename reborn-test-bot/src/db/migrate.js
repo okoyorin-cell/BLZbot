@@ -177,6 +177,7 @@ function migrate(db) {
   addColumnIfMissing(db, 'trades', 'from_items_json', "TEXT NOT NULL DEFAULT '[]'");
   addColumnIfMissing(db, 'trades', 'to_items_json', "TEXT NOT NULL DEFAULT '[]'");
   addColumnIfMissing(db, 'player_guild_members', 'perms_json', "TEXT NOT NULL DEFAULT '{}'");
+  addColumnIfMissing(db, 'user_quest_state', 'lifetime_msgs', 'INTEGER NOT NULL DEFAULT 0');
 }
 
 module.exports = { migrate };
