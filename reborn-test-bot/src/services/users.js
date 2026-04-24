@@ -169,5 +169,7 @@ module.exports = {
   bumpCatm,
   resetCatmIfNewDay,
   setDailyLastMs,
+  setModTestsScore,
+  setCandidatureStatus,
   B,
 };
