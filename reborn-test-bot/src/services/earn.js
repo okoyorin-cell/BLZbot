@@ -19,7 +19,7 @@ function gxpMultForUser(userId) {
 }
 
 function grpFocusMultForUser(hubDiscordId, userId) {
-  const m = pg.getMembershipInHub(userId, hubDiscordId);
+  const m = playerGuilds.getMembershipInHub(userId, hubDiscordId);
   if (!m) return 100n;
   const until = parseInt(meta.get(`grp_half_${m.guild_id}`) || '0', 10) || 0;
   return Date.now() < until ? 50n : 100n;
