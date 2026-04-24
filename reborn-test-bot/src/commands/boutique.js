@@ -21,8 +21,9 @@ module.exports = {
     shop.ensureShopSlots(uid);
     const slots = shop.getTodaySlots(uid);
     const bal = users.getStars(uid).toLocaleString('fr-FR');
-    const day = shop.utcDateKey();
-    users.resetCatmIfNewDay(uid, day);
+    const dayUtc = shop.utcDateKey();
+    const dayKey = shop.effectiveShopDateKey(uid);
+    users.resetCatmIfNewDay(uid, dayUtc);
     const { count: catmCount } = users.getCatmState(uid);
 
     let desc = `Solde : **${bal}** starss · jour boutique **${day}** (UTC)\n\n**Ligne 1 — items du jour**\n`;
