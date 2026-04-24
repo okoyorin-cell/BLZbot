@@ -11,7 +11,19 @@ module.exports = {
         .setDescription('Proposer un échange')
         .addUserOption((o) => o.setName('vers').setDescription('Destinataire').setRequired(true))
         .addStringOption((o) => o.setName('tu_donnes').setDescription('Starss que tu donnes').setRequired(true))
-        .addStringOption((o) => o.setName('tu_recois').setDescription('Starss que tu reçois').setRequired(true)),
+        .addStringOption((o) => o.setName('tu_recois').setDescription('Starss que tu reçois').setRequired(true))
+        .addStringOption((o) =>
+          o
+            .setName('objets_donnes')
+            .setDescription('Optionnel : ex. corail:2,xp_boost:1')
+            .setRequired(false),
+        )
+        .addStringOption((o) =>
+          o
+            .setName('objets_recus')
+            .setDescription('Optionnel : items demandés au destinataire (même format)')
+            .setRequired(false),
+        ),
     )
     .addSubcommand((sc) =>
       sc
