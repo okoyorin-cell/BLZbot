@@ -14,14 +14,11 @@ function gxpMultForUser(userId) {
 function grantVoiceMinutes(guildId, userId, minutes) {
   if (minutes <= 0n) return;
   users.getOrCreate(userId, '');
-  const u = users.getUser(userId);
-  const uname = u?.username || 'voc';
-  users.getOrCreate(userId, uname);
   const row = users.getUser(userId);
   const baseStars = BigInt(C.STARSS_PER_VOICE_MINUTE) * minutes;
   const stars = users.applyStarssMultiplier(userId, baseStars);
   users.addStars(userId, stars);
-  const gr = C.gxpRatesForPlayerLevel(row.level);
+  const gr = C.gxpRatesForPlayerLevel(row?.level || 1);
   const mult = gxpMultForUser(userId);
   gm.addGxp(guildId, userId, gr.vocMin * minutes * mult);
   gm.addGrp(guildId, userId, C.grpRatesForMessage().vocMin * minutes);
@@ -42,8 +39,10 @@ function registerEarn(client) {
       users.addXp(uid, 1);
       const u = users.getUser(uid);
       const gr = C.gxpRatesForPlayerLevel(u?.level || 1);
-      const mult = gxpMultForUser(uid);
-      gm.addGxp(msg.guild.id, uid, gr.msg * mult);
+      if (gr.msg > 0n) {
+        const mult = gxpMultForUser(uid);
+        gm.addGxp(msg.guild.id, uid, gr.msg * mult);
+      }
       gm.addGrp(msg.guild.id, uid, C.grpRatesForMessage().msg);
     } catch (e) {
       console.error('[earn message]', e);
@@ -61,6 +60,17 @@ function registerEarn(client) {
         return;
       }
 
+      if (oldS.channelId && newS.channelId && oldS.channelId !== newS.channelId) {
+        const rec = voiceSince.get(uid);
+        if (rec) {
+          const ms = Date.now() - rec.since;
+          const minutes = BigInt(Math.max(0, Math.floor(ms / 60000)));
+          grantVoiceMinutes(rec.guildId, uid, minutes);
+        }
+        voiceSince.set(uid, { guildId, since: Date.now() });
+        return;
+      }
+
       if (oldS.channelId && !newS.channelId) {
         const rec = voiceSince.get(uid);
         voiceSince.delete(uid);
@@ -68,10 +78,7 @@ function registerEarn(client) {
         const ms = Date.now() - rec.since;
         const minutes = BigInt(Math.max(0, Math.floor(ms / 60000)));
         grantVoiceMinutes(rec.guildId, uid, minutes);
-        return;
       }
-
-      if (oldS.channelId && !newS.channelId) return;
     } catch (e) {
       console.error('[earn voice]', e);
     }
