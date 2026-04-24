@@ -156,16 +156,21 @@ function acceptTrade(tradeId, userId) {
       users.getOrCreate(t.to_user, '');
       const fs = BigInt(t.from_stars || '0');
       const ts = BigInt(t.to_stars || '0');
+      const fe = B(t.from_event);
+      const te = B(t.to_event);
       const fromItems = deserializeItems(t.from_items_json);
       const toItems = deserializeItems(t.to_items_json);
       const fromRowsCheck = itemsToRows(t.from_user, fromItems);
       if (!fromRowsCheck.ok) throw new Error(fromRowsCheck.error);
       const toRowsCheck = itemsToRows(t.to_user, toItems);
       if (!toRowsCheck.ok) throw new Error(toRowsCheck.error);
-      const chk = tradeAllowed(fs, fromRowsCheck.rows, ts, toRowsCheck.rows);
+      const chk = tradeAllowed(fs, fromRowsCheck.rows, ts, toRowsCheck.rows, fe, te);
       if (!chk.ok) throw new Error(chk.error);
       if (users.getStars(t.from_user) < fs || users.getStars(t.to_user) < ts) {
         throw new Error('Solde starss insuffisant.');
+      }
+      if (users.getEventCurrency(t.from_user) < fe || users.getEventCurrency(t.to_user) < te) {
+        throw new Error('Monnaie d’évent insuffisante.');
       }
       for (const { id, qty } of fromItems) {
         if (!users.takeInventory(t.from_user, id, qty)) throw new Error(`Retrait impossible : ${id}`);
