@@ -6,7 +6,7 @@ const {
   CHEST_CATS,
   CATM_DAILY_LIMIT,
 } = require('../reborn/constants');
-const { getItem, priceFor } = require('../reborn/catalog');
+const { getItem } = require('../reborn/catalog');
 const users = require('./users');
 const shop = require('./shop');
 const meta = require('./meta');
