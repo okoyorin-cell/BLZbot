@@ -28,7 +28,7 @@ module.exports = {
     .addSubcommand((sc) =>
       sc
         .setName('inviter')
-        .setDescription('Inviter un membre (chef)')
+        .setDescription('Inviter un membre (chef ou permission « rôles »)')
         .addUserOption((o) => o.setName('membre').setDescription('Joueur').setRequired(true)),
     )
     .addSubcommand((sc) =>
