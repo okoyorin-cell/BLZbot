@@ -203,7 +203,6 @@ module.exports = {
       }
 
       users.setDailyLastMs(userId, Date.now());
-      const fresh = users.getOrCreate(userId, interaction.user.username);
       const starsTotal = users.getStars(userId);
 
       const container = buildDailyContainer({
