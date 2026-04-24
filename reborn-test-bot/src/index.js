@@ -8,8 +8,11 @@ const {
   Partials,
   ActivityType,
 } = require('discord.js');
+require('./db');
 const cfg = require('./config');
 const { refreshApplicationOwners, isOwner } = require('./lib/owners');
+const { registerEarn } = require('./services/earn');
+const { handlePurchase } = require('./services/purchase');
 
 cfg.assertToken();
 
@@ -34,7 +37,7 @@ const client = new Client({
   ],
 });
 
-/** @type {Collection<string, import('./commands/ping')>} */
+/** @type {Collection<string, { data: import('discord.js').SlashCommandBuilder, execute: Function }>} */
 client.commands = new Collection();
 const commandsDir = path.join(__dirname, 'commands');
 for (const file of fs.readdirSync(commandsDir)) {
@@ -43,15 +46,29 @@ for (const file of fs.readdirSync(commandsDir)) {
   if (cmd.data?.name) client.commands.set(cmd.data.name, cmd);
 }
 
+registerEarn(client);
+
 client.once(Events.ClientReady, async () => {
   await refreshApplicationOwners(client);
   console.log(
     `[reborn-test-bot] Connecté en tant que ${client.user?.tag} — TEST_NO_LIMITS=${cfg.TEST_NO_LIMITS}`,
   );
-  client.user?.setActivity('sandbox REBORN', { type: ActivityType.Playing });
+  client.user?.setActivity('REBORN sandbox', { type: ActivityType.Playing });
 });
 
 client.on('interactionCreate', async (interaction) => {
+  if (interaction.isButton() && interaction.customId.startsWith('rb:')) {
+    try {
+      await handlePurchase(interaction, interaction.customId.split(':'));
+    } catch (e) {
+      console.error('[boutique bouton]', e);
+      const msg = { content: `Erreur: \`${e?.message || e}\``, ephemeral: true };
+      if (interaction.replied || interaction.deferred) await interaction.followUp(msg).catch(() => {});
+      else await interaction.reply(msg).catch(() => {});
+    }
+    return;
+  }
+
   if (!interaction.isChatInputCommand()) return;
   const cmd = client.commands.get(interaction.commandName);
   if (!cmd) return;
