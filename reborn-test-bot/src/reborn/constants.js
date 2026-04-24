@@ -3,6 +3,10 @@
 const STARSS_PER_MESSAGE = 15;
 const STARSS_PER_VOICE_MINUTE = 40;
 
+/** XP joueur (doc progression). */
+const XP_PER_MESSAGE = 10;
+const XP_PER_VOICE_MINUTE = 25;
+
 const RARITY_PRICE_STARSS = {
   Commun: 10_000n,
   Rare: 25_000n,
