@@ -67,6 +67,38 @@ function canDepositToTreasury(guildId, userId) {
   return Boolean(p.depot);
 }
 
+function canWithdrawTreasury(guildId, userId) {
+  const g = getGuild(guildId);
+  const m = memberRow(guildId, userId);
+  if (!g || !m) return false;
+  if (g.leader_id === userId) return true;
+  return Boolean(parsePermsJson(m.perms_json).retrait);
+}
+
+function canKickMember(guildId, actorId) {
+  const g = getGuild(guildId);
+  const m = memberRow(guildId, actorId);
+  if (!g || !m) return false;
+  if (g.leader_id === actorId) return true;
+  return Boolean(parsePermsJson(m.perms_json).kick);
+}
+
+function canInviteMembers(guildId, actorId) {
+  const g = getGuild(guildId);
+  const m = memberRow(guildId, actorId);
+  if (!g || !m) return false;
+  if (g.leader_id === actorId) return true;
+  return Boolean(parsePermsJson(m.perms_json).roles);
+}
+
+function canLaunchFocus(guildId, actorId) {
+  const g = getGuild(guildId);
+  const m = memberRow(guildId, actorId);
+  if (!g || !m) return false;
+  if (g.leader_id === actorId) return true;
+  return Boolean(parsePermsJson(m.perms_json).focus);
+}
+
 function getGuild(guildId) {
   return db.prepare('SELECT * FROM player_guilds WHERE id = ?').get(guildId);
 }
