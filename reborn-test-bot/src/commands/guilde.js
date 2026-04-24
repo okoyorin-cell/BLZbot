@@ -166,7 +166,9 @@ module.exports = {
     if (sub === 'inviter') {
       const u = interaction.options.getUser('membre', true);
       const m = pg.getMembershipInHub(uid, hub);
-      if (!m || m.leader_id !== uid) return interaction.reply({ content: 'Réservé au chef.', ephemeral: true });
+      if (!m || !pg.canInviteMembers(m.guild_id, uid)) {
+        return interaction.reply({ content: 'Réservé au chef ou permission « invitations ».', ephemeral: true });
+      }
       const r = pg.joinGuild(hub, u.id, u.username, m.guild_id);
       if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
       return interaction.reply({ content: `${u} a été ajouté à la guilde.`, ephemeral: true });
