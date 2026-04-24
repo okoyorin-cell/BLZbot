@@ -251,25 +251,42 @@ module.exports = {
             flags: MessageFlags.IsComponentsV2,
             ephemeral: true,
           });
-        } else if (i.customId.startsWith('rb_pg_stats_')) {
+        } else if (i.customId.startsWith('rb_pg_careers_')) {
           await i.deferUpdate();
           const { grp } = gm.getMemberRow(hub, gFresh.leader_id);
           const rk = grpRankFromTotal(grp);
-          const stats = [
-            `### 🛡️ Données REBORN (${gFresh.name})`,
-            `• **ID** \`${gFresh.id}\``,
-            `• **Niveau guilde** ${gFresh.guild_level}`,
-            `• **Grade** ${label(gFresh.grade || '') || '—'}`,
-            `• **GXP** ${BigInt(gFresh.gxp || '0').toLocaleString('fr-FR')}`,
-            `• **Trésorerie** ${BigInt(gFresh.treasury || '0').toLocaleString('fr-FR')} starss`,
-            `• **Anti-séparation** ${gFresh.anti_separation ? 'oui' : 'non'}`,
-            `• **GRP chef** (indicatif) ${rk || '—'}`,
+          const treasuryB = BigInt(gFresh.treasury || '0');
+          const gxpB = BigInt(gFresh.gxp || '0');
+          const statsText = [
+            `# 🎓 Carrières & progression — ${gFresh.name}`,
+            '### REBORN (guilde joueur)',
+            `• **ID** \`${gFresh.id}\` · **Grade** ${label(gFresh.grade || '') || '—'}`,
+            `• **GXP (guilde)** ${gxpB.toLocaleString('fr-FR')} · **Trésorerie** ${treasuryB.toLocaleString('fr-FR')} starss`,
+            `• **Niveau guilde** ${gFresh.guild_level} · **Membres** ${totalMembers} / **${gFresh.member_cap}**`,
+            `• **Anti-séparation** : ${gFresh.anti_separation ? 'oui' : 'non'} · Dernier focus (ms) : \`${gFresh.last_focus_ms || 0}\``,
+            `• **GRP chef** (indicatif serveur) : ${rk || '—'}`,
             '',
-            '*Guerres / salon privé / quêtes BLZbot classiques : non branchés sur ce hub REBORN.*',
+            '### Équivalences affichage BLZbot (image)',
+            'Valeur 💎, upgrade, trésor et guerres sur le **canvas** reprennent la mise en forme du bot principal ; les chiffres sont **dérivés** des données REBORN + membres (stars/points) pour l’icône valeur membre.',
           ].join('\n');
-          const statsText = new TextDisplayBuilder().setContent(stats);
+          const td = new TextDisplayBuilder().setContent(statsText);
           await i.followUp({
-            components: [new ContainerBuilder().addTextDisplayComponents(statsText)],
+            components: [new ContainerBuilder().addTextDisplayComponents(td)],
+            flags: MessageFlags.IsComponentsV2,
+            ephemeral: true,
+          });
+        } else if (i.customId.startsWith('rb_pg_quests_')) {
+          await i.deferUpdate();
+          const questText = new TextDisplayBuilder().setContent(
+            [
+              `# 📜 Quêtes — ${gFresh.name}`,
+              '• **REBORN** : pas de « quêtes de guilde » type BLZ (table dédiée) sur ce build.',
+              '• **Quêtes perso** : \`/quete\` (sandbox).',
+              '• *Les pastilles guerre / salon du canvas sont des rappels visuels (données hub principal non liées ici).*',
+            ].join('\n'),
+          );
+          await i.followUp({
+            components: [new ContainerBuilder().addTextDisplayComponents(questText)],
             flags: MessageFlags.IsComponentsV2,
             ephemeral: true,
           });
