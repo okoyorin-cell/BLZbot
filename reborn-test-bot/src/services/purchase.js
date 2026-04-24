@@ -126,11 +126,12 @@ async function handlePurchase(interaction, parts) {
       await interaction.reply({ content: 'Coffre inconnu.', ephemeral: true });
       return;
     }
-    if (users.getStars(uid) < price) {
+    const pay = discountedPrice(uid, price);
+    if (users.getStars(uid) < pay) {
       await interaction.reply({ content: 'Pas assez de starss.', ephemeral: true });
       return;
     }
-    users.addStars(uid, -price);
+    users.addStars(uid, -pay);
     if (sub === 'catm') users.bumpCatm(uid, shop.utcDateKey());
 
     const lines = [];
