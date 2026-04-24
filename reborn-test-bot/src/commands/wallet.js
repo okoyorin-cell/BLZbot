@@ -1,6 +1,14 @@
 const { SlashCommandBuilder } = require('discord.js');
 const wallet = require('../lib/wallet-store');
 
+function fmtStarss(s) {
+  try {
+    return BigInt(s).toLocaleString('fr-FR');
+  } catch {
+    return s;
+  }
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('wallet')
@@ -36,7 +44,7 @@ module.exports = {
       const u = interaction.options.getUser('membre') || interaction.user;
       const bal = wallet.getBalance(u.id);
       await interaction.reply({
-        content: `**${u.tag}** — **${bal.toLocaleString('fr-FR')}** starss (test)`,
+        content: `**${u.tag}** — **${fmtStarss(bal)}** starss (test)`,
         ephemeral: true,
       });
       return;
@@ -48,20 +56,18 @@ module.exports = {
     const mem = interaction.options.getUser('membre', true);
     if (sub === 'set') {
       const raw = interaction.options.getString('montant', true);
-      const n = BigInt(raw.replace(/\s/g, ''));
-      wallet.setBalance(mem.id, n);
+      wallet.setBalance(mem.id, BigInt(raw.replace(/\s/g, '')));
       await interaction.reply({
-        content: `Solde **${mem.tag}** → **${wallet.getBalance(mem.id).toLocaleString('fr-FR')}** starss`,
+        content: `Solde **${mem.tag}** → **${fmtStarss(wallet.getBalance(mem.id))}** starss`,
         ephemeral: true,
       });
       return;
     }
     if (sub === 'add') {
       const raw = interaction.options.getString('delta', true);
-      const n = BigInt(raw.replace(/\s/g, ''));
-      wallet.addBalance(mem.id, n);
+      wallet.addBalance(mem.id, BigInt(raw.replace(/\s/g, '')));
       await interaction.reply({
-        content: `**${mem.tag}** — nouveau solde **${wallet.getBalance(mem.id).toLocaleString('fr-FR')}** starss`,
+        content: `**${mem.tag}** — nouveau solde **${fmtStarss(wallet.getBalance(mem.id))}** starss`,
         ephemeral: true,
       });
     }
