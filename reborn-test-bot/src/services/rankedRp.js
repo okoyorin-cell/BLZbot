@@ -1,5 +1,6 @@
 const db = require('../db');
 const users = require('./users');
+const skillTree = require('./skillTree');
 
 const POOL_CAP = 300_000n;
 const BAND_LOW = 50_000n;
@@ -24,7 +25,6 @@ function bandExcess(rp) {
   return rp - BAND_LOW;
 }
 
-/** Somme des « excès » [50k,100k] pour tous les joueurs (pool zéro-sum). */
 function sumBandExcess() {
   const rows = db.prepare('SELECT points FROM users').all();
   let s = 0n;
@@ -34,18 +34,14 @@ function sumBandExcess() {
   return s;
 }
 
-/**
- * Retire `amount` de RP aux joueurs dans la bande (hors `exceptUserId`), en priorité les plus hauts.
- * @returns {bigint} réellement retiré
- */
 function stealRpFromBracket(exceptUserId, amount) {
   let left = amount;
   if (left <= 0n) return 0n;
   const rows = db
     .prepare(
       `SELECT id, points FROM users
-       WHERE id != ? AND CAST(points AS INTEGER) > ? AND CAST(points AS INTEGER) < ?
-       ORDER BY CAST(points AS INTEGER) DESC`,
+       WHERE id != ? AND CAST(COALESCE(points,'0') AS INTEGER) > ? AND CAST(COALESCE(points,'0') AS INTEGER) < ?
+       ORDER BY CAST(COALESCE(points,'0') AS INTEGER) DESC`,
     )
     .all(exceptUserId, Number(BAND_LOW), Number(BAND_HIGH));
   for (const r of rows) {
@@ -62,36 +58,52 @@ function stealRpFromBracket(exceptUserId, amount) {
   return amount - left;
 }
 
+function clampGainForPool(userId, p, gain) {
+  let g = gain;
+  while (g > 0n) {
+    const e1 = bandExcess(p);
+    const e2 = bandExcess(p + g);
+    const E = sumBandExcess();
+    const newSum = E - e1 + e2;
+    if (newSum <= POOL_CAP) return g;
+    g -= 1n;
+  }
+  return 0n;
+}
+
 /**
  * @param {string} userId
  * @param {'msg'|'voc'} kind
- * @param {bigint} [units] voc = minutes
+ * @param {bigint} [units] minutes voc
  */
 function grantFromActivity(userId, kind, units = 1n) {
   users.getOrCreate(userId, '');
-  const now = Date.now();
-  db.prepare('UPDATE users SET rp_last_activity_ms = ? WHERE id = ?').run(now, userId);
-
   const p = users.getPoints(userId);
   const r = ratesForPoints(p);
-  let gain = kind === 'msg' ? r.msg : r.vocMin * units;
+  const rb = skillTree.rankedRpBonuses(userId);
+  let gain =
+    kind === 'msg'
+      ? ((r.msg + rb.flatMsg) * BigInt(rb.pctBp)) / 10000n
+      : ((r.vocMin + rb.flatVoc) * units * BigInt(rb.pctBp)) / 10000n;
   if (gain <= 0n) return;
 
-  const newP = p + gain;
-  const excessBefore = sumBandExcess();
-  const simRows = db.prepare('SELECT id, points FROM users').all();
-  let simSum = 0n;
-  for (const row of simRows) {
-    let rp = users.B(row.points);
-    if (row.id === userId) rp = newP;
-    simSum += bandExcess(rp);
+  const gGuild = skillTree.guildGrpMultBp(userId);
+  if (kind === 'msg') {
+    /* GRP handled in earn.js with same mult */
   }
 
-  if (simSum > POOL_CAP) {
-    const over = simSum - POOL_CAP;
-    stealRpFromBracket(userId, over);
+  const capped = clampGainForPool(userId, p, gain);
+  if (capped <= 0n) return;
+
+  const e1 = bandExcess(p);
+  const e2 = bandExcess(p + capped);
+  const E = sumBandExcess();
+  const newSum = E - e1 + e2;
+  if (newSum > POOL_CAP) {
+    stealRpFromBracket(userId, newSum - POOL_CAP);
   }
-  users.addPoints(userId, gain);
+  users.addPoints(userId, capped);
+  db.prepare('UPDATE users SET rp_last_activity_ms = ? WHERE id = ?').run(Date.now(), userId);
 }
 
 function decayForUserIfIdle(userId) {
@@ -126,4 +138,5 @@ module.exports = {
   POOL_CAP,
   BAND_LOW,
   BAND_HIGH,
+  guildGrpMultBp: () => 10000, // overwritten by skillTree re-export in earn
 };
