@@ -389,5 +389,12 @@ module.exports = {
   getMemberPerms,
   setMemberPerm,
   canDepositToTreasury,
+  canWithdrawTreasury,
+  canKickMember,
+  canInviteMembers,
+  canLaunchFocus,
+  kickMember,
+  transferLeadership,
+  dissolveGuild,
   memberRow,
 };
