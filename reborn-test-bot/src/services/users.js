@@ -6,7 +6,7 @@ const upsertStmt = db.prepare(
 );
 const starsStmt = db.prepare('UPDATE users SET stars = ? WHERE id = ?');
 const pointsStmt = db.prepare('UPDATE users SET points = ? WHERE id = ?');
-const xpStmt = db.prepare('UPDATE users SET xp = ?, level = ? WHERE id = ?');
+const xpStmt = db.prepare('UPDATE users SET xp = ?, level = ?, xp_total = ? WHERE id = ?');
 const boostStmt = db.prepare(
   'UPDATE users SET xp_boost_ms = ?, gxp_boost_ms = ?, starss_boost_ms = ? WHERE id = ?',
 );
