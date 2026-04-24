@@ -122,8 +122,8 @@ function createTrade(hubDiscordId, fromUser, toUser, fromStars, toStars, fromIte
   if (!fromRowsCheck.ok) return fromRowsCheck;
   const toRowsCheck = itemsToRows(toUser, ti);
   if (!toRowsCheck.ok) return toRowsCheck;
-  const fe = typeof fromEvent === 'bigint' ? fromEvent : B(fromEvent);
-  const te = typeof toEvent === 'bigint' ? toEvent : B(toEvent);
+  const fe = typeof fromEvent === 'bigint' ? fromEvent : users.B(fromEvent);
+  const te = typeof toEvent === 'bigint' ? toEvent : users.B(toEvent);
   const chk = tradeAllowed(fromStars, fromRowsCheck.rows, toStars, toRowsCheck.rows, fe, te);
   if (!chk.ok) return chk;
   const id = genId();
