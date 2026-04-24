@@ -11,7 +11,7 @@ const { getItem } = require('../reborn/catalog');
 const { BOOST_ROW_PRICE, CHEST_CLASSIC, CHEST_CATM, CHEST_CATL, CHEST_CATS, CATM_DAILY_LIMIT } = require('../reborn/constants');
 
 module.exports = {
-  data: new SlashCommandBuilder().setName('boutique').setDescription('Boutique REBORN (reset minuit UTC).'),
+  data: new SlashCommandBuilder().setName('boutique').setDescription('Boutique REBORN (Paris + branche shop doc).'),
   /**
    * @param {import('discord.js').ChatInputCommandInteraction} interaction
    */
