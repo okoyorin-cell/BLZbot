@@ -1,0 +1,270 @@
+const db = require('../db');
+const users = require('./users');
+const { getItem } = require('../reborn/catalog');
+const { NEXT_REQUIREMENTS, grpRankFromTotal, nextGrade, label } = require('../reborn/grades');
+
+function B(s) {
+  try {
+    return BigInt(s || '0');
+  } catch {
+    return 0n;
+  }
+}
+
+function genId() {
+  return `${Date.now()}${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function guildLevelFromTotalGxp(total) {
+  let t = total;
+  if (t < 1n) return 1;
+  let level = 1;
+  t -= 1n;
+  if (t < 0n) return 1;
+  const step99 = 99n;
+  if (t < step99) return 1;
+  t -= step99;
+  level = 2;
+  while (true) {
+    const inc = 100n * BigInt(Math.max(1, level - 1));
+    if (t < inc) break;
+    t -= inc;
+    level += 1;
+  }
+  return level;
+}
+
+function memberCapForGuildLevel(gl) {
+  return 5 + Math.max(0, gl - 1);
+}
+
+function getGuild(guildId) {
+  return db.prepare('SELECT * FROM player_guilds WHERE id = ?').get(guildId);
+}
+
+function getMembershipInHub(userId, hubDiscordId) {
+  return db
+    .prepare(
+      `SELECT m.*, g.* FROM player_guild_members m
+     JOIN player_guilds g ON g.id = m.guild_id
+     WHERE m.user_id = ? AND g.hub_discord_id = ?`,
+    )
+    .get(userId, hubDiscordId);
+}
+
+function memberCount(guildId) {
+  return db.prepare('SELECT COUNT(*) AS c FROM player_guild_members WHERE guild_id = ?').get(guildId).c;
+}
+
+function createGuild(hubDiscordId, leaderId, leaderName, name) {
+  const u = users.getOrCreate(leaderId, leaderName);
+  if ((u.level || 1) < 15) {
+    return { ok: false, error: 'Niveau 15 minimum pour créer une guilde.' };
+  }
+  if (getMembershipInHub(leaderId, hubDiscordId)) {
+    return { ok: false, error: 'Tu es déjà dans une guilde sur ce serveur.' };
+  }
+  const id = genId();
+  const now = Date.now();
+  db.prepare(
+    `INSERT INTO player_guilds (id, hub_discord_id, name, leader_id, created_ms, member_cap, gxp, guild_level, grade, treasury, anti_separation, last_focus_ms)
+     VALUES (?, ?, ?, ?, ?, ?, '0', 1, '', '0', 0, 0)`,
+  ).run(id, hubDiscordId, name.slice(0, 80), leaderId, now, 5);
+  db.prepare('INSERT INTO player_guild_members (guild_id, user_id, joined_ms) VALUES (?, ?, ?)').run(id, leaderId, now);
+  return { ok: true, guildId: id };
+}
+
+function joinGuild(hubDiscordId, userId, username, guildId) {
+  const g = getGuild(guildId);
+  if (!g || g.hub_discord_id !== hubDiscordId) return { ok: false, error: 'Guilde introuvable sur ce serveur.' };
+  if (getMembershipInHub(userId, hubDiscordId)) return { ok: false, error: 'Tu es déjà dans une guilde.' };
+  const n = memberCount(guildId);
+  const cap = g.member_cap || memberCapForGuildLevel(g.guild_level || 1);
+  if (n >= cap) return { ok: false, error: 'Guilde pleine.' };
+  users.getOrCreate(userId, username);
+  db.prepare('INSERT INTO player_guild_members (guild_id, user_id, joined_ms) VALUES (?, ?, ?)').run(guildId, userId, Date.now());
+  return { ok: true };
+}
+
+function leaveGuild(hubDiscordId, userId) {
+  const row = getMembershipInHub(userId, hubDiscordId);
+  if (!row) return { ok: false, error: 'Pas dans une guilde.' };
+  if (row.leader_id === userId) return { ok: false, error: 'Transfère le lead ou dissous (non implémenté) — un lead ne peut pas quitter pour l’instant.' };
+  db.prepare('DELETE FROM player_guild_members WHERE guild_id = ? AND user_id = ?').run(row.guild_id, userId);
+  return { ok: true };
+}
+
+function addGuildGxp(guildId, delta) {
+  const g = getGuild(guildId);
+  if (!g) return;
+  const next = B(g.gxp) + delta;
+  const gl = guildLevelFromTotalGxp(next);
+  const cap = memberCapForGuildLevel(gl);
+  db.prepare('UPDATE player_guilds SET gxp = ?, guild_level = ?, member_cap = ? WHERE id = ?').run(
+    next.toString(),
+    gl,
+    cap,
+    guildId,
+  );
+}
+
+function addGxpFromMemberActivity(hubDiscordId, userId, delta) {
+  const m = getMembershipInHub(userId, hubDiscordId);
+  if (!m) return;
+  addGuildGxp(m.guild_id, delta);
+}
+
+function treasuryView(guildId) {
+  const g = getGuild(guildId);
+  return g ? B(g.treasury) : 0n;
+}
+
+function treasuryDeposit(guildId, userId, amount) {
+  if (amount <= 0n) return { ok: false, error: 'Montant invalide.' };
+  const m = db.prepare('SELECT * FROM player_guild_members WHERE guild_id = ? AND user_id = ?').get(guildId, userId);
+  if (!m) return { ok: false, error: 'Pas membre.' };
+  if (users.getStars(userId) < amount) return { ok: false, error: 'Pas assez de starss.' };
+  users.addStars(userId, -amount);
+  const g = getGuild(guildId);
+  const t = B(g.treasury) + amount;
+  db.prepare('UPDATE player_guilds SET treasury = ? WHERE id = ?').run(t.toString(), guildId);
+  return { ok: true };
+}
+
+function treasuryWithdraw(guildId, userId, amount) {
+  const g = getGuild(guildId);
+  if (!g || g.leader_id !== userId) return { ok: false, error: 'Réservé au chef.' };
+  if (amount <= 0n) return { ok: false, error: 'Montant invalide.' };
+  const t = B(g.treasury);
+  if (t < amount) return { ok: false, error: 'Trésorerie insuffisante.' };
+  db.prepare('UPDATE player_guilds SET treasury = ? WHERE id = ?').run((t - amount).toString(), guildId);
+  users.addStars(userId, amount);
+  return { ok: true };
+}
+
+function countRarity(userId, rarity) {
+  const rows = users.getInventory(userId);
+  let n = 0;
+  for (const r of rows) {
+    const it = getItem(r.item_id);
+    if (it && it.rarity === rarity) n += r.qty;
+  }
+  return n;
+}
+
+function hasGrpPeak(hubDiscordId, userId, rankKey, seasonKey) {
+  return !!db
+    .prepare(
+      'SELECT 1 FROM user_grp_peaks WHERE hub_discord_id = ? AND user_id = ? AND rank_key = ? AND season_key = ?',
+    )
+    .get(hubDiscordId, userId, rankKey, seasonKey);
+}
+
+function recordGrpPeak(hubDiscordId, userId, rankKey, seasonKey) {
+  db.prepare(
+    'INSERT OR IGNORE INTO user_grp_peaks (hub_discord_id, user_id, rank_key, season_key) VALUES (?, ?, ?, ?)',
+  ).run(hubDiscordId, userId, rankKey, seasonKey);
+}
+
+function tryBuyNextGrade(hubDiscordId, userId) {
+  const row = getMembershipInHub(userId, hubDiscordId);
+  if (!row) return { ok: false, error: 'Pas dans une guilde.' };
+  if (row.leader_id !== userId) return { ok: false, error: 'Seul le chef peut acheter un grade.' };
+  const g = getGuild(row.guild_id);
+  const cur = g.grade || '';
+  const nxt = nextGrade(cur);
+  if (!nxt) return { ok: false, error: 'Grade max atteint (Star).' };
+  const req = NEXT_REQUIREMENTS[nxt];
+  if (!req) return { ok: false, error: 'Grade inconnu.' };
+  const u = users.getUser(userId);
+  const grpTotal = require('./guildMember').getMemberRow(hubDiscordId, userId).grp;
+  const peakRank = grpRankFromTotal(grpTotal);
+  const seasonKey = require('./grpSeason').currentSeasonKey();
+  if (!hasGrpPeak(hubDiscordId, userId, req.minGrpRank, seasonKey) && peakRank !== req.minGrpRank) {
+    const peaks = db
+      .prepare(
+        'SELECT rank_key FROM user_grp_peaks WHERE hub_discord_id = ? AND user_id = ? AND season_key = ?',
+      )
+      .all(hubDiscordId, userId, seasonKey);
+    const hasEver = peaks.some((p) => p.rank_key === req.minGrpRank);
+    if (!hasEver && peakRank !== req.minGrpRank) {
+      return { ok: false, error: `Pic GR requis : **${req.minGrpRank}** (saison actuelle ou pic enregistré).` };
+    }
+  }
+  if (users.getStars(userId) < req.stars) {
+    return { ok: false, error: `Il manque des starss (besoin **${req.stars.toLocaleString('fr-FR')}**).` };
+  }
+  if (countRarity(userId, 'Mythique') < req.mythic) {
+    return { ok: false, error: `Items mythiques insuffisants (${req.mythic} requis).` };
+  }
+  if (countRarity(userId, 'Goatesque') < req.crystal) {
+    return { ok: false, error: `Crystals / items goatesques insuffisants (${req.crystal} requis).` };
+  }
+  if (req.needDiamond) {
+    const h = require('./meta').diamondHolder();
+    if (h !== userId && countRarity(userId, 'Staresque') < 1) {
+      return { ok: false, error: 'Il faut posséder le **Diamant** (unique) ou un item staresque en stock.' };
+    }
+  }
+  users.addStars(userId, -req.stars);
+  const anti = nxt === 'star' ? 1 : g.anti_separation;
+  db.prepare('UPDATE player_guilds SET grade = ?, anti_separation = ? WHERE id = ?').run(nxt, anti, g.id);
+  return { ok: true, grade: nxt, label: label(nxt) };
+}
+
+function listGuildsOnHub(hubDiscordId) {
+  return db.prepare('SELECT id, name, leader_id, member_cap, guild_level, grade, treasury FROM player_guilds WHERE hub_discord_id = ? ORDER BY created_ms DESC').all(hubDiscordId);
+}
+
+function useFocus(hubDiscordId, attackerGuildId, targetGuildId, mode) {
+  const now = Date.now();
+  const CD = 168 * 60 * 60 * 1000;
+  const COST = 500_000n;
+  const att = getGuild(attackerGuildId);
+  const tgt = getGuild(targetGuildId);
+  if (!att || !tgt || att.hub_discord_id !== hubDiscordId || tgt.hub_discord_id !== hubDiscordId) {
+    return { ok: false, error: 'Guildes invalides.' };
+  }
+  if (now - (att.last_focus_ms || 0) < CD) return { ok: false, error: 'Focus en cooldown (7 j).' };
+  if (B(att.treasury) < COST) return { ok: false, error: '500 000 starss requis en trésorerie de guilde.' };
+  db.prepare('UPDATE player_guilds SET treasury = ?, last_focus_ms = ? WHERE id = ?').run(
+    (B(att.treasury) - COST).toString(),
+    now,
+    attackerGuildId,
+  );
+  const gm = require('./guildMember');
+  const members = db.prepare('SELECT user_id FROM player_guild_members WHERE guild_id = ?').all(targetGuildId);
+  if (mode === '1') {
+    for (const { user_id } of members) {
+      gm.addGrp(hubDiscordId, user_id, -500n);
+    }
+  } else if (mode === '2') {
+    const share = -3000n / BigInt(Math.max(1, members.length));
+    for (const { user_id } of members) {
+      gm.addGrp(hubDiscordId, user_id, share);
+    }
+  } else if (mode === '3') {
+    require('./meta').set(`focus_half_grp_${tgt.id}_${now}`, String(now + 2 * 3600000));
+  }
+  return { ok: true };
+}
+
+module.exports = {
+  getGuild,
+  getMembershipInHub,
+  memberCount,
+  createGuild,
+  joinGuild,
+  leaveGuild,
+  addGxpFromMemberActivity,
+  treasuryView,
+  treasuryDeposit,
+  treasuryWithdraw,
+  tryBuyNextGrade,
+  listGuildsOnHub,
+  useFocus,
+  recordGrpPeak,
+  guildLevelFromTotalGxp,
+  memberCapForGuildLevel,
+  B,
+};
