@@ -58,8 +58,14 @@ function onMessage(userId) {
   row = syncDayWeek(row);
   const msgs = (row.msgs_today || 0) + 1;
   const wp = (row.week_points || 0) + 1;
-  db.prepare('UPDATE user_quest_state SET msgs_today = ?, week_points = ? WHERE user_id = ?').run(msgs, wp, userId);
-  return { msgs_today: msgs, week_points: wp, day_key: row.day_key };
+  const life = (row.lifetime_msgs ?? 0) + 1;
+  db.prepare('UPDATE user_quest_state SET msgs_today = ?, week_points = ?, lifetime_msgs = ? WHERE user_id = ?').run(
+    msgs,
+    wp,
+    life,
+    userId,
+  );
+  return { msgs_today: msgs, week_points: wp, day_key: row.day_key, lifetime_msgs: life };
 }
 
 function claimDaily(userId) {
