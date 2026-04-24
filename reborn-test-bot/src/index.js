@@ -50,6 +50,27 @@ for (const file of fs.readdirSync(commandsDir)) {
 registerEarn(client);
 
 client.once(Events.ClientReady, async () => {
+  if (cfg.autoDeploySlashOnReady) {
+    if (!cfg.clientId) {
+      console.warn(
+        '[reborn-test-bot] Slash auto-deploy ignoré : ajoute REBORN_TEST_BOT_CLIENT_ID dans reborn-test-bot/.env',
+      );
+    } else {
+      try {
+        const r = await deploySlashCommands();
+        if (r.ok) {
+          console.log(
+            `[reborn-test-bot] Slash déployés (${r.scope}, ${r.count} cmd${r.guildId ? `, guild ${r.guildId}` : ''})`,
+          );
+        } else {
+          console.warn('[reborn-test-bot] Slash deploy :', r.reason);
+        }
+      } catch (e) {
+        console.error('[reborn-test-bot] Erreur deploy slash au démarrage :', e?.message || e);
+      }
+    }
+  }
+
   await refreshApplicationOwners(client);
   console.log(
     `[reborn-test-bot] Connecté en tant que ${client.user?.tag} — TEST_NO_LIMITS=${cfg.TEST_NO_LIMITS}`,
