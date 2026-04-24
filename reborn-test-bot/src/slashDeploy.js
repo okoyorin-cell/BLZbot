@@ -83,7 +83,7 @@ function makeNiveauMirrorStub(commandName) {
   return {
     data: new SlashCommandBuilder()
       .setName(commandName)
-      .setDescription('Mirroir BLZbot (non exécuté dans ce sandbox).'),
+      .setDescription('Miroir BLZbot — exécution non portée sur ce sandbox.'),
     async execute(interaction) {
       await interaction.reply({
         content:
