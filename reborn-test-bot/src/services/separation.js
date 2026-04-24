@@ -39,7 +39,9 @@ function startSeparation(hubDiscordId, guildId, initiatorId) {
 
 function joinSeparationCamp(hubDiscordId, userId, separationId) {
   const s = db.prepare('SELECT * FROM separations WHERE id = ? AND hub_discord_id = ?').get(separationId, hubDiscordId);
-  if (!s || s.cancelled || s.winner) return { ok: false, error: 'Séparation introuvable ou terminée.' };
+  if (!s || s.cancelled || (s.winner && String(s.winner).length > 0)) {
+    return { ok: false, error: 'Séparation introuvable ou terminée.' };
+  }
   if (s.phase !== 1 || Date.now() > s.phase1_end_ms) return { ok: false, error: 'Phase 1 terminée.' };
   const m = playerGuilds.getMembershipInHub(userId, hubDiscordId);
   if (!m || m.guild_id !== s.guild_id) return { ok: false, error: 'Tu dois être membre de cette guilde.' };
