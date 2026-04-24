@@ -4,20 +4,9 @@ const localEnv = path.join(__dirname, '..', '.env');
 const monorepoRootEnv = path.join(__dirname, '..', '..', '.env');
 
 require('dotenv').config({ path: localEnv });
-/** Si le token est absent ou vide localement, on complète depuis le `.env` racine du monorepo. */
-const rebornKeys = [
-  'REBORN_TEST_BOT_TOKEN',
-  'REBORN_TEST_BOT_CLIENT_ID',
-  'REBORN_TEST_GUILD_ID',
-  'REBORN_TEST_OWNER_IDS',
-  'REBORN_AUTO_DEPLOY_SLASH',
-  'REBORN_HACKER_ROLE_ID',
-];
+/** Token vide dans `reborn-test-bot/.env` : on relit le `.env` racine du monorepo en écrasant (override). */
 if (!String(process.env.REBORN_TEST_BOT_TOKEN || '').trim()) {
-  for (const k of rebornKeys) {
-    if (!String(process.env[k] || '').trim()) delete process.env[k];
-  }
-  require('dotenv').config({ path: monorepoRootEnv });
+  require('dotenv').config({ path: monorepoRootEnv, override: true });
 }
 
 /** Aucune limite artificielle côté bot (cooldowns, caps internes désactivés). */
