@@ -64,6 +64,7 @@ async function handlePurchase(interaction, parts) {
       meta.setDiamondHolder(uid);
     }
     users.addInventory(uid, item.id, 1);
+    shop.removeSlot(uid, slot);
     await interaction.reply({
       content: `Achat : **${item.name}** pour **${price.toLocaleString('fr-FR')}** starss.`,
       ephemeral: true,
