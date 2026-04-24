@@ -5,6 +5,10 @@ const grpSeason = require('./grpSeason');
 const playerGuilds = require('./playerGuilds');
 const quests = require('./quests');
 const trophies = require('./trophies');
+const rankedRp = require('./rankedRp');
+const skillTree = require('./skillTree');
+const meta = require('./meta');
+const pg = require('./playerGuilds');
 
 /** @type {Map<string, { guildId: string, since: number }>} */
 const voiceSince = new Map();
@@ -15,6 +19,13 @@ function gxpMultForUser(userId) {
   return Date.now() < (u.gxp_boost_ms || 0) ? 2n : 1n;
 }
 
+function grpFocusMultForUser(hubDiscordId, userId) {
+  const m = pg.getMembershipInHub(userId, hubDiscordId);
+  if (!m) return 100n;
+  const until = parseInt(meta.get(`grp_half_${m.guild_id}`) || '0', 10) || 0;
+  return Date.now() < until ? 50n : 100n;
+}
+
 function grantVoiceMinutes(guildId, userId, minutes) {
   if (minutes <= 0n) return;
   users.getOrCreate(userId, '');
@@ -22,14 +33,22 @@ function grantVoiceMinutes(guildId, userId, minutes) {
   const baseStars = BigInt(C.STARSS_PER_VOICE_MINUTE) * minutes;
   const stars = users.applyStarssMultiplier(userId, baseStars);
   users.addStars(userId, stars);
+  users.addXp(userId, Number(minutes) * C.XP_PER_VOICE_MINUTE);
+  rankedRp.decayForUserIfIdle(userId);
+  rankedRp.grantFromActivity(userId, 'voc', minutes);
   const gr = C.gxpRatesForPlayerLevel(row?.level || 1);
   const mult = gxpMultForUser(userId);
-  gm.addGxp(guildId, userId, gr.vocMin * minutes * mult);
-  gm.addGrp(guildId, userId, C.grpRatesForMessage().vocMin * minutes);
+  const gxpBp = skillTree.guildGxpMultBp(userId);
+  const gxpGain = (gr.vocMin * minutes * mult * BigInt(gxpBp)) / 10000n;
+  gm.addGxp(guildId, userId, gxpGain);
+  const baseGrp = C.grpRatesForMessage().vocMin * minutes;
+  const grpBp = skillTree.guildGrpMultBp(userId);
+  const focus = grpFocusMultForUser(guildId, userId);
+  gm.addGrp(guildId, userId, (baseGrp * BigInt(grpBp) * focus) / (10000n * 100n));
   grpSeason.maybeResetMonthlyGrp(guildId);
   const after = gm.getMemberRow(guildId, userId);
   grpSeason.recordGrpPeaksIfNeeded(guildId, userId, after.grp);
-  playerGuilds.addGxpFromMemberActivity(guildId, userId, gr.vocMin * minutes * mult);
+  playerGuilds.addGxpFromMemberActivity(guildId, userId, gxpGain);
 }
 
 /**
@@ -45,18 +64,25 @@ function registerEarn(client) {
       const base = BigInt(C.STARSS_PER_MESSAGE);
       const gain = users.applyStarssMultiplier(uid, base);
       users.addStars(uid, gain);
-      users.addXp(uid, 1);
+      users.addXp(uid, C.XP_PER_MESSAGE);
+      rankedRp.decayForUserIfIdle(uid);
+      rankedRp.grantFromActivity(uid, 'msg');
       const u = users.getUser(uid);
       const gr = C.gxpRatesForPlayerLevel(u?.level || 1);
       const mult = gxpMultForUser(uid);
-      if (gr.msg > 0n) {
-        gm.addGxp(hub, uid, gr.msg * mult);
+      const gxpBp = skillTree.guildGxpMultBp(uid);
+      const gxpGain = (gr.msg * mult * BigInt(gxpBp)) / 10000n;
+      if (gxpGain > 0n) {
+        gm.addGxp(hub, uid, gxpGain);
       }
       grpSeason.maybeResetMonthlyGrp(hub);
-      gm.addGrp(hub, uid, C.grpRatesForMessage().msg);
+      const baseGrp = C.grpRatesForMessage().msg;
+      const grpBp = skillTree.guildGrpMultBp(uid);
+      const focus = grpFocusMultForUser(hub, uid);
+      gm.addGrp(hub, uid, (baseGrp * BigInt(grpBp) * focus) / (10000n * 100n));
       const after = gm.getMemberRow(hub, uid);
       grpSeason.recordGrpPeaksIfNeeded(hub, uid, after.grp);
-      playerGuilds.addGxpFromMemberActivity(hub, uid, gr.msg * mult);
+      playerGuilds.addGxpFromMemberActivity(hub, uid, gxpGain);
       quests.onMessage(uid);
       trophies.evaluate(uid, hub);
     } catch (e) {
