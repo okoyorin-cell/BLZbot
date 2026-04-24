@@ -34,7 +34,7 @@ const HACKER_SALON_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 function assertToken() {
   if (!token) {
     console.error(
-      '[reborn-test-bot] Renseigne REBORN_TEST_BOT_TOKEN dans reborn-test-bot/.env (voir .env.example)',
+      '[reborn-test-bot] Renseigne REBORN_TEST_BOT_TOKEN dans reborn-test-bot/.env ou à la racine du repo (.env). Voir reborn-test-bot/.env.example',
     );
     process.exit(1);
   }
