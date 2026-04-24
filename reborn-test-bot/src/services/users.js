@@ -130,6 +130,10 @@ function resetCatmIfNewDay(userId, dayKey) {
   if (u.catm_day !== dayKey) catmStmt.run(dayKey, 0, userId);
 }
 
+function setDailyLastMs(userId, t) {
+  db.prepare('UPDATE users SET daily_last_ms = ? WHERE id = ?').run(t, userId);
+}
+
 function getUser(userId) {
   return getStmt.get(userId);
 }
