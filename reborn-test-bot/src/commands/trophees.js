@@ -9,13 +9,14 @@ module.exports = {
     .addSubcommand((sc) => sc.setName('verifier').setDescription('Revérifier les critères maintenant')),
   async execute(interaction) {
     const uid = interaction.user.id;
+    const hub = interaction.guildId;
     const sub = interaction.options.getSubcommand();
     if (sub === 'verifier') {
-      const newly = trophies.evaluate(uid);
+      const newly = trophies.evaluate(uid, hub);
       const extra = newly.length ? `\nNouveau(x) : **${newly.join('**, **')}**` : '\nAucun nouveau trophée.';
       return interaction.reply({ content: `Vérification terminée.${extra}`, ephemeral: true });
     }
-    trophies.evaluate(uid);
+    trophies.evaluate(uid, hub);
     const unlocked = new Set(trophies.listUnlocked(uid).map((r) => r.trophy_id));
     const lines = trophies.DEFS.map((t) => {
       const ok = unlocked.has(t.id) ? '✅' : '⬜';
