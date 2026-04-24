@@ -162,7 +162,7 @@ Fiche **embed** (pas le canvas prod) : ta guilde ou recherche par **nom / ID**.
 
 ## 10. Séparation (`/separation`)
 
-Flux test : **phase 1** (adhésion au camp), **phase 2** (comparaison des **gains GRP** depuis les snapshots), annulation si **&lt; 25 %** des membres en phase 1.  
+Flux test : **phase 1** (adhésion au camp), **phase 2** (comparaison des **gains GRP** depuis les snapshots), annulation si **moins de 25 %** des membres en phase 1.  
 Détail dans `src/services/separation.js` + commande.
 
 ---
