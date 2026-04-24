@@ -91,8 +91,7 @@ function buildDailyContainer(opts) {
     body = `## ⏳ Prochain daily\nReviens dans **${remainingTime}**.\n\n${roleLine}${starsLine}${dd}\n\n*Sandbox REBORN — reset à minuit (heure du process Node), comme le daily principal.*`;
   }
 
-  const header = success ? '# Daily' : '# Daily';
-  const mainText = new TextDisplayBuilder().setContent(`${header}\n**${displayName}**\n\n${body}`);
+  const mainText = new TextDisplayBuilder().setContent(`# Daily\n**${displayName}**\n\n${body}`);
 
   const container = new ContainerBuilder().addMediaGalleryComponents(gallery).addTextDisplayComponents(mainText);
   container.addActionRowComponents(buildCloseRow());
