@@ -97,6 +97,7 @@ function summary(userId) {
   const row = syncDayWeek(getState(userId));
   return {
     msgs_today: row.msgs_today || 0,
+    lifetime_msgs: row.lifetime_msgs ?? 0,
     daily_target: DAILY_MSG_TARGET,
     daily_claimed: !!row.daily_claimed,
     daily_reward: DAILY_REWARD,
