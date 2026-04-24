@@ -55,7 +55,7 @@ const DEFS = [
     id: 'grp_argent',
     name: 'GRP Argent',
     desc: 'Atteindre le rang GRP Argent (5 000+) sur un serveur.',
-    check: (ctx) => ctx.grp_rank_at_least === 'argent',
+    check: (ctx) => ctx.grp_total >= 5000n,
   },
 ];
 
