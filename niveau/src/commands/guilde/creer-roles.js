@@ -44,9 +44,10 @@ module.exports = {
             for (const rank of rolesToCreate) {
                 const existingRole = guild.roles.cache.find(r => r.name === rank.name);
                 if (!existingRole) {
+                    const c = resolveColor(rank.color);
                     const newRole = await guild.roles.create({
                         name: rank.name,
-                        colors: resolveColor(rank.color) != null ? [resolveColor(rank.color)] : undefined,
+                        ...(c != null ? { colors: { primaryColor: c } } : {}),
                         permissions: [],
                     });
                     createdRoles.push(newRole);
