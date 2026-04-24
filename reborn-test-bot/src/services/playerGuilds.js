@@ -38,6 +38,35 @@ function memberCapForGuildLevel(gl) {
   return 5 + Math.max(0, gl - 1);
 }
 
+const DEFAULT_PERMS = { depot: 1, retrait: 0, kick: 0, roles: 0, focus: 0 };
+const LEADER_PERMS = { depot: 1, retrait: 1, kick: 1, roles: 1, focus: 1 };
+
+function parsePermsJson(raw) {
+  try {
+    const o = JSON.parse(raw || '{}');
+    return { ...DEFAULT_PERMS, ...o };
+  } catch {
+    return { ...DEFAULT_PERMS };
+  }
+}
+
+function permsJsonString(p) {
+  return JSON.stringify({ ...DEFAULT_PERMS, ...p });
+}
+
+function memberRow(guildId, userId) {
+  return db.prepare('SELECT * FROM player_guild_members WHERE guild_id = ? AND user_id = ?').get(guildId, userId);
+}
+
+function canDepositToTreasury(guildId, userId) {
+  const g = getGuild(guildId);
+  const m = memberRow(guildId, userId);
+  if (!g || !m) return false;
+  if (g.leader_id === userId) return true;
+  const p = parsePermsJson(m.perms_json);
+  return Boolean(p.depot);
+}
+
 function getGuild(guildId) {
   return db.prepare('SELECT * FROM player_guilds WHERE id = ?').get(guildId);
 }
