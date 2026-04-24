@@ -38,6 +38,7 @@ const ITEMS = [
   { id: 'coffre_catm', name: 'CATM (coffre mieux)', rarity: 'Légendaire', price: 500_000n, kind: 'consumable' },
   { id: 'coffre_catl', name: 'CATL (légendaire)', rarity: 'Mythique', price: 1_000_000n, kind: 'consumable' },
   { id: 'coffre_cats', name: 'CATS (star)', rarity: 'Goatesque', price: 3_000_000n, kind: 'consumable' },
+  { id: 'hacker_token', name: 'Jeton accès Hacker', rarity: 'Mythique', kind: 'consumable' },
 ];
 
 const byId = new Map(ITEMS.map((i) => [i.id, i]));
