@@ -4,10 +4,26 @@ const quests = require('../services/quests');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('quete')
-    .setDescription('Quêtes journalières / hebdomadaires (messages sur le serveur).')
+    .setDescription('Quêtes journalières / hebdo / à choix (messages sur le serveur).')
     .addSubcommand((sc) => sc.setName('voir').setDescription('Progression actuelle'))
     .addSubcommand((sc) => sc.setName('quotidienne').setDescription('Réclamer la récompense du jour'))
-    .addSubcommand((sc) => sc.setName('hebdo').setDescription('Réclamer la récompense hebdomadaire')),
+    .addSubcommand((sc) => sc.setName('hebdo').setDescription('Réclamer la récompense hebdomadaire'))
+    .addSubcommand((sc) =>
+      sc
+        .setName('choisir')
+        .setDescription('Choisir ta quête « à choix » de la semaine (une fois / semaine)')
+        .addStringOption((o) =>
+          o
+            .setName('type')
+            .setDescription('Quête')
+            .setRequired(true)
+            .addChoices(
+              { name: 'Chasse 20 messages', value: 'chasse_messages' },
+              { name: 'Offre 1 corail (+ récompense)', value: 'offre_corail' },
+            ),
+        ),
+    )
+    .addSubcommand((sc) => sc.setName('reclamer_selection').setDescription('Réclamer la récompense de ta quête à choix')),
   async execute(interaction) {
     if (!interaction.guildId) return interaction.reply({ content: 'Serveur uniquement.', ephemeral: true });
     const sub = interaction.options.getSubcommand();
@@ -16,8 +32,9 @@ module.exports = {
       const s = quests.summary(uid);
       return interaction.reply({
         content:
-          `**Aujourd’hui** : **${s.msgs_today}** / ${s.daily_target} messages — récompense **${s.daily_reward.toLocaleString('fr-FR')}** starss (${s.daily_claimed ? 'déjà pris' : 'disponible si objectif atteint'})\n` +
-          `**Semaine** : **${s.week_points}** / ${s.weekly_target} pts — **${s.weekly_reward.toLocaleString('fr-FR')}** starss (${s.weekly_claimed ? 'déjà pris' : 'disponible si objectif atteint'})\n` +
+          `**Aujourd’hui** : **${s.msgs_today}** / ${s.daily_target} messages — **${s.daily_reward.toLocaleString('fr-FR')}** starss (${s.daily_claimed ? 'déjà pris' : 'réclamable avec \`/quete quotidienne\`'})\n` +
+          `**Semaine** : **${s.week_points}** / ${s.weekly_target} pts — **${s.weekly_reward.toLocaleString('fr-FR')}** starss (${s.weekly_claimed ? 'déjà pris' : 'réclamable avec \`/quete hebdo\`'})\n` +
+          `**À choix** : ${s.selection_line}\n` +
           `Messages (total suivi) : **${s.lifetime_msgs}**`,
         ephemeral: true,
       });
@@ -35,6 +52,23 @@ module.exports = {
       if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
       return interaction.reply({
         content: `Récompense hebdo : **+${r.reward.toLocaleString('fr-FR')}** starss.`,
+        ephemeral: true,
+      });
+    }
+    if (sub === 'choisir') {
+      const key = interaction.options.getString('type', true);
+      const r = quests.pickSelection(uid, key);
+      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+      return interaction.reply({
+        content: `Quête activée : **${r.def.label}**. Récompense **${r.def.reward.toLocaleString('fr-FR')}** starss (voir \`/quete voir\` puis \`/quete reclamer_selection\`).`,
+        ephemeral: true,
+      });
+    }
+    if (sub === 'reclamer_selection') {
+      const r = quests.claimSelection(uid);
+      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+      return interaction.reply({
+        content: `**${r.label}** — **+${r.reward.toLocaleString('fr-FR')}** starss.`,
         ephemeral: true,
       });
     }
