@@ -11,6 +11,10 @@ const {
 } = require('discord.js');
 const users = require('../services/users');
 const { getItem } = require('../reborn/catalog');
+const meta = require('../services/meta');
+const cfg = require('../config');
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function msToTime(ms) {
   const seconds = Math.floor((ms / 1000) % 60)
@@ -25,7 +29,32 @@ function msToTime(ms) {
   return `${seconds}s`;
 }
 
-/** Même table de probabilités que `niveau/src/commands/core/daily.js` — ids d’items mappés au catalogue REBORN. */
+function sameCalendarDay(d, ref) {
+  return (
+    d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth() && d.getDate() === ref.getDate()
+  );
+}
+
+function pruneDoubleRolls(userId) {
+  const key = `ddailyroll:${userId}`;
+  let arr = [];
+  try {
+    arr = JSON.parse(meta.get(key) || '[]');
+  } catch {
+    arr = [];
+  }
+  const now = Date.now();
+  arr = arr.filter((t) => typeof t === 'number' && now - t < DAY_MS);
+  meta.set(key, JSON.stringify(arr));
+  return arr;
+}
+
+function pushDoubleRoll(userId) {
+  const arr = pruneDoubleRolls(userId);
+  arr.push(Date.now());
+  meta.set(`ddailyroll:${userId}`, JSON.stringify(arr));
+}
+
 const rewards = [
   { name: '10 000 Starss', chance: 0.3, type: 'stars', amount: 10000 },
   { name: '500 EXP', chance: 0.3, type: 'xp', amount: 500 },
@@ -57,17 +86,6 @@ function buildCloseRow() {
   );
 }
 
-/**
- * @param {object} opts
- * @param {boolean} opts.success
- * @param {string} opts.displayName
- * @param {string} opts.avatarUrl
- * @param {string} [opts.highestRoleName]
- * @param {import('../reborn/catalog').ItemDef | null} [opts.rewardLine] titre + emoji affichés comme sur la carte daily
- * @param {string} [opts.remainingTime]
- * @param {number} [opts.doubleDailyCount]
- * @param {bigint} [opts.starsTotal]
- */
 function buildDailyContainer(opts) {
   const { success, displayName, avatarUrl, highestRoleName, rewardLine, remainingTime, doubleDailyCount, starsTotal } =
     opts;
@@ -86,9 +104,9 @@ function buildDailyContainer(opts) {
   } else {
     const dd =
       typeof doubleDailyCount === 'number' && doubleDailyCount > 0
-        ? `\n\nTu as **${doubleDailyCount}** × **Double Daily** en inventaire (utilisable depuis l’inventaire / boutique test).`
+        ? `\n\nTu as **${doubleDailyCount}** × **Double Daily** (max **3** bonus / 24h glissantes avec l’item).`
         : '';
-    body = `## ⏳ Prochain daily\nReviens dans **${remainingTime}**.\n\n${roleLine}${starsLine}${dd}\n\n*Sandbox REBORN — reset à minuit (heure du process Node), comme le daily principal.*`;
+    body = `## ⏳ Prochain daily\nReviens dans **${remainingTime}**.\n\n${roleLine}${starsLine}${dd}\n\n*Reset calendaire minuit local + bonus Double Daily.*`;
   }
 
   const mainText = new TextDisplayBuilder().setContent(`# Daily\n**${displayName}**\n\n${body}`);
@@ -124,6 +142,53 @@ async function sendDailyV2Reply(interaction, container) {
   });
 }
 
+/**
+ * @param {string} userId
+ * @returns {{ title: string, emoji: string }}
+ */
+function applyRandomReward(userId) {
+  const reward = getRandomReward();
+  let rewardEmoji = '';
+  let rewardLine = { title: reward.name, emoji: '✅' };
+
+  switch (reward.type) {
+    case 'stars': {
+      const base = BigInt(reward.amount);
+      const amount = users.applyStarssMultiplier(userId, base);
+      users.addStars(userId, amount);
+      rewardEmoji = '⭐';
+      rewardLine = {
+        title: `**+${amount.toLocaleString('fr-FR')}** starss — ${reward.name}`,
+        emoji: rewardEmoji,
+      };
+      break;
+    }
+    case 'xp':
+      users.addXp(userId, reward.amount);
+      rewardEmoji = '🚀';
+      rewardLine = { title: `${reward.name} gagnés`, emoji: rewardEmoji };
+      break;
+    case 'points':
+      users.addPoints(userId, BigInt(reward.amount));
+      rewardEmoji = '🏆';
+      rewardLine = { title: `${reward.name} gagnés`, emoji: rewardEmoji };
+      break;
+    case 'item': {
+      users.addInventory(userId, reward.itemId, 1);
+      rewardEmoji = '🎁';
+      const def = getItem(reward.itemId);
+      rewardLine = {
+        title: `${def?.name || reward.name} ajouté à l’inventaire`,
+        emoji: rewardEmoji,
+      };
+      break;
+    }
+    default:
+      break;
+  }
+  return rewardLine;
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('daily')
@@ -150,6 +215,9 @@ module.exports = {
       lastClaimedMidnight.setHours(0, 0, 0, 0);
     }
 
+    const naturalOk = canClaim || (lastClaimedMidnight && lastClaimedMidnight < midnightLocal);
+    const claimedToday = Boolean(lastMs && sameCalendarDay(new Date(lastMs), now));
+
     const member = interaction.guild ? await interaction.guild.members.fetch(userId).catch(() => null) : null;
     const displayName = member?.displayName || interaction.user.username;
     const highestRoleName =
@@ -160,51 +228,37 @@ module.exports = {
       member?.displayAvatarURL({ extension: 'png', size: 256 }) ||
       interaction.user.displayAvatarURL({ extension: 'png', size: 256 });
 
-    if (canClaim || (lastClaimedMidnight && lastClaimedMidnight < midnightLocal)) {
-      const reward = getRandomReward();
-      let rewardEmoji = '';
-      /** @type {{ title: string, emoji: string }} */
-      let rewardLine = { title: reward.name, emoji: '✅' };
+    const tryDouble =
+      !naturalOk &&
+      claimedToday &&
+      invQty(userId, 'double_daily') > 0 &&
+      (cfg.TEST_NO_LIMITS || pruneDoubleRolls(userId).length < 3);
 
-      switch (reward.type) {
-        case 'stars': {
-          const base = BigInt(reward.amount);
-          const amount = users.applyStarssMultiplier(userId, base);
-          users.addStars(userId, amount);
-          rewardEmoji = '⭐';
-          rewardLine = {
-            title: `**+${amount.toLocaleString('fr-FR')}** starss — ${reward.name}`,
-            emoji: rewardEmoji,
-          };
-          break;
+    if (naturalOk || tryDouble) {
+      if (tryDouble) {
+        if (!users.takeInventory(userId, 'double_daily', 1)) {
+          const tomorrowMidnight = new Date(midnightLocal);
+          tomorrowMidnight.setDate(tomorrowMidnight.getDate() + 1);
+          const remainingTime = msToTime(tomorrowMidnight.getTime() - now.getTime());
+          const container = buildDailyContainer({
+            success: false,
+            displayName,
+            avatarUrl,
+            highestRoleName,
+            remainingTime,
+            doubleDailyCount: invQty(userId, 'double_daily'),
+            starsTotal: users.getStars(userId),
+          });
+          await sendDailyV2Reply(interaction, container);
+          return;
         }
-        case 'xp':
-          users.addXp(userId, reward.amount);
-          rewardEmoji = '🚀';
-          rewardLine = { title: `${reward.name} gagnés`, emoji: rewardEmoji };
-          break;
-        case 'points':
-          users.addPoints(userId, BigInt(reward.amount));
-          rewardEmoji = '🏆';
-          rewardLine = { title: `${reward.name} gagnés`, emoji: rewardEmoji };
-          break;
-        case 'item': {
-          users.addInventory(userId, reward.itemId, 1);
-          rewardEmoji = '🎁';
-          const def = getItem(reward.itemId);
-          rewardLine = {
-            title: `${def?.name || reward.name} ajouté à l’inventaire`,
-            emoji: rewardEmoji,
-          };
-          break;
-        }
-        default:
-          break;
+        pushDoubleRoll(userId);
       }
 
-      users.setDailyLastMs(userId, Date.now());
-      const starsTotal = users.getStars(userId);
+      const rewardLine = applyRandomReward(userId);
+      if (naturalOk) users.setDailyLastMs(userId, Date.now());
 
+      const starsTotal = users.getStars(userId);
       const container = buildDailyContainer({
         success: true,
         displayName,
