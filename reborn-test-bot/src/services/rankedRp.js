@@ -133,5 +133,4 @@ module.exports = {
   POOL_CAP,
   BAND_LOW,
   BAND_HIGH,
-  guildGrpMultBp: () => 10000, // overwritten by skillTree re-export in earn
 };
