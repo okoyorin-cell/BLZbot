@@ -1,0 +1,53 @@
+const { SlashCommandBuilder } = require('discord.js');
+const trade = require('../services/trade');
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('echange')
+    .setDescription('Échange starss entre joueurs (règle 40 % de valeur max).')
+    .addSubcommand((sc) =>
+      sc
+        .setName('proposer')
+        .setDescription('Proposer un échange')
+        .addUserOption((o) => o.setName('vers').setDescription('Destinataire').setRequired(true))
+        .addStringOption((o) => o.setName('tu_donnes').setDescription('Starss que tu donnes').setRequired(true))
+        .addStringOption((o) => o.setName('tu_recois').setDescription('Starss que tu reçois').setRequired(true)),
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('accepter')
+        .setDescription('Accepter un trade en attente')
+        .addStringOption((o) => o.setName('trade_id').setDescription('ID du trade').setRequired(true)),
+    ),
+  async execute(interaction) {
+    const hub = interaction.guildId;
+    if (!hub) return interaction.reply({ content: 'Serveur uniquement.', ephemeral: true });
+    const sub = interaction.options.getSubcommand();
+    if (sub === 'proposer') {
+      const to = interaction.options.getUser('vers', true);
+      if (to.id === interaction.user.id || to.bot) {
+        return interaction.reply({ content: 'Destinataire invalide.', ephemeral: true });
+      }
+      let a;
+      let b;
+      try {
+        a = BigInt(interaction.options.getString('tu_donnes', true).replace(/\s/g, ''));
+        b = BigInt(interaction.options.getString('tu_recois', true).replace(/\s/g, ''));
+      } catch {
+        return interaction.reply({ content: 'Montants invalides.', ephemeral: true });
+      }
+      const r = trade.createTrade(hub, interaction.user.id, to.id, a, b);
+      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+      return interaction.reply({
+        content: `Trade **${r.tradeId}** créé. ${to}, utilise \`/echange accepter trade_id:${r.tradeId}\``,
+        ephemeral: false,
+      });
+    }
+    if (sub === 'accepter') {
+      const id = interaction.options.getString('trade_id', true).trim();
+      const r = trade.acceptTrade(id, interaction.user.id);
+      if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
+      return interaction.reply({ content: 'Échange accepté.', ephemeral: true });
+    }
+  },
+};
