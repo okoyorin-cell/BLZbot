@@ -20,7 +20,7 @@ module.exports = {
       return;
     }
     users.addStars(uid, REWARD);
-    require('../db').prepare('UPDATE users SET daily_last_ms = ? WHERE id = ?').run(now, uid);
+    users.setDailyLastMs(uid, now);
     await interaction.reply({
       content: `**+${REWARD.toLocaleString('fr-FR')}** starss (daily test).`,
       ephemeral: true,
