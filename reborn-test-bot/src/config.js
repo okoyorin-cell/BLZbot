@@ -65,6 +65,7 @@ module.exports = {
   autoDeploySlashOnReady,
   hackerRoleId,
   HACKER_SALON_COOLDOWN_MS,
+  mirrorNiveauExecute,
   assertToken,
   assertClientIdForDeploy,
 };
