@@ -11,7 +11,6 @@ const boostStmt = db.prepare(
   'UPDATE users SET xp_boost_ms = ?, gxp_boost_ms = ?, starss_boost_ms = ? WHERE id = ?',
 );
 const catmStmt = db.prepare('UPDATE users SET catm_day = ?, catm_count = ? WHERE id = ?');
-const chestTimerStmt = db.prepare('UPDATE users SET catl_next_ms = ?, cats_next_ms = ? WHERE id = ?');
 
 function B(s) {
   try {
@@ -58,10 +57,6 @@ function addPoints(userId, delta) {
   return n;
 }
 
-function starssBoostActive(user) {
-  return Date.now() < (user.starss_boost_ms || 0);
-}
-
 function applyStarssMultiplier(userId, base) {
   const u = getStmt.get(userId);
   if (!u) return base;
@@ -69,10 +64,10 @@ function applyStarssMultiplier(userId, base) {
   return base;
 }
 
-function grantXp(userId, add) {
+function addXp(userId, delta) {
   const u = getOrCreate(userId, '');
-  let xp = (u.xp || 0) + add;
-  let level = u.level || 1;
+  let xp = (u.xp || 0) + delta;
+  let level = Math.max(1, u.level || 1);
   while (xp >= level * 100) {
     xp -= level * 100;
     level += 1;
@@ -81,24 +76,8 @@ function grantXp(userId, add) {
   return { xp, level };
 }
 
-function setBoostUntil(userId, kind, untilMs) {
-  const u = getStmt.get(userId);
-  if (!u) return;
-  const xp = kind === 'xp' ? untilMs : u.xp_boost_ms || 0;
-  const gxp = kind === 'gxp' ? untilMs : u.gxp_boost_ms || 0;
-  const st = kind === 'starss' ? untilMs : u.starss_boost_ms || 0;
-  boostStmt.run(
-    kind === 'xp' ? untilMs : u.xp_boost_ms || 0,
-    kind === 'gxp' ? untilMs : u.gxp_boost_ms || 0,
-    kind === 'starss' ? untilMs : u.starss_boost_ms || 0,
-    userId,
-  );
-  // fix: above is wrong - need read current and set one field
-}
-
 function setBoostField(userId, field, untilMs) {
-  const u = getStmt.get(userId);
-  if (!u) getOrCreate(userId, '');
+  getOrCreate(userId, '');
   const row = getStmt.get(userId);
   const xp = field === 'xp_boost_ms' ? untilMs : row.xp_boost_ms || 0;
   const gxp = field === 'gxp_boost_ms' ? untilMs : row.gxp_boost_ms || 0;
@@ -133,7 +112,7 @@ function getCatmState(userId) {
 
 function bumpCatm(userId, dayKey) {
   const u = getStmt.get(userId);
-  if (!u) return;
+  if (!u) return 0;
   let count = u.catm_count || 0;
   let day = u.catm_day || '';
   if (day !== dayKey) {
@@ -160,7 +139,7 @@ module.exports = {
   setPoints,
   addPoints,
   applyStarssMultiplier,
-  grantXp,
+  addXp,
   setBoostField,
   addInventory,
   getInventory,
