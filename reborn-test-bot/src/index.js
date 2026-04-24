@@ -88,6 +88,14 @@ client.once(Events.ClientReady, async () => {
       console.error('[separation tick]', e);
     }
   }, 60_000);
+
+  setInterval(() => {
+    try {
+      grpSeason.tickCalendarFirstOfMonthUTC();
+    } catch (e) {
+      console.error('[grp calendar]', e);
+    }
+  }, 60_000);
 });
 
 client.on('interactionCreate', async (interaction) => {
