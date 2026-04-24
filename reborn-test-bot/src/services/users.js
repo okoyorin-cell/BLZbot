@@ -156,5 +156,6 @@ module.exports = {
   getCatmState,
   bumpCatm,
   resetCatmIfNewDay,
+  setDailyLastMs,
   B,
 };
