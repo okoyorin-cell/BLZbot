@@ -23,7 +23,7 @@ function valueFromInventoryRows(rows) {
 }
 
 function totalOfferValue(stars, invRows, eventCurrency = 0n) {
-  const ev = typeof eventCurrency === 'bigint' ? eventCurrency : B(eventCurrency);
+  const ev = typeof eventCurrency === 'bigint' ? eventCurrency : users.B(eventCurrency);
   return BigInt(stars || '0') + valueFromInventoryRows(invRows) + ev * 5n;
 }
 
