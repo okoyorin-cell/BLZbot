@@ -4,8 +4,19 @@ const localEnv = path.join(__dirname, '..', '.env');
 const monorepoRootEnv = path.join(__dirname, '..', '..', '.env');
 
 require('dotenv').config({ path: localEnv });
-/** Si le token n’est que dans le `.env` racine du repo (monorepo), on le charge en secours. */
+/** Si le token est absent ou vide localement, on complète depuis le `.env` racine du monorepo. */
+const rebornKeys = [
+  'REBORN_TEST_BOT_TOKEN',
+  'REBORN_TEST_BOT_CLIENT_ID',
+  'REBORN_TEST_GUILD_ID',
+  'REBORN_TEST_OWNER_IDS',
+  'REBORN_AUTO_DEPLOY_SLASH',
+  'REBORN_HACKER_ROLE_ID',
+];
 if (!String(process.env.REBORN_TEST_BOT_TOKEN || '').trim()) {
+  for (const k of rebornKeys) {
+    if (!String(process.env[k] || '').trim()) delete process.env[k];
+  }
   require('dotenv').config({ path: monorepoRootEnv });
 }
 
