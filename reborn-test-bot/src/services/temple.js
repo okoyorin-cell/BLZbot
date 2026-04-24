@@ -61,7 +61,6 @@ function sync(userId, hubDiscordId) {
     JSON.stringify([...merged].sort()),
     userId,
   );
-  skillTree.syncTempleUnlock(userId);
   return { points: pts, keys: [...merged] };
 }
 

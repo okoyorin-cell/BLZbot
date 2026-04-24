@@ -34,4 +34,17 @@ function recordGrpPeaksIfNeeded(hubDiscordId, userId, grpTotal) {
   }
 }
 
-module.exports = { currentSeasonKey, maybeResetMonthlyGrp, recordGrpPeaksIfNeeded, grpRankFromTotal };
+/** Reset GRP tous les hubs le 1er du mois UTC (doc : saison mensuelle). */
+function tickCalendarFirstOfMonthUTC() {
+  const d = new Date();
+  if (d.getUTCDate() !== 1) return;
+  const tag = `grp_cal_zero_${d.getUTCFullYear()}_${d.getUTCMonth()}`;
+  if (meta.get(tag)) return;
+  const hubs = db.prepare('SELECT DISTINCT guild_id FROM guild_member_gxp').all();
+  for (const { guild_id } of hubs) {
+    db.prepare('UPDATE guild_member_gxp SET grp = ? WHERE guild_id = ?').run('0', guild_id);
+  }
+  meta.set(tag, '1');
+}
+
+module.exports = { currentSeasonKey, maybeResetMonthlyGrp, recordGrpPeaksIfNeeded, grpRankFromTotal, tickCalendarFirstOfMonthUTC };
