@@ -36,6 +36,10 @@ module.exports = {
     const uid = interaction.user.id;
     users.getOrCreate(uid, interaction.user.username);
     const u = users.getUser(uid);
+    const xpTot = u.xp_total ?? 0;
+    const xpSt = totalToLevelState(xpTot);
+    const rp = users.getPoints(uid);
+    const rpRates = rankedRp.ratesForPoints(rp);
     const gId = interaction.guildId;
     let gxp = 0n;
     let grp = 0n;
