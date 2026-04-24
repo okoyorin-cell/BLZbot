@@ -26,7 +26,7 @@ module.exports = {
     users.resetCatmIfNewDay(uid, dayUtc);
     const { count: catmCount } = users.getCatmState(uid);
 
-    let desc = `Solde : **${bal}** starss · jour boutique **${day}** (UTC)\n\n**Ligne 1 — items du jour**\n`;
+    let desc = `Solde : **${bal}** starss · clé boutique **\`${dayKey}\`** (Europe/Paris + 2ᵉ rotation midi si branche boutique ≥ 3)\n\n**Ligne 1 — items du jour**\n`;
     for (const s of slots) {
       const it = getItem(s.item_id);
       const name = it?.name || s.item_id;
