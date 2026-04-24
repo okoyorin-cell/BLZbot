@@ -6,25 +6,24 @@ const cfg = require('./config');
 const NIVEAU_COMMAND_SUBDIRS = ['core', 'guilde', 'admin', 'misc'];
 const NIVEAU_SLASH_OBSOLETE = new Set(['profil-v2', 'profile', 'testprofil', 'testprofilguilde']);
 const DISCORD_APPLICATION_COMMAND_MAX = 100;
+const REPO_ROOT = path.join(__dirname, '..', '..');
 
 /**
- * Charge les définitions slash du module **niveau** (bot principal) pour les enregistrer
- * sur l’application du bot de test — l’exécution reste un stub sauf si une commande locale existe.
+ * Parcourt les fichiers commande `niveau` (mêmes règles que le miroir slash).
+ * @returns {Generator<{ name: string, filePath: string, mod: object }>}
  */
-function collectNiveauSlashBodiesForMirror() {
-  const repoRoot = path.join(__dirname, '..', '..');
-  const bodies = [];
+function* iterNiveauMirrorCommandFiles() {
   const seen = new Set();
   for (const sub of NIVEAU_COMMAND_SUBDIRS) {
-    const dir = path.join(repoRoot, 'niveau', 'src', 'commands', sub);
+    const dir = path.join(REPO_ROOT, 'niveau', 'src', 'commands', sub);
     if (!fs.existsSync(dir)) continue;
     for (const file of fs.readdirSync(dir)) {
       if (!file.endsWith('.js') || file.endsWith('-ancien.js')) continue;
-      const fp = path.join(dir, file);
+      const filePath = path.join(dir, file);
       let mod;
       try {
-        delete require.cache[require.resolve(fp)];
-        mod = require(fp);
+        delete require.cache[require.resolve(filePath)];
+        mod = require(filePath);
       } catch {
         continue;
       }
@@ -37,8 +36,19 @@ function collectNiveauSlashBodiesForMirror() {
       }
       if (!j?.name || NIVEAU_SLASH_OBSOLETE.has(j.name) || seen.has(j.name)) continue;
       seen.add(j.name);
-      bodies.push(j);
+      yield { name: j.name, filePath, mod };
     }
+  }
+}
+
+/**
+ * Charge les définitions slash du module **niveau** (bot principal) pour les enregistrer
+ * sur l’application du bot de test — l’exécution : vrais handlers si `cfg.mirrorNiveauExecute`, sinon stub.
+ */
+function collectNiveauSlashBodiesForMirror() {
+  const bodies = [];
+  for (const { mod } of iterNiveauMirrorCommandFiles()) {
+    bodies.push(mod.data.toJSON());
   }
   return bodies;
 }
