@@ -268,7 +268,8 @@ Dans **`src/config.js`**, `TEST_NO_LIMITS` peut désactiver certaines limites (e
 
 | Problème | Piste |
 |----------|--------|
-| Bot ne démarre pas, erreur **better-sqlite3** | `npm rebuild better-sqlite3` ou `npm run reinstall:sqlite` avec la bonne version de Node |
+| Bot ne démarre pas, erreur **better-sqlite3** | `npm rebuild better-sqlite3` à la **racine** (ou `npm run reinstall:sqlite` dans `reborn-test-bot`) ; aligner la version de **Node** (voir `.nvmrc` / moteur) |
+| `/profil` etc. = « utiliser BLZbot » ou commande absente | Vérifier `REBORN_MIRROR_NIVEAU_EXECUTE=1` ; console au démarrage : **chargement ignoré** = dépendance native (rebuild) ou chemin `niveau` |
 | Slash introuvable / anciennes defs | `npm run deploy` + redémarrage ; vérifier `CLIENT_ID` et scope **guild** si `REBORN_TEST_GUILD_ID` est set |
 | Pas de gains en vocal | Vérifier **intent** vocal + bot **connecté** au salon ; minutes comptées **entières** |
 | RP bizarre entre 50k–100k | Normal : mécanique **pool** ; voir `rankedRp.js` |
