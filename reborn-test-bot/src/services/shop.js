@@ -1,6 +1,6 @@
 const db = require('../db');
 const { SHOP_ROW1_RARITY_WEIGHTS } = require('../reborn/constants');
-const { randomItemOfRarity, getItem, priceFor } = require('../reborn/catalog');
+const { randomItemOfRarity, priceFor } = require('../reborn/catalog');
 const meta = require('./meta');
 
 function utcDateKey() {
@@ -29,11 +29,13 @@ function pickShopItemExcludingDiamondConflict() {
 
 function ensureShopSlots(userId) {
   const day = utcDateKey();
-  const count = db.prepare('SELECT COUNT(*) AS c FROM user_shop WHERE user_id = ? AND shop_date = ?').get(userId, day).c;
+  const rows = db.prepare('SELECT slot FROM user_shop WHERE user_id = ? AND shop_date = ?').all(userId, day);
+  const taken = new Set(rows.map((r) => r.slot));
   const ins = db.prepare(
     'INSERT INTO user_shop (user_id, shop_date, slot, item_id, price) VALUES (?, ?, ?, ?, ?)',
   );
-  for (let slot = count; slot < 5; slot++) {
+  for (let slot = 0; slot < 5; slot++) {
+    if (taken.has(slot)) continue;
     const item = pickShopItemExcludingDiamondConflict();
     const price = priceFor(item);
     ins.run(userId, day, slot, item.id, price.toString());
