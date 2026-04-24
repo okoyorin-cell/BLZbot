@@ -24,7 +24,11 @@ function* iterNiveauMirrorCommandFiles() {
       try {
         delete require.cache[require.resolve(filePath)];
         mod = require(filePath);
-      } catch {
+      } catch (e) {
+        console.warn(
+          `[reborn-test-bot] Miroir niveau — chargement ignoré (${file.replace(REPO_ROOT + path.sep, '')}):`,
+          e?.message || e,
+        );
         continue;
       }
       if (!mod?.data?.toJSON || typeof mod.execute !== 'function') continue;
