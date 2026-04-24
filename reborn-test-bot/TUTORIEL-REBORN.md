@@ -250,7 +250,8 @@ Détail dans `src/services/separation.js` + commande.
 Si **`REBORN_MIRROR_NIVEAU_SLASH=1`** : les définitions slash du dossier **`niveau`** sont aussi enregistrées sur **la même application Discord**.
 
 - Si une commande a le **même nom** qu’une commande **locale** du sandbox → **la version REBORN gagne**.
-- Sinon → le menu peut ressembler à BLZbot, mais l’exécution renvoie souvent un message du type **« utiliser le bot principal »**.
+- Avec **`REBORN_MIRROR_NIVEAU_EXECUTE=1`** (défaut) : le bot enregistre le **même exécutable** que le module `niveau` (BDD, canvas, etc. = **même stack** que le bot principal ; `npm install` à la **racine** du repo + **même version de Node** que celle qui a compilé `better-sqlite3` / `canvas` si besoin). Si un fichier ne charge pas (logs **« Miroir niveau — chargement ignoré »**), la commande peut manquer au déploiement ou tomber en **stub** pour celle-là.
+- Avec **`REBORN_MIRROR_NIVEAU_EXECUTE=0`** : l’exécution renvoie le message **« utiliser BLZbot »** (sauf commandes entièrement locales `reborn-test-bot`).
 - Plafond **100** commandes / application : en cas de dépassement, priorité aux commandes **locales**.
 
 Désactive le miroir avec **`REBORN_MIRROR_NIVEAU_SLASH=0`** si tu veux **uniquement** le sandbox.
