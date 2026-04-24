@@ -32,10 +32,16 @@ module.exports = {
     const gId = interaction.guildId;
     let gxp = 0n;
     let grp = 0n;
+    let pgLine = '—';
     if (gId) {
       const row = gm.getMemberRow(gId, uid);
       gxp = row.gxp;
       grp = row.grp;
+      const m = pg.getMembershipInHub(uid, gId);
+      if (m) {
+        const g = pg.getGuild(m.guild_id);
+        pgLine = `**${g.name}** · grade **${label(g.grade || '')}** · GXP guilde **${BigInt(g.gxp || '0').toLocaleString('fr-FR')}**`;
+      }
     }
     const embed = new EmbedBuilder()
       .setTitle(`💰 ${interaction.user.username}`)
