@@ -4,7 +4,7 @@ const trade = require('../services/trade');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('echange')
-    .setDescription('Échange starss entre joueurs (règle 40 % de valeur max).')
+    .setDescription('Échange starss + objets optionnels (règle 40 % de valeur max).')
     .addSubcommand((sc) =>
       sc
         .setName('proposer')
