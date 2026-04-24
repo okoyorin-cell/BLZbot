@@ -79,17 +79,12 @@ function buildContext(userId, hubDiscordId) {
   const qsum = quests.summary(userId);
   const row = db.prepare('SELECT lifetime_msgs FROM user_quest_state WHERE user_id = ?').get(userId);
   const ir = indexProgress.getRow(userId);
-  let grp_rank_at_least = '';
+  let grp_total = 0n;
   let in_player_guild = false;
   if (hubDiscordId) {
     const m = pg.getMembershipInHub(userId, hubDiscordId);
     in_player_guild = Boolean(m);
-    const { grp } = gm.getMemberRow(hubDiscordId, userId);
-    const rk = grpRankFromTotal(grp);
-    const order = ['', 'bronze', 'argent', 'or', 'platine', 'diamant', 'goat', 'star'];
-    const idx = order.indexOf(rk);
-    if (idx >= order.indexOf('argent')) grp_rank_at_least = 'argent';
-    else if (idx >= order.indexOf('bronze')) grp_rank_at_least = 'bronze';
+    grp_total = gm.getMemberRow(hubDiscordId, userId).grp;
   }
   return {
     lifetime_msgs: row?.lifetime_msgs || 0,
@@ -98,7 +93,7 @@ function buildContext(userId, hubDiscordId) {
     level: u?.level || 1,
     index_pct: ir?.completion_pct || 0,
     in_player_guild,
-    grp_rank_at_least,
+    grp_total,
   };
 }
 
