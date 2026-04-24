@@ -1,7 +1,24 @@
 /**
- * Courbe XP doc REBORN : 0→1 : 1 XP ; 1→2 : 99 ; puis k→k+1 pour k≥2 coûte k×100 XP.
- * `xp_total` = XP cumulée totale ; niveau 1 commence à total 0.
+ * XP cumulée doc REBORN :
+ * 1→2 : 1 XP ; 2→3 : 99 XP ; puis pour L≥3, passage L→L+1 coûte (L-1)×100 XP.
  */
+
+const MAX_LEVEL = 500;
+
+function buildThresholdStarts() {
+  /** T[L] = XP cumulée au début du niveau L (1-indexé). */
+  const T = [];
+  T[1] = 0;
+  T[2] = 1;
+  T[3] = 1 + 99;
+  for (let L = 3; L < MAX_LEVEL; L++) {
+    const cost = (L - 1) * 100;
+    T[L + 1] = T[L] + cost;
+  }
+  return T;
+}
+
+const T_START = buildThresholdStarts();
 
 /**
  * @param {number} totalXp
@@ -9,23 +26,15 @@
  */
 function totalToLevelState(totalXp) {
   const t = Math.max(0, Math.floor(Number(totalXp) || 0));
-  let rem = t;
   let level = 1;
-  if (rem < 1) {
-    return { level: 1, xpInto: rem, xpTotal: t };
+  for (let L = MAX_LEVEL - 1; L >= 1; L--) {
+    if (t >= T_START[L]) {
+      level = L;
+      break;
+    }
   }
-  rem -= 1;
-  level = 2;
-  if (rem < 99) {
-    return { level: 2, xpInto: rem, xpTotal: t };
-  }
-  rem -= 99;
-  level = 3;
-  while (rem >= level * 100) {
-    rem -= level * 100;
-    level += 1;
-  }
-  return { level, xpInto: rem, xpTotal: t };
+  const xpInto = t - T_START[level];
+  return { level, xpInto, xpTotal: t };
 }
 
-module.exports = { totalToLevelState };
+module.exports = { totalToLevelState, T_START };
