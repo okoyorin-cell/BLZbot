@@ -7,6 +7,7 @@ const {
   CATM_DAILY_LIMIT,
 } = require('../reborn/constants');
 const { getItem } = require('../reborn/catalog');
+const { rollChest } = require('../reborn/chestLoot');
 const users = require('./users');
 const shop = require('./shop');
 const meta = require('./meta');
