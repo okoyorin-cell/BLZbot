@@ -48,6 +48,8 @@ for (const file of fs.readdirSync(commandsDir)) {
   if (cmd.data?.name) client.commands.set(cmd.data.name, cmd);
 }
 
+registerNiveauMirrorStubs(client);
+
 registerEarn(client);
 
 client.once(Events.ClientReady, async () => {
