@@ -156,8 +156,8 @@ function acceptTrade(tradeId, userId) {
       users.getOrCreate(t.to_user, '');
       const fs = BigInt(t.from_stars || '0');
       const ts = BigInt(t.to_stars || '0');
-      const fe = B(t.from_event);
-      const te = B(t.to_event);
+      const fe = users.B(t.from_event);
+      const te = users.B(t.to_event);
       const fromItems = deserializeItems(t.from_items_json);
       const toItems = deserializeItems(t.to_items_json);
       const fromRowsCheck = itemsToRows(t.from_user, fromItems);
