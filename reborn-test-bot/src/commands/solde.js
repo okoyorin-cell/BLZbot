@@ -59,8 +59,18 @@ module.exports = {
       .setColor(0xf1c40f)
       .addFields(
         { name: 'Starss', value: fmt(u.stars), inline: true },
-        { name: 'Points', value: fmt(u.points), inline: true },
-        { name: 'Niveau / XP', value: `Nv **${u.level}** · **${u.xp}** XP`, inline: true },
+        { name: 'RP (ranked)', value: fmt(u.points), inline: true },
+        { name: 'Monnaie d’évent', value: fmt(u.event_currency || '0'), inline: true },
+        {
+          name: 'Niveau / XP',
+          value: `Nv **${xpSt.level}** · **${xpSt.xpInto}** / palier (total **${xpTot}** XP)`,
+          inline: true,
+        },
+        {
+          name: 'Gains RP (palier actuel)',
+          value: `**${rpRates.msg}** / msg · **${rpRates.vocMin}** / min voc`,
+          inline: true,
+        },
         { name: 'GXP (ce serveur)', value: fmt(gxp), inline: true },
         { name: 'GRP (ce serveur)', value: fmt(grp), inline: true },
         { name: 'Guilde REBORN', value: pgLine, inline: false },
