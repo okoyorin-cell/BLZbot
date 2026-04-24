@@ -1,6 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const users = require('../services/users');
 const gm = require('../services/guildMember');
+const pg = require('../services/playerGuilds');
+const { label } = require('../reborn/grades');
 const { STARSS_PER_MESSAGE, STARSS_PER_VOICE_MINUTE } = require('../reborn/constants');
 
 function fmt(n) {

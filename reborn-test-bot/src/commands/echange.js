@@ -39,7 +39,7 @@ module.exports = {
       const r = trade.createTrade(hub, interaction.user.id, to.id, a, b);
       if (!r.ok) return interaction.reply({ content: r.error, ephemeral: true });
       return interaction.reply({
-        content: `Trade **${r.tradeId}** créé. ${to}, utilise \`/echange accepter trade_id:${r.tradeId}\``,
+        content: `Trade **${r.tradeId}** créé. ${to}, utilise \`/echange accepter\` avec l’ID **${r.tradeId}**.`,
         ephemeral: false,
       });
     }
