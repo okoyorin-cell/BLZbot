@@ -60,7 +60,6 @@ async function tryRenderTreePng(userId, displayName, avatarUrl) {
       displayName: displayName || 'Joueur',
       points: u?.skill_points ?? 0,
       steps,
-      bg: getArbreBg(userId),
       avatarUrl: avatarUrl || null,
     });
   } catch (e) {
