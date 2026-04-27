@@ -83,7 +83,7 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
          (id, hub_discord_id, name, leader_id, member_cap, treasury, gxp,
           grade, anti_separation, last_focus_ms, guild_level, created_ms,
           salon_channel_id, description, icon_url)
-       VALUES (?, ?, ?, ?, ?, ?, '0', '', 0, 0, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, '0', '', 0, 0, ?, ?, ?, '', '')`,
     ).run(
       rebornId,
       hubDiscordId,
@@ -93,9 +93,7 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
       treasury,
       Math.max(1, Number(niveauGuild.level) || 1),
       Number(niveauGuild.created_at) || now,
-      niveauGuild.channel_id || null,
-      null,
-      null,
+      niveauGuild.channel_id || '',
     );
   } else {
     // Re-sync miroir (sans écraser les champs spécifiques REBORN : gxp, grade,
