@@ -9,7 +9,8 @@ module.exports = {
   async execute(interaction) {
     if (!interaction.guildId) return interaction.reply({ content: 'Serveur uniquement.' });
     users.getOrCreate(interaction.user.id, interaction.user.username);
-    const payload = buildQuetesPayload(interaction.user.id);
-    return interaction.reply(payload);
+    await interaction.deferReply();
+    const payload = await buildQuetesPayload(interaction.user.id, 0);
+    return interaction.editReply(payload);
   },
 };
