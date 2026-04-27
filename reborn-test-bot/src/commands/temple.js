@@ -82,25 +82,20 @@ module.exports = {
 
     if (buf) {
       const file = new AttachmentBuilder(buf, { name: 'temple_reborn.png' });
-      const TOTAL_KEYS = 6;
+      const TOTAL_KEYS = temple.SOURCE_DEFS.length;
       const have = r.keys.length;
+      const sourcesView = temple.publicLines(uid, hub);
       const t = new TextDisplayBuilder().setContent(
         [
           '# ⛩️ Temple',
-          'Le **Temple** est le **sanctuaire des élus** — il rassemble les **6 plus grandes réussites** du serveur.',
-          'Quand tu décroches **les 6 clés**, le temple **s’ouvre pour toi** et tu rejoins le cercle très fermé de ceux qui ont **tout maxé**.',
-          '',
-          '**Comment l’ouvrir ?** Réunis ces 6 sceaux :',
-          '• `Maître des Voies` — 5/5 sur **toutes** les branches de `/arbre`',
-          '• `Étoile Pourpre` — atteindre **100 000 RP**',
-          '• `Cœur de Diamant` — détenir le **Diamant** (unique serveur)',
-          '• `Codex Complet` — index de complétion à **100 %**',
-          '• `Bannière Étoilée` — appartenir à une **guilde rang Star**',
-          '• `Astre de Guilde` — accumuler **200 000 GRP**',
+          'Le **Temple** est le **sanctuaire des élus** — il rassemble les **plus grandes réussites** du serveur.',
+          `Quand tu décroches **les ${TOTAL_KEYS} clés**, le temple **s’ouvre pour toi** et tu rejoins le cercle très fermé de ceux qui ont **tout maxé**.`,
           '',
           u.temple_unlocked
             ? `**Statut** : 🔥 **Temple ouvert** — toutes les voies maîtrisées (${have}/${TOTAL_KEYS}).`
-            : `**Statut** : 🔒 *Temple scellé* — **${have}/${TOTAL_KEYS}** clés réunies, continue à grimper.`,
+            : `**Statut** : 🔒 *Temple scellé* — **${have}/${TOTAL_KEYS}** clés réunies. *Détails masqués jusqu’à l’ouverture.*`,
+          '',
+          ...sourcesView.lines,
         ].join('\n'),
       );
       const c = new ContainerBuilder();
