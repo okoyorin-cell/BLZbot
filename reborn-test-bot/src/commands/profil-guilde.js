@@ -5,7 +5,6 @@ const {
   ButtonBuilder,
   ButtonStyle,
   ActionRowBuilder,
-  ComponentType,
   ContainerBuilder,
   MediaGalleryBuilder,
   MessageFlags,
