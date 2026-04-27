@@ -35,7 +35,6 @@ module.exports = {
     const leaderLine = leader.id === interaction.user.id ? 'Toi' : `${leader} (${leader.tag})`;
     return interaction.reply({
       content: `Guilde **${nom.slice(0, 80)}** créée — ID \`${r.guildId}\` · chef : ${leaderLine}.`,
-      
     });
   },
 };

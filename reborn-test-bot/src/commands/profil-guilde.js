@@ -137,7 +137,6 @@ module.exports = {
       if (!m) {
         return interaction.reply({
           content: 'Tu n’es dans aucune guilde **joueur** sur ce serveur. Indique un **nom** ou **ID** (`/guilde liste`).',
-          
         });
       }
       gRow = pg.getGuild(m.guild_id);
@@ -250,7 +249,6 @@ module.exports = {
           await i.followUp({
             components: [new ContainerBuilder().addTextDisplayComponents(listText)],
             flags: MessageFlags.IsComponentsV2,
-            
           });
         } else if (i.customId.startsWith('rb_pg_careers_')) {
           await i.deferUpdate();
@@ -275,7 +273,6 @@ module.exports = {
           await i.followUp({
             components: [new ContainerBuilder().addTextDisplayComponents(td)],
             flags: MessageFlags.IsComponentsV2,
-            
           });
         } else if (i.customId.startsWith('rb_pg_quests_')) {
           await i.deferUpdate();
@@ -290,7 +287,6 @@ module.exports = {
           await i.followUp({
             components: [new ContainerBuilder().addTextDisplayComponents(questText)],
             flags: MessageFlags.IsComponentsV2,
-            
           });
         }
       } catch (err) {

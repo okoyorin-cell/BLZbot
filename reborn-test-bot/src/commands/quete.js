@@ -36,7 +36,6 @@ module.exports = {
           `**Semaine** : **${s.week_points}** / ${s.weekly_target} pts — **${s.weekly_reward.toLocaleString('fr-FR')}** starss (${s.weekly_claimed ? 'déjà pris' : 'réclamable avec \`/quete hebdo\`'})\n` +
           `**À choix** : ${s.selection_line}\n` +
           `Messages (total suivi) : **${s.lifetime_msgs}**`,
-        
       });
     }
     if (sub === 'quotidienne') {
@@ -44,7 +43,6 @@ module.exports = {
       if (!r.ok) return interaction.reply({ content: r.error });
       return interaction.reply({
         content: `Récompense quotidienne : **+${r.reward.toLocaleString('fr-FR')}** starss.`,
-        
       });
     }
     if (sub === 'hebdo') {
@@ -52,7 +50,6 @@ module.exports = {
       if (!r.ok) return interaction.reply({ content: r.error });
       return interaction.reply({
         content: `Récompense hebdo : **+${r.reward.toLocaleString('fr-FR')}** starss.`,
-        
       });
     }
     if (sub === 'choisir') {
@@ -61,7 +58,6 @@ module.exports = {
       if (!r.ok) return interaction.reply({ content: r.error });
       return interaction.reply({
         content: `Quête activée : **${r.def.label}**. Récompense **${r.def.reward.toLocaleString('fr-FR')}** starss (voir \`/quete voir\` puis \`/quete reclamer_selection\`).`,
-        
       });
     }
     if (sub === 'reclamer_selection') {
@@ -69,7 +65,6 @@ module.exports = {
       if (!r.ok) return interaction.reply({ content: r.error });
       return interaction.reply({
         content: `**${r.label}** — **+${r.reward.toLocaleString('fr-FR')}** starss.`,
-        
       });
     }
   },

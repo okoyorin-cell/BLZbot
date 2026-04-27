@@ -74,7 +74,6 @@ module.exports = {
         db.prepare('UPDATE users SET skill_points = COALESCE(skill_points, 0) + ? WHERE id = ?').run(n, target.id);
         return interaction.reply({
           content: `✅ **+${n}** point(s) de compétence pour **${target.username}** (total : **${getSp(target.id)}**).`,
-          
         });
       }
       if (sub === 'remove') {
@@ -84,7 +83,6 @@ module.exports = {
         db.prepare('UPDATE users SET skill_points = ? WHERE id = ?').run(next, target.id);
         return interaction.reply({
           content: `✅ **−${n}** point(s) de compétence pour **${target.username}** (total : **${next}**).`,
-          
         });
       }
       if (sub === 'set') {
@@ -92,7 +90,6 @@ module.exports = {
         db.prepare('UPDATE users SET skill_points = ? WHERE id = ?').run(n, target.id);
         return interaction.reply({
           content: `✅ Points de compétence de **${target.username}** → **${n}**.`,
-          
         });
       }
       if (sub === 'voir') {
@@ -108,7 +105,6 @@ module.exports = {
             `Points dispo : **${sp}**`,
             ...lines,
           ].join('\n'),
-          
         });
       }
       if (sub === 'reset-arbre') {
@@ -118,7 +114,6 @@ module.exports = {
           content:
             `✅ Arbre de **${target.username}** réinitialisé (toutes branches à 0/5). ` +
             'Le temple a été resynchronisé. *Note : les points dépensés ne sont pas remboursés ; utilise `set` ou `give` pour rééquilibrer.*',
-          
         });
       }
     } catch (e) {

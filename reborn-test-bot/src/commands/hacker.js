@@ -24,7 +24,6 @@ module.exports = {
     if (!owner && cfg.hackerRoleId && !hasHackerRole(member)) {
       return interaction.reply({
         content: 'Tu n’as pas le rôle **Hacker** (ou `REBORN_HACKER_ROLE_ID`). Les owners outrepassent.',
-        
       });
     }
     const key = `hacker_salon_last_${uid}`;

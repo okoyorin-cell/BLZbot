@@ -33,7 +33,6 @@ module.exports = {
     const r = passport.addWarn(hub, t.id, interaction.user.id, deg, raison);
     return interaction.reply({
       content: `Warn **${deg}** → <@${t.id}> — points de sécu : **${r.newPoints}**`,
-      
     });
   },
 };

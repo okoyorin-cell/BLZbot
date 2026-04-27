@@ -157,7 +157,6 @@ async function handlePanelInteraction(interaction) {
     if (!parts) {
       return interaction.reply({
         content: 'Choisis d’abord un article dans le **menu**.',
-        
       });
     }
     return handlePurchase(interaction, parts);
@@ -194,7 +193,6 @@ async function handlePanelInteraction(interaction) {
     if (!b) {
       return interaction.reply({
         content: `✅ **${BR_LABEL[br] || br}** → **${r.newStep}** / 5 (canvas indisponible)`,
-        
       });
     }
     await interaction.deferUpdate();

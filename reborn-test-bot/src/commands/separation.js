@@ -27,7 +27,6 @@ module.exports = {
       if (!r.ok) return interaction.reply({ content: r.error });
       return interaction.reply({
         content: `Séparation lancée — ID **${r.separationId}**\nPhase 1 fin <t:${Math.floor(r.phase1End / 1000)}:R>`,
-        
       });
     }
 

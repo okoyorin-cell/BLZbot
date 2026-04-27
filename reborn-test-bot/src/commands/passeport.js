@@ -75,14 +75,12 @@ module.exports = {
       if (score == null && !cand) {
         return interaction.reply({
           content: 'Indique au moins **score_tests** ou **candidature**.',
-          
         });
       }
       if (score != null) users.setModTestsScore(target.id, score);
       if (cand) users.setCandidatureStatus(target.id, cand);
       return interaction.reply({
         content: `Passeport staff mis à jour pour **${target.username}**.`,
-        
       });
     }
 

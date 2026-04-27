@@ -76,7 +76,6 @@ async function handlePurchase(interaction, parts) {
     shop.removeSlot(uid, slot);
     await interaction.reply({
       content: `Achat : **${item.name}** pour **${price.toLocaleString('fr-FR')}** starss.`,
-      
     });
     return;
   }
@@ -178,7 +177,6 @@ async function handlePurchase(interaction, parts) {
     const body = lines.length ? `\n${lines.map((l) => `• ${l}`).join('\n')}` : '';
     await interaction.reply({
       content: `**${label}** ouvert${head ? ` — ${head}` : ''}.${body}`.slice(0, 1900),
-      
     });
   }
 }

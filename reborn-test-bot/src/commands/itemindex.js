@@ -67,7 +67,6 @@ module.exports = {
       const extra = [chest, r.step.roleNote].filter(Boolean).join(' ');
       return interaction.reply({
         content: `Étape **${r.step.pct} %** : +**${r.step.stars.toLocaleString('fr-FR')}** starss${extra ? ` · ${extra}` : ''}`,
-        
       });
     }
   },

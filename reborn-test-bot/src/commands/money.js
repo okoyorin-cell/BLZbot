@@ -67,7 +67,6 @@ module.exports = {
         users.addStars(target.id, a);
         await interaction.reply({
           content: `✅ **+${a.toLocaleString('fr-FR')}** starss pour **${target.username}**.`,
-          
         });
         return;
       }
@@ -76,7 +75,6 @@ module.exports = {
         users.addStars(target.id, -a);
         await interaction.reply({
           content: `✅ **-${a.toLocaleString('fr-FR')}** starss pour **${target.username}**.`,
-          
         });
         return;
       }
@@ -90,7 +88,6 @@ module.exports = {
       else users.setPoints(target.id, a);
       await interaction.reply({
         content: `✅ **${type === 'stars' ? 'Starss' : 'Points'}** de **${target.username}** → **${a.toLocaleString('fr-FR')}**.`,
-        
       });
     } catch (e) {
       await interaction.reply({ content: `❌ ${e.message || e}` });
