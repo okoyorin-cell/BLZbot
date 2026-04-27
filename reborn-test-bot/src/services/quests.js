@@ -196,7 +196,7 @@ function claimSelection(userId) {
   users.getOrCreate(userId, '');
   let row = syncDayWeek(getState(userId));
   const sid = row.selection_id || '';
-  if (!sid) return { ok: false, error: 'Choisis d’abord une quête avec `/quete choisir`.' };
+  if (!sid) return { ok: false, error: 'Choisis d’abord une quête à choix dans `/quetes`.' };
   if (row.selection_claimed) return { ok: false, error: 'Déjà réclamée cette semaine.' };
   const def = SELECTIONS[sid];
   if (!def) return { ok: false, error: 'Quête invalide.' };
