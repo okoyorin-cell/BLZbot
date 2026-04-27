@@ -197,18 +197,26 @@ function summary(userId) {
       selLine = `**${def.label}** — prêt à réclamer si tu as l’item (voir \`/quete reclamer_selection\`).`;
     }
   }
+  const mult = skillTree.questRewardMult(userId);
+  const skipsTotal = skillTree.questSkipsPerWeek(userId);
+  const skipsUsed = row.weekly_skips_used || 0;
   return {
     msgs_today: row.msgs_today || 0,
     lifetime_msgs: row.lifetime_msgs ?? 0,
     daily_target: DAILY_MSG_TARGET,
     daily_claimed: !!row.daily_claimed,
-    daily_reward: DAILY_REWARD,
+    daily_reward: DAILY_REWARD * mult,
     week_points: row.week_points || 0,
     weekly_target: WEEKLY_MSG_TARGET,
     weekly_claimed: !!row.weekly_claimed,
-    weekly_reward: WEEKLY_REWARD,
+    weekly_reward: WEEKLY_REWARD * mult,
     selection_line: selLine,
     selection_id: sid,
+    reward_mult: Number(mult),
+    skips_total: skipsTotal,
+    skips_used: skipsUsed,
+    skips_left: Math.max(0, skipsTotal - skipsUsed),
+    selection_slots: skillTree.questSelectionSlots(userId),
   };
 }
 
@@ -216,6 +224,8 @@ module.exports = {
   onMessage,
   claimDaily,
   claimWeekly,
+  skipDaily,
+  skipWeekly,
   pickSelection,
   claimSelection,
   summary,
