@@ -9,6 +9,7 @@ const trophies = require('./trophies');
 const rankedRp = require('./rankedRp');
 const skillTree = require('./skillTree');
 const meta = require('./meta');
+const { notifyQuestUnlocks } = require('../lib/questNotify');
 
 /** @type {Map<string, { guildId: string, since: number }>} */
 const voiceSince = new Map();
