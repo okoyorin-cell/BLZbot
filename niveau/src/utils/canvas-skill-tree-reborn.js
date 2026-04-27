@@ -465,7 +465,7 @@ function buildLayout(layout = 'star') {
 
     trees.push({ branch: branchKey, ang, perp, main, sides, tipX, tipY });
   }
-  return { center, trees };
+  return { center, trees, tune };
 }
 
 /* ---------- rendu principal ---------- */
