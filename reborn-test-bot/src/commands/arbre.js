@@ -5,6 +5,7 @@ const {
   MessageFlags,
 } = require('discord.js');
 const skillTree = require('../services/skillTree');
+const { buildArbreContainer } = require('../services/panelComponents');
 
 const LABEL = {
   quest: 'Quête',
@@ -17,12 +18,12 @@ const LABEL = {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('arbre')
-    .setDescription('Arbre de compétences REBORN (branches doc, achats séquentiels).')
-    .addSubcommand((sc) => sc.setName('voir').setDescription('Voir ton arbre et tes points de compétence'))
+    .setDescription('Arbre de compétences (canvas + menu) ou achat par / sous-commande.')
+    .addSubcommand((sc) => sc.setName('voir').setDescription('Image arbre (fond sombre) + branche + Débloquer'))
     .addSubcommand((sc) =>
       sc
         .setName('acheter')
-        .setDescription('Acheter la prochaine étape d’une branche (coût = numéro d’étape)')
+        .setDescription('Acheter le prochain palier d’une branche')
         .addStringOption((o) =>
           o
             .setName('branche')
@@ -46,15 +47,31 @@ module.exports = {
     const sp = u.skill_points ?? 0;
 
     if (sub === 'voir') {
+      const b = await buildArbreContainer(uid, interaction.user.username);
+      if (b) {
+        return interaction.reply({
+          files: [b.file],
+          components: [b.container],
+          flags: b.flags | MessageFlags.Ephemeral,
+        });
+      }
       const lines = skillTree.BRANCHES.map((b) => {
         const s = skillTree.step(uid, b);
-        return `• **${LABEL[b] || b}** : étape **${s}** / 5`;
+        return `• **${LABEL[b] || b}** : **${s}** / 5`;
       });
       const txt = new TextDisplayBuilder().setContent(
-        `# Arbre de compétences\n**Points disponibles** : **${sp}**\n\n${lines.join('\n')}\n\n*Les points viennent des montées de niveau (+1 par niveau gagné). Coût étape n = n points.*`,
+        [
+          '# Arbre (texte, canvas indisponible)',
+          `**Points** : **${sp}**`,
+          ...lines,
+          'Installe le module `canvas` (binaire) ou utilise Node avec binaire précompilé pour l’image.',
+        ].join('\n'),
       );
       const c = new ContainerBuilder().addTextDisplayComponents(txt);
-      return interaction.reply({ components: [c], flags: MessageFlags.IsComponentsV2, ephemeral: true });
+      return interaction.reply({
+        components: [c],
+        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      });
     }
 
     const br = interaction.options.getString('branche', true);
@@ -63,17 +80,15 @@ module.exports = {
       const err = new TextDisplayBuilder().setContent(`❌ ${r.error}`);
       return interaction.reply({
         components: [new ContainerBuilder().addTextDisplayComponents(err)],
-        flags: MessageFlags.IsComponentsV2,
-        ephemeral: true,
+        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
       });
     }
     const ok = new TextDisplayBuilder().setContent(
-      `✅ **${LABEL[br] || br}** → étape **${r.newStep}** / 5\nPoints restants : **${(users.getUser(uid).skill_points ?? 0)}**`,
+      `✅ **${LABEL[br] || br}** → **${r.newStep}** / 5\nPoints restants : **${(users.getUser(uid).skill_points ?? 0)}**`,
     );
     return interaction.reply({
       components: [new ContainerBuilder().addTextDisplayComponents(ok)],
-      flags: MessageFlags.IsComponentsV2,
-      ephemeral: true,
+      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
     });
   },
 };
