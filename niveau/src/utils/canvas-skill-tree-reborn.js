@@ -1351,8 +1351,8 @@ async function renderTemplePng({
   const canvas = createCanvas(TEMPLE_W, TEMPLE_H);
   const ctx = canvas.getContext('2d');
 
-  // 1. Fond cosmique.
-  drawCosmicBackground(ctx, TEMPLE_W, TEMPLE_H);
+  // 1. Fond cosmique (blz_bg flouté + couche rouge).
+  await drawCosmicBackground(ctx, TEMPLE_W, TEMPLE_H);
 
   // 2. Anneaux sacrés.
   const cx = TEMPLE_W / 2;
