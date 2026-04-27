@@ -16,7 +16,8 @@ const BRANCH = {
 const ORDER = ['quest', 'guild', 'shop', 'ranked', 'event'];
 
 const ROOT = { x: W / 2, y: H - 88 };
-const SPREAD_DEG = 78;
+const SPREAD_DEG = 90;
+const FIRST_NODE_DIST = 160;
 const NODE_GAP = 108;
 const MAIN_R = 26;
 const SIDE_R = 11;
