@@ -30,10 +30,12 @@ module.exports = {
     let buf;
     try {
       const { renderTemplePng } = require(RENDER);
+      const guildIconUrl = interaction.guild?.iconURL({ extension: 'png', size: 256 }) || null;
       buf = await renderTemplePng({
         points: r.points,
         keys: r.keys,
         templeUnlocked: Boolean(u.temple_unlocked),
+        guildIconUrl,
       });
     } catch (e) {
       console.error('[temple canvas]', e);
