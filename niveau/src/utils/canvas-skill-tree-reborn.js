@@ -759,12 +759,42 @@ const TEMPLE_INK = '#1a0606';
 const TEMPLE_TEXT_HOT = '#ffd6cf';
 const TEMPLE_TEXT_DIM = '#c89890';
 
-function drawCosmicBackground(ctx, w, h) {
-  // Dégradé radial — rouge plus chaud / lumineux qu'avant.
+async function drawCosmicBackground(ctx, w, h) {
+  // 0. Fond `blz_bg.png` (le même que /profil) flouté en plein écran.
+  const bgPath = path.join(ASSETS, 'blz_bg.png');
+  let drewBg = false;
+  if (fs.existsSync(bgPath)) {
+    try {
+      const bg = await loadImage(fs.readFileSync(bgPath));
+      ctx.save();
+      ctx.filter = 'blur(22px)';
+      // On dépasse légèrement les bords pour cacher la bordure transparente créée par le flou.
+      drawImageCover(ctx, bg, -40, -40, w + 80, h + 80);
+      ctx.filter = 'none';
+      ctx.restore();
+      drewBg = true;
+    } catch {
+      /* ignore */
+    }
+  }
+  if (!drewBg) {
+    // Fallback : dégradé sombre proche du fond /profil.
+    const base = ctx.createLinearGradient(0, 0, 0, h);
+    base.addColorStop(0, '#1c1024');
+    base.addColorStop(1, '#0a0512');
+    ctx.fillStyle = base;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  // 1. Voile sombre pour préserver la lisibilité.
+  ctx.fillStyle = 'rgba(8, 4, 6, 0.55)';
+  ctx.fillRect(0, 0, w, h);
+
+  // 2. Dégradé radial rouge — garde l'ambiance « temple » par-dessus le flou.
   const g = ctx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, w);
-  g.addColorStop(0, '#5e1a1a');
-  g.addColorStop(0.45, '#330b0b');
-  g.addColorStop(1, '#120505');
+  g.addColorStop(0, 'rgba(94, 26, 26, 0.85)');
+  g.addColorStop(0.45, 'rgba(51, 11, 11, 0.78)');
+  g.addColorStop(1, 'rgba(18, 5, 5, 0.92)');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 
