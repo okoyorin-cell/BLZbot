@@ -1,5 +1,8 @@
+const path = require('node:path');
 const {
+  AttachmentBuilder,
   ContainerBuilder,
+  MediaGalleryBuilder,
   TextDisplayBuilder,
   ActionRowBuilder,
   ButtonBuilder,
@@ -12,6 +15,21 @@ const skillTree = require('../services/skillTree');
 const users = require('../services/users');
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const NIVEAU_QUESTS_PER_PAGE = 5;
+
+/** Chargement « tolérant » des modules niveau pour la page archives. */
+function loadNiveauQuests() {
+  try {
+    const utilsBase = path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'utils');
+    const dbQuests = require(path.join(utilsBase, 'db-quests'));
+    const { QUESTS } = require(path.join(utilsBase, 'quests'));
+    const { renderQuestsCardFiche2 } = require(path.join(utilsBase, 'canvas-fiche2-quests-trophies'));
+    return { getAllUserQuests: dbQuests.getAllUserQuests, QUESTS, renderQuestsCardFiche2 };
+  } catch (e) {
+    console.warn('[quetesPanel] niveau quests indisponibles:', e?.message || e);
+    return null;
+  }
+}
 
 function bar(cur, target) {
   const c = Math.max(0, Math.min(target, cur));
@@ -37,12 +55,63 @@ function fmtTimeLeft(ms) {
   return `${m} min`;
 }
 
-/**
- * Construit le payload Components V2 pour `/quetes`.
- * @param {string} userId
- * @returns {{ components: any[], flags: number }}
- */
-function buildQuetesPayload(userId) {
+/** Compte le nombre total de pages archives (niveau) en attente pour ce user. */
+function countNiveauPages(userId) {
+  const niveau = loadNiveauQuests();
+  if (!niveau) return 0;
+  try {
+    const userQuestsData = niveau.getAllUserQuests(userId) || [];
+    let pending = 0;
+    for (const questId in niveau.QUESTS) {
+      const qInfo = niveau.QUESTS[questId];
+      if (!qInfo) continue;
+      const userProgress = userQuestsData.find((q) => q.quest_id === questId);
+      if (!userProgress || !userProgress.completed) pending += 1;
+    }
+    return Math.ceil(pending / NIVEAU_QUESTS_PER_PAGE) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Récupère la liste paginée de quêtes archives (niveau) au format attendu par le canvas. */
+function getNiveauPageQuests(userId, page) {
+  const niveau = loadNiveauQuests();
+  if (!niveau) return null;
+  try {
+    const userQuestsData = niveau.getAllUserQuests(userId) || [];
+    const pending = [];
+    for (const questId in niveau.QUESTS) {
+      const qInfo = niveau.QUESTS[questId];
+      if (!qInfo) continue;
+      const userProgress = userQuestsData.find((q) => q.quest_id === questId);
+      if (!userProgress || !userProgress.completed) {
+        pending.push({
+          name: qInfo.name || 'Quête',
+          description: qInfo.description || '',
+          progress: userProgress?.progress || 0,
+          goal: qInfo.goal,
+          rarity: qInfo.rarity || 'Commune',
+          isNumeric: typeof qInfo.goal === 'number',
+        });
+      }
+    }
+    const totalPages = Math.ceil(pending.length / NIVEAU_QUESTS_PER_PAGE) || 1;
+    const p = Math.max(0, Math.min(page, totalPages - 1));
+    return {
+      quests: pending.slice(p * NIVEAU_QUESTS_PER_PAGE, (p + 1) * NIVEAU_QUESTS_PER_PAGE),
+      totalPages,
+      page: p,
+      renderQuestsCardFiche2: niveau.renderQuestsCardFiche2,
+    };
+  } catch (e) {
+    console.warn('[quetesPanel] niveau page KO:', e?.message || e);
+    return null;
+  }
+}
+
+// ─── Page 0 : REBORN ────────────────────────────────────────────────────────
+function buildRebornPage(userId, niveauPages) {
   const s = quests.summary(userId);
   const c = new ContainerBuilder();
 
@@ -64,19 +133,15 @@ function buildQuetesPayload(userId) {
 
   const sp = spawnerStatus(userId);
   let spawnerLine;
-  if (sp.locked) {
-    spawnerLine = '🔒 *Event Spawner hebdo : débloqué au palier 5 Événement.*';
-  } else if (sp.available) {
-    spawnerLine = '🎁 **Event Spawner hebdo : disponible !**';
-  } else {
-    spawnerLine = `🎁 *Event Spawner — prochain claim dans **${fmtTimeLeft(sp.msLeft)}**.*`;
-  }
+  if (sp.locked) spawnerLine = '🔒 *Event Spawner hebdo : palier 5 Événement.*';
+  else if (sp.available) spawnerLine = '🎁 **Event Spawner hebdo disponible !**';
+  else spawnerLine = `🎁 *Event Spawner — prochain claim dans **${fmtTimeLeft(sp.msLeft)}**.*`;
 
   c.addTextDisplayComponents(
     new TextDisplayBuilder().setContent(
       [
-        '# 🎯 Quêtes',
-        '*Les récompenses tombent **automatiquement** dès le seuil atteint.*',
+        '# 🎯 Quêtes — REBORN',
+        '*Récompenses **automatiques** dès le seuil atteint.*',
         '',
         dailyLine,
         weeklyLine,
@@ -88,80 +153,136 @@ function buildQuetesPayload(userId) {
     ),
   );
 
-  // --- Boutons d'action ---
   const rows = [];
 
-  // Sélecteur de quête à choix (visible si pas de selection active OU déjà réclamée)
   if (!s.selection_id || /terminée/i.test(s.selection_line)) {
-    const sel = new StringSelectMenuBuilder()
-      .setCustomId('rb:q:pick')
-      .setPlaceholder('Choisir une quête à choix (semaine)')
-      .addOptions([
-        { label: 'Chasse — 20 messages cette semaine', value: 'chasse_messages', description: 'Récompense auto à 20 msg' },
-        { label: 'Offrir 1× corail (réclamation manuelle)', value: 'offre_corail', description: 'Bouton « Réclamer » apparaîtra' },
-      ]);
-    rows.push(new ActionRowBuilder().addComponents(sel));
+    rows.push(
+      new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('rb:q:pick')
+          .setPlaceholder('Choisir une quête à choix (semaine)')
+          .addOptions([
+            { label: 'Chasse — 20 messages cette semaine', value: 'chasse_messages', description: 'Récompense auto à 20 msg' },
+            { label: 'Offrir 1× corail (réclamation manuelle)', value: 'offre_corail', description: 'Bouton « Réclamer » apparaîtra' },
+          ]),
+      ),
+    );
   }
 
-  // Boutons : skip daily / hebdo / claim corail / spawner / refresh
-  const buttonRow = new ActionRowBuilder();
-  let buttons = 0;
-
+  // Boutons d'action (skip / claim corail / spawner) + Rafraîchir
+  const actionRow = new ActionRowBuilder();
+  let actionCount = 0;
   if (s.skips_left > 0 && !dailyDone) {
-    buttonRow.addComponents(
-      new ButtonBuilder()
-        .setCustomId('rb:q:skip:d')
-        .setLabel(`Skip daily (-1)`)
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('⏭️'),
+    actionRow.addComponents(
+      new ButtonBuilder().setCustomId('rb:q:skip:d').setLabel('Skip daily (-1)').setStyle(ButtonStyle.Secondary).setEmoji('⏭️'),
     );
-    buttons += 1;
+    actionCount += 1;
   }
   if (s.skips_left > 0 && !weeklyDone) {
-    buttonRow.addComponents(
-      new ButtonBuilder()
-        .setCustomId('rb:q:skip:w')
-        .setLabel(`Skip hebdo (-1)`)
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('⏭️'),
+    actionRow.addComponents(
+      new ButtonBuilder().setCustomId('rb:q:skip:w').setLabel('Skip hebdo (-1)').setStyle(ButtonStyle.Secondary).setEmoji('⏭️'),
     );
-    buttons += 1;
+    actionCount += 1;
   }
-  // Bouton "Réclamer corail" si selection item active et pas réclamée
   if (s.selection_id === 'offre_corail' && !/terminée/i.test(s.selection_line)) {
-    buttonRow.addComponents(
-      new ButtonBuilder()
-        .setCustomId('rb:q:sel_claim')
-        .setLabel('Réclamer (-1× corail)')
-        .setStyle(ButtonStyle.Success)
-        .setEmoji('📜'),
+    actionRow.addComponents(
+      new ButtonBuilder().setCustomId('rb:q:sel_claim').setLabel('Réclamer (-1× corail)').setStyle(ButtonStyle.Success).setEmoji('📜'),
     );
-    buttons += 1;
+    actionCount += 1;
   }
   if (sp.available) {
-    buttonRow.addComponents(
-      new ButtonBuilder()
-        .setCustomId('rb:q:spawner')
-        .setLabel('Event Spawner hebdo')
-        .setStyle(ButtonStyle.Success)
-        .setEmoji('🎁'),
+    actionRow.addComponents(
+      new ButtonBuilder().setCustomId('rb:q:spawner').setLabel('Event Spawner').setStyle(ButtonStyle.Success).setEmoji('🎁'),
     );
-    buttons += 1;
+    actionCount += 1;
   }
-  buttonRow.addComponents(
-    new ButtonBuilder()
-      .setCustomId('rb:q:re')
-      .setLabel('Rafraîchir')
-      .setStyle(ButtonStyle.Secondary)
-      .setEmoji('🔄'),
+  actionRow.addComponents(
+    new ButtonBuilder().setCustomId('rb:q:re').setLabel('Rafraîchir').setStyle(ButtonStyle.Secondary).setEmoji('🔄'),
   );
-  buttons += 1;
+  actionCount += 1;
+  if (actionCount > 0) rows.push(actionRow);
 
-  if (buttons > 0) rows.push(buttonRow);
+  // Pagination — bouton "Anciennes quêtes →" si présentes
+  const totalPages = 1 + niveauPages;
+  if (niveauPages > 0) {
+    rows.push(
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('rb:q:page:1').setLabel(`Anciennes quêtes (1/${niveauPages})`).setStyle(ButtonStyle.Primary).setEmoji('📜'),
+      ),
+    );
+  }
 
   if (rows.length) c.addActionRowComponents(...rows);
+  return { components: [c], flags: MessageFlags.IsComponentsV2, files: [], totalPages };
+}
 
-  return { components: [c], flags: MessageFlags.IsComponentsV2 };
+// ─── Pages 1+ : Archives niveau (canvas) ────────────────────────────────────
+async function buildNiveauPage(userId, niveauPageIdx) {
+  const data = getNiveauPageQuests(userId, niveauPageIdx - 1);
+  if (!data) return null;
+  let buf = null;
+  try {
+    buf = await data.renderQuestsCardFiche2({ quests: data.quests });
+  } catch (e) {
+    console.warn('[quetesPanel] canvas archives KO:', e?.message || e);
+  }
+  const c = new ContainerBuilder();
+  if (buf) {
+    c.addMediaGalleryComponents(
+      new MediaGalleryBuilder().addItems({ media: { url: 'attachment://quetes_archives.png' } }),
+    );
+  } else {
+    const lines = data.quests.length
+      ? data.quests.map((q) => `• **${q.name}** — ${q.progress}/${q.goal}`)
+      : ['*Aucune quête archive en attente.*'];
+    c.addTextDisplayComponents(new TextDisplayBuilder().setContent(['## 📜 Anciennes quêtes', ...lines].join('\n')));
+  }
+  c.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(`📜 *Anciennes quêtes — page **${niveauPageIdx}** / **${data.totalPages}***`),
+  );
+
+  const navRow = new ActionRowBuilder();
+  navRow.addComponents(
+    new ButtonBuilder().setCustomId('rb:q:page:0').setLabel('REBORN').setStyle(ButtonStyle.Secondary).setEmoji('🎯'),
+  );
+  if (niveauPageIdx > 1) {
+    navRow.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`rb:q:page:${niveauPageIdx - 1}`)
+        .setLabel('← Préc.')
+        .setStyle(ButtonStyle.Secondary),
+    );
+  }
+  if (niveauPageIdx < data.totalPages) {
+    navRow.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`rb:q:page:${niveauPageIdx + 1}`)
+        .setLabel('Suiv. →')
+        .setStyle(ButtonStyle.Secondary),
+    );
+  }
+  navRow.addComponents(
+    new ButtonBuilder().setCustomId(`rb:q:page:${niveauPageIdx}`).setLabel('Rafraîchir').setStyle(ButtonStyle.Secondary).setEmoji('🔄'),
+  );
+  c.addActionRowComponents(navRow);
+
+  const files = buf ? [new AttachmentBuilder(buf, { name: 'quetes_archives.png' })] : [];
+  return { components: [c], flags: MessageFlags.IsComponentsV2, files };
+}
+
+/**
+ * Construit le payload Components V2 pour `/quetes`.
+ * @param {string} userId
+ * @param {number} [page] - 0 = REBORN, ≥1 = archives niveau (paginées)
+ */
+async function buildQuetesPayload(userId, page = 0) {
+  const niveauPages = countNiveauPages(userId);
+  if (page <= 0) {
+    return buildRebornPage(userId, niveauPages);
+  }
+  const built = await buildNiveauPage(userId, page);
+  if (!built) return buildRebornPage(userId, niveauPages);
+  return built;
 }
 
 module.exports = { buildQuetesPayload };
