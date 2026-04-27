@@ -29,11 +29,16 @@ const ORDER = ['quest', 'guild', 'shop', 'ranked', 'event'];
  */
 const BRANCH_ANGLES = {
   star: { quest: -162, guild: -90, shop: -18, ranked: 54, event: 126 },
-  demi: { quest: -162, guild: -126, shop: -90, ranked: -54, event: -18 },
+  demi: { quest: -170, guild: -130, shop: -90, ranked: -50, event: -10 },
 };
 const CENTERS = {
   star: { x: W / 2, y: H / 2 + 80 },
   demi: { x: W / 2, y: H - 100 },
+};
+// Paramètres organiques par layout : amplitude de la courbure latérale et écart des nœuds.
+const LAYOUT_TUNING = {
+  star: { bulge: 22, sideMin: 38, sideJitter: 14, alongJitter: 22, firstDist: 112, gap: 58 },
+  demi: { bulge: 8, sideMin: 30, sideJitter: 10, alongJitter: 16, firstDist: 120, gap: 64 },
 };
 const FIRST_NODE_DIST = 112;
 const NODE_GAP = 58;
