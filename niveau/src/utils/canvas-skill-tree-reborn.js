@@ -329,34 +329,90 @@ function drawSideNode(ctx, p, rgb, color, lit, sizes = {}) {
   ctx.stroke();
 }
 
-/** Cœur central : petit orbe doré, point de départ des 5 branches. */
-function drawRoot(ctx, center) {
+/**
+ * Cœur central. Trois modes :
+ * - `avatarImg === undefined` : petit orbe doré (look « étoile »).
+ * - `avatarImg === null` : médaillon vide avec dégradé sombre + ring doré (fallback avatar).
+ * - `avatarImg` Image : avatar du membre, anneau doré épais + halo.
+ */
+function drawRoot(ctx, center, avatarImg) {
   const { x, y } = center;
-  const halo = ctx.createRadialGradient(x, y, 4, x, y, 56);
-  halo.addColorStop(0, 'rgba(255, 235, 190, 0.55)');
-  halo.addColorStop(0.5, 'rgba(255, 200, 130, 0.18)');
+
+  if (avatarImg === undefined) {
+    // Mode étoile : petit orbe doré.
+    const halo = ctx.createRadialGradient(x, y, 4, x, y, 56);
+    halo.addColorStop(0, 'rgba(255, 235, 190, 0.55)');
+    halo.addColorStop(0.5, 'rgba(255, 200, 130, 0.18)');
+    halo.addColorStop(1, 'rgba(255, 210, 140, 0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(x, y, 56, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(x, y, 22, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 220, 150, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const core = ctx.createRadialGradient(x - 3, y - 3, 1, x, y, 14);
+    core.addColorStop(0, '#fff4dc');
+    core.addColorStop(1, '#e9b765');
+    ctx.fillStyle = core;
+    ctx.beginPath();
+    ctx.arc(x, y, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.stroke();
+    return;
+  }
+
+  // Mode avatar : médaillon de profil, plus large, avec anneau doré épais.
+  const r = 52;
+
+  // Halo doré large.
+  const halo = ctx.createRadialGradient(x, y, r * 0.4, x, y, r * 2);
+  halo.addColorStop(0, 'rgba(255, 220, 150, 0.55)');
+  halo.addColorStop(0.55, 'rgba(255, 195, 110, 0.18)');
   halo.addColorStop(1, 'rgba(255, 210, 140, 0)');
   ctx.fillStyle = halo;
   ctx.beginPath();
-  ctx.arc(x, y, 56, 0, Math.PI * 2);
+  ctx.arc(x, y, r * 2, 0, Math.PI * 2);
   ctx.fill();
 
-  // Anneau doré fin (façon viseur central).
+  // Disque médaillon (clip + image ou dégradé fallback).
+  ctx.save();
   ctx.beginPath();
-  ctx.arc(x, y, 22, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(255, 220, 150, 0.35)';
-  ctx.lineWidth = 1;
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+  if (avatarImg) {
+    ctx.drawImage(avatarImg, x - r, y - r, r * 2, r * 2);
+  } else {
+    const g = ctx.createLinearGradient(x - r, y - r, x + r, y + r);
+    g.addColorStop(0, '#3a2e22');
+    g.addColorStop(1, '#1a1410');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  ctx.restore();
+
+  // Anneau doré épais.
+  ctx.beginPath();
+  ctx.arc(x, y, r + 1.5, 0, Math.PI * 2);
+  ctx.lineWidth = 3.5;
+  ctx.strokeStyle = '#f5c842';
+  ctx.shadowColor = 'rgba(245, 200, 66, 0.6)';
+  ctx.shadowBlur = 12;
   ctx.stroke();
+  ctx.shadowBlur = 0;
 
-  const core = ctx.createRadialGradient(x - 3, y - 3, 1, x, y, 14);
-  core.addColorStop(0, '#fff4dc');
-  core.addColorStop(1, '#e9b765');
-  ctx.fillStyle = core;
+  // Anneau extérieur fin (effet viseur).
   ctx.beginPath();
-  ctx.arc(x, y, 14, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.lineWidth = 1.4;
-  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+  ctx.arc(x, y, r + 9, 0, Math.PI * 2);
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = 'rgba(245, 200, 66, 0.35)';
   ctx.stroke();
 }
 
