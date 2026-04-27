@@ -177,12 +177,29 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
  * Retourne `{ rebornGuildId }` si trouvé, sinon `null`.
  */
 function bridgeMembership(userId, hubDiscordId) {
+  const cacheKey = `${userId}|${hubDiscordId}`;
+  if (_isCached(memberSyncCache, cacheKey)) {
+    // Lookup direct de la membership existante en REBORN (déjà synchronisée).
+    const row = db
+      .prepare(
+        `SELECT m.guild_id FROM player_guild_members m
+         JOIN player_guilds g ON g.id = m.guild_id
+         WHERE m.user_id = ? AND g.hub_discord_id = ?
+           AND g.id LIKE 'niv_%' LIMIT 1`,
+      )
+      .get(userId, hubDiscordId);
+    return row ? { rebornGuildId: row.guild_id } : null;
+  }
   const niv = loadNiveau();
-  if (!niv?.getGuildOfUser) return null;
+  if (!niv?.getGuildOfUser) {
+    _cache(memberSyncCache, cacheKey);
+    return null;
+  }
   let g;
   try {
     g = niv.getGuildOfUser(userId);
   } catch {
+    _cache(memberSyncCache, cacheKey);
     return null;
   }
   if (!g) {
