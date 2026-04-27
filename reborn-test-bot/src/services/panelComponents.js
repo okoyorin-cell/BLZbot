@@ -233,6 +233,8 @@ async function handlePanelInteraction(interaction) {
     const u = users.getUser(viewId);
     const targetUser = await interaction.client.users.fetch(viewId);
     if (kind === 'card') {
+      // Défère AVANT le canvas (rendu + fetch avatar peuvent dépasser 3 s).
+      await interaction.deferUpdate();
       let buf;
       try {
         const { renderPassportCardStaffStyle } = require(CANVAS_PASS);
@@ -252,7 +254,7 @@ async function handlePanelInteraction(interaction) {
         });
       } catch (e) {
         console.error('[passeport card]', e);
-        return interaction.reply({ content: 'Canvas indisponible (module `canvas` / binaire).' });
+        return interaction.followUp({ content: 'Canvas indisponible (module `canvas` / binaire).' });
       }
       const f = new AttachmentBuilder(buf, { name: 'passeport_reborn.png' });
       const c = new ContainerBuilder();
@@ -273,7 +275,6 @@ async function handlePanelInteraction(interaction) {
             .setEmoji('📄'),
         ),
       );
-      await interaction.deferUpdate();
       return interaction.editReply({ files: [f], components: [c], flags: MessageFlags.IsComponentsV2 });
     }
     if (kind === 'txt') {
