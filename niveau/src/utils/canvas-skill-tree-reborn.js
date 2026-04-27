@@ -937,18 +937,18 @@ function drawTorii(ctx, cx, cy, scale, unlocked) {
   ctx.translate(cx, cy);
   ctx.scale(scale, scale);
 
-  const main = unlocked ? TEMPLE_VERMIL : '#2b1f2a';
-  const main2 = unlocked ? '#a83228' : '#1a1218';
-  const high = unlocked ? '#ffd9b3' : '#2e2230';
+  const main = unlocked ? '#e84a3a' : '#2a1414';
+  const main2 = unlocked ? '#8c1a14' : '#180808';
+  const high = unlocked ? '#ffc8b8' : '#2a1818';
 
   // Rayons lumineux verticaux derrière le torii (uniquement débloqué).
   if (unlocked) {
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     const rays = ctx.createLinearGradient(0, -120, 0, 120);
-    rays.addColorStop(0, 'rgba(255,210,140,0)');
-    rays.addColorStop(0.5, 'rgba(255,180,90,0.18)');
-    rays.addColorStop(1, 'rgba(255,210,140,0)');
+    rays.addColorStop(0, 'rgba(255,150,120,0)');
+    rays.addColorStop(0.5, 'rgba(255,90,70,0.22)');
+    rays.addColorStop(1, 'rgba(255,150,120,0)');
     ctx.fillStyle = rays;
     ctx.fillRect(-12, -120, 24, 240);
     ctx.fillRect(-46, -120, 8, 240);
