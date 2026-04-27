@@ -162,7 +162,98 @@ async function buildMemberRowsForCanvas(interaction, memRows, leaderId) {
   return out;
 }
 
+/**
+ * Construit le payload `/profil-guilde` (canvas + boutons) pour un (hub, guild).
+ * Réutilisable depuis :
+ *  - la commande slash `/profil-guilde`
+ *  - le bouton « 🛡️ Guilde » du `/profil` (niveau) intercepté par REBORN
+ *
+ * Retourne `{ payload, error }`. Si `error` est défini, c'est un message à
+ * afficher au lieu du canvas.
+ */
+async function buildProfilGuildePayload(interaction, { hub, gRow }) {
+  const g = pg.getGuild(gRow.id);
+  if (!g || g.hub_discord_id !== hub) {
+    return { error: 'Guilde invalide.' };
+  }
+  const memRows = db
+    .prepare('SELECT user_id, joined_ms FROM player_guild_members WHERE guild_id = ? ORDER BY joined_ms')
+    .all(g.id);
+  const totalMembers = memRows.length;
+  const members = await buildMemberRowsForCanvas(interaction, memRows, g.leader_id);
+  const owner = await interaction.client.users.fetch(g.leader_id).catch(() => ({ username: 'Chef' }));
+  const canvasGuild = buildCanvasGuildViewModel(g, totalMembers);
+
+  let png;
+  try {
+    png = await renderGuildProfileV2({
+      guild: canvasGuild,
+      members: members.slice(0, 10),
+      owner: owner || { username: 'Chef' },
+      warInfo: null,
+      totalMembers,
+    });
+  } catch (e) {
+    console.error('[profil-guilde REBORN] canvas', e);
+    return { error: `Impossible de générer l'image (canvas). \`${e?.message || e}\`` };
+  }
+
+  const file = new AttachmentBuilder(png, { name: 'guild_profile_reborn.png' });
+  const mediaGallery = new MediaGalleryBuilder().addItems({
+    media: { url: 'attachment://guild_profile_reborn.png' },
+  });
+  const container = new ContainerBuilder().addMediaGalleryComponents(mediaGallery);
+
+  const row1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`rb_pg_list_${g.id}`)
+      .setLabel('Liste complète')
+      .setEmoji('📋')
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId(`rb_pg_careers_${g.id}`)
+      .setLabel('Carrières')
+      .setEmoji('🎓')
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId(`rb_pg_quests_${g.id}`)
+      .setLabel('Quêtes')
+      .setEmoji('📜')
+      .setStyle(ButtonStyle.Success),
+  );
+  container.addActionRowComponents(row1);
+
+  return {
+    payload: {
+      files: [file],
+      components: [container],
+      flags: MessageFlags.IsComponentsV2,
+    },
+    g,
+  };
+}
+
+/**
+ * Résout la guilde à afficher quand on appuie sur le bouton « Guilde » du
+ * /profil niveau. Le customId fournit l'ID niveau brut → on tente d'abord la
+ * version pontée `niv_<id>`, puis fallback sur la membership REBORN.
+ */
+function resolveGuildForProfilButton(hub, userId, niveauGuildId) {
+  const bridgedId = `niv_${niveauGuildId}`;
+  let g = pg.getGuild(bridgedId);
+  if (g && g.hub_discord_id === hub) return g;
+  // fallback : chercher via la membership REBORN sur ce hub
+  const m = pg.getMembershipInHub(userId, hub);
+  if (m) {
+    g = pg.getGuild(m.guild_id);
+    if (g && g.hub_discord_id === hub) return g;
+  }
+  return null;
+}
+
 module.exports = {
+  buildProfilGuildePayload,
+  resolveGuildForProfilButton,
   data: new SlashCommandBuilder()
     .setName('profil-guilde')
     .setDescription("Affiche les informations d'une guilde (canvas BLZbot + champs REBORN).")
@@ -201,69 +292,11 @@ module.exports = {
       }
       gRow = pg.getGuild(m.guild_id);
     }
-    const g = pg.getGuild(gRow.id);
-    if (!g || g.hub_discord_id !== hub) {
-      return interaction.editReply({ content: 'Guilde invalide.' });
+    const built = await buildProfilGuildePayload(interaction, { hub, gRow });
+    if (built.error) {
+      return interaction.editReply({ content: built.error });
     }
-
-    const memRows = db
-      .prepare('SELECT user_id, joined_ms FROM player_guild_members WHERE guild_id = ? ORDER BY joined_ms')
-      .all(g.id);
-    const totalMembers = memRows.length;
-    const members = await buildMemberRowsForCanvas(interaction, memRows, g.leader_id);
-    const owner = await interaction.client.users.fetch(g.leader_id).catch(() => ({ username: 'Chef' }));
-    const canvasGuild = buildCanvasGuildViewModel(g, totalMembers);
-
-    let png;
-    try {
-      png = await renderGuildProfileV2({
-        guild: canvasGuild,
-        members: members.slice(0, 10),
-        owner: owner || { username: 'Chef' },
-        warInfo: null,
-        totalMembers,
-      });
-    } catch (e) {
-      console.error('[profil-guilde REBORN] canvas', e);
-      const err = new TextDisplayBuilder().setContent(
-        `❌ Impossible de générer l’image (canvas). Vérifie \`canvas\` à la racine du repo (\`npm install\`).\n\`${e?.message || e}\``,
-      );
-      return interaction.editReply({
-        components: [new ContainerBuilder().addTextDisplayComponents(err)],
-        flags: MessageFlags.IsComponentsV2,
-      });
-    }
-
-    const file = new AttachmentBuilder(png, { name: 'guild_profile_reborn.png' });
-    const mediaGallery = new MediaGalleryBuilder().addItems({
-      media: { url: 'attachment://guild_profile_reborn.png' },
-    });
-    const container = new ContainerBuilder().addMediaGalleryComponents(mediaGallery);
-
-    const row1 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(`rb_pg_list_${g.id}`)
-        .setLabel('Liste complète')
-        .setEmoji('📋')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId(`rb_pg_careers_${g.id}`)
-        .setLabel('Carrières')
-        .setEmoji('🎓')
-        .setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder()
-        .setCustomId(`rb_pg_quests_${g.id}`)
-        .setLabel('Quêtes')
-        .setEmoji('📜')
-        .setStyle(ButtonStyle.Success),
-    );
-    container.addActionRowComponents(row1);
-
-    await interaction.editReply({
-      files: [file],
-      components: [container],
-      flags: MessageFlags.IsComponentsV2,
-    });
+    await interaction.editReply(built.payload);
 
     const message = await interaction.fetchReply();
     const collector = message.createMessageComponentCollector({
