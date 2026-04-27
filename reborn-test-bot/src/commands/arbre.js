@@ -48,13 +48,12 @@ module.exports = {
     const u = users.getUser(uid);
     const sp = u.skill_points ?? 0;
 
-    if (sub === 'voir' || sub === 'voir2') {
-      const layout = sub === 'voir2' ? 'demi' : 'star';
+    if (sub === 'voir') {
       const b = await buildArbreContainer(
         uid,
         interaction.member?.displayName || interaction.user.username,
         interaction.user.displayAvatarURL({ extension: 'png', size: 128 }),
-        layout,
+        'demi',
       );
       if (b) {
         return interaction.reply({
