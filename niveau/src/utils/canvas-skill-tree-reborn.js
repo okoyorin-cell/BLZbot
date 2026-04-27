@@ -1219,8 +1219,8 @@ function drawTempleFooter(ctx, unlocked, keysCount, keysTotal) {
   );
 
   ctx.textAlign = 'right';
-  ctx.fillStyle = '#7a4a4a';
-  ctx.fillText(`REBORN sandbox  ·  ${keysCount}/${keysTotal} sceaux`, TEMPLE_W - 36, y + 23);
+  ctx.fillStyle = '#a07878';
+  ctx.fillText(`${keysCount} / ${keysTotal} sceaux`, TEMPLE_W - 36, y + 23);
   ctx.restore();
 }
 
