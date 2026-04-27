@@ -3,16 +3,86 @@ const path = require('node:path');
 const fs = require('node:fs');
 
 const W = 1400;
-const H = 800;
+const H = 820;
+const ASSETS = path.join(__dirname, '..', 'assets');
 
-const BRANCH = /** @type {const} */ ({
+const BRANCH = {
   quest: { label: 'Quête', color: '#2ecc71' },
   guild: { label: 'Guilde', color: '#9b59b6' },
   shop: { label: 'Boutique', color: '#e67e22' },
   ranked: { label: 'Ranked', color: '#3498db' },
   event: { label: 'Événement', color: '#e74c3c' },
-});
+};
 const ORDER = ['quest', 'guild', 'shop', 'ranked', 'event'];
+
+/**
+ * Flou : downscale + upscale (compatible sans `ctx.filter` Cairo).
+ * @param {import('canvas').CanvasRenderingContext2D} ctx
+ * @param {import('canvas').Image} img
+ */
+function drawBlurredBg(ctx, w, h, img) {
+  const div = 10;
+  const sw = Math.max(2, Math.floor(w / div));
+  const sh = Math.max(2, Math.floor(h / div));
+  const { createCanvas: CC } = require('canvas');
+  const tmp = CC(sw, sh);
+  const t = tmp.getContext('2d');
+  t.imageSmoothingEnabled = true;
+  t.imageSmoothingQuality = 'high';
+  t.drawImage(img, 0, 0, sw, sh);
+  const ctx2 = ctx;
+  ctx2.imageSmoothingEnabled = true;
+  ctx2.imageSmoothingQuality = 'high';
+  ctx2.drawImage(tmp, 0, 0, w, h);
+  ctx2.fillStyle = 'rgba(6, 8, 18, 0.5)';
+  ctx2.fillRect(0, 0, w, h);
+}
+
+/**
+ * Courbe type « Dying Light » (pas de droites) — quadratique avec saillie.
+ */
+function strokeCurve(ctx, x0, y0, x1, y1, color, lineW, isLit) {
+  const mx = (x0 + x1) / 2;
+  const my = (y0 + y1) / 2;
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const len = Math.hypot(dx, dy) || 1;
+  const bulge = Math.min(56, 12 + len * 0.22);
+  const cpx = mx - (dy / len) * bulge;
+  const cpy = my + (dx / len) * bulge;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.quadraticCurveTo(cpx, cpy, x1, y1);
+  ctx.strokeStyle = isLit ? color : '#2a2a32';
+  ctx.lineWidth = isLit ? 5 : 2.2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.globalAlpha = isLit ? 0.95 : 0.55;
+  if (isLit) {
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10;
+  }
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 1;
+}
+
+function placeNodes(rootX, rootY) {
+  const nodes = /** @type {{x:number,y:number,branch:string,k:number}[]} */ [];
+  for (let b = 0; b < 5; b++) {
+    const spread = 0.78;
+    const a = -Math.PI / 2 - spread / 2 + (spread * b) / 4;
+    for (let k = 0; k < 5; k++) {
+      const d = 88 + k * 80;
+      const wob = Math.sin(b * 1.7 + k * 1.1) * 22;
+      const perpA = a + Math.PI / 2;
+      const x = rootX + d * Math.cos(a) + wob * Math.cos(perpA);
+      const y = rootY + d * Math.sin(a) + wob * Math.sin(perpA);
+      nodes.push({ x, y, branch: ORDER[b], k });
+    }
+  }
+  return nodes;
+}
 
 /**
  * @param {object} opts
@@ -24,89 +94,177 @@ async function renderSkillTreePng(opts) {
   const { displayName = 'Joueur', points = 0, steps = {} } = opts;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
+  const bgPath = path.join(ASSETS, 'blz_bg.png');
+  if (fs.existsSync(bgPath)) {
+    const bg = await loadImage(fs.readFileSync(bgPath));
+    drawBlurredBg(ctx, W, H, bg);
+  } else {
+    ctx.fillStyle = '#0a0a0c';
+    ctx.fillRect(0, 0, W, H);
+  }
 
-  ctx.fillStyle = '#0a0a0c';
-  ctx.fillRect(0, 0, W, H);
+  const rootX = W / 2;
+  const rootY = H - 52;
+  const byBranch = new Map(ORDER.map((b) => [b, placeNodes(rootX, rootY).filter((n) => n.branch === b)]));
+  const sOf = (br) => Math.min(5, Math.max(0, Math.floor(steps[br] || 0)));
 
-  ctx.fillStyle = 'rgba(30, 30, 36, 0.95)';
-  ctx.fillRect(0, 0, W, 100);
-  ctx.fillStyle = '#ecf0f1';
-  ctx.font = 'bold 32px "Segoe UI", sans-serif';
-  ctx.fillText('Arbre de compétences REBORN', 40, 50);
-  ctx.font = '22px "Segoe UI", sans-serif';
-  ctx.fillStyle = '#bdc3c7';
-  ctx.fillText(`Points disponibles : ${points} — coût palier n = n points · 5 paliers / branche`, 40, 86);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(0, 0, W, 92);
+  ctx.fillStyle = '#e8f0ff';
+  ctx.font = 'bold 30px "Segoe UI", sans-serif';
+  ctx.fillText('Arbre de compétences REBORN', 36, 44);
+  ctx.font = '20px "Segoe UI", sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(
+    `Points : ${points}  ·  Coût palier n = n  ·  Courbes & fond profil (flou)`,
+    36,
+    76,
+  );
 
-  const nBranch = ORDER.length;
-  const marginX = 100;
-  const colW = (W - 2 * marginX) / nBranch;
-  const y0 = 200;
-  const ySpan = 95;
-
-  for (let c = 0; c < nBranch; c++) {
-    const key = ORDER[c];
-    const { label, color } = BRANCH[key] || { label: key, color: '#7f8c8d' };
-    const s = Math.min(5, Math.max(0, Math.floor(steps[key] || 0)));
-    const colCenter = marginX + c * colW + colW / 2;
-
-    ctx.textAlign = 'center';
-    ctx.fillStyle = color;
-    ctx.font = 'bold 20px "Segoe UI", sans-serif';
-    ctx.fillText(label, colCenter, 150);
-    ctx.fillStyle = '#7f8c8d';
-    ctx.font = '16px "Segoe UI", sans-serif';
-    ctx.fillText(`${s} / 5`, colCenter, 176);
-
+  for (const br of ORDER) {
+    const list = byBranch.get(br) || [];
+    const s = sOf(br);
+    const { color, label } = BRANCH[br] || { color: '#888', label: br };
     for (let k = 0; k < 5; k++) {
-      const unlocked = s > k;
-      const cx = colCenter;
-      const cy = y0 + k * ySpan;
-      if (k > 0) {
-        ctx.beginPath();
-        ctx.strokeStyle = s >= k ? color : '#333';
-        ctx.lineWidth = unlocked ? 4 : 2;
-        ctx.moveTo(cx, cy - ySpan + 20);
-        ctx.lineTo(cx, cy - 18);
-        ctx.stroke();
-      }
-      ctx.beginPath();
-      ctx.arc(cx, cy, 22, 0, Math.PI * 2);
-      ctx.fillStyle = unlocked ? color : '#1e1e24';
-      ctx.fill();
-      ctx.strokeStyle = unlocked ? '#fff' : '#444';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.fillStyle = unlocked ? '#0a0a0c' : '#555';
-      ctx.font = 'bold 16px "Segoe UI", sans-serif';
-      ctx.fillText(String(k + 1), cx, cy + 6);
+      const p = list[k];
+      if (!p) continue;
+      const from = k === 0 ? { x: rootX, y: rootY } : list[k - 1];
+      const to = p;
+      const segmentLit = s > k;
+      strokeCurve(ctx, from.x, from.y, to.x, to.y, color, 4, segmentLit);
+    }
+    if (list[0]) {
+      strokeCurve(ctx, rootX, rootY, list[0].x, list[0].y, color, 4, s > 0);
+    }
+    if (list[0]) {
+      const tip = list[0];
+      ctx.textAlign = 'center';
+      ctx.fillStyle = color;
+      ctx.font = 'bold 20px "Segoe UI", sans-serif';
+      const ly = list.reduce((m, p) => Math.min(m, p.y), 9999) - 8;
+      ctx.fillText(label, tip.x, Math.max(120, ly));
+      ctx.fillStyle = '#7f8c8d';
+      ctx.font = '16px "Segoe UI", sans-serif';
+      ctx.fillText(`${s} / 5`, tip.x, Math.max(120, ly) + 20);
     }
   }
 
-  ctx.textAlign = 'right';
-  ctx.fillStyle = '#5d6d7e';
-  ctx.font = '18px "Segoe UI", sans-serif';
-  ctx.fillText(displayName, W - 32, 52);
+  for (const br of ORDER) {
+    const list = byBranch.get(br) || [];
+    const s = sOf(br);
+    const { color } = BRANCH[br] || { color: '#888' };
+    for (const p of list) {
+      const unlocked = s > p.k;
+      const { x, y } = p;
+      ctx.beginPath();
+      ctx.arc(x, y, 20, 0, Math.PI * 2);
+      ctx.fillStyle = unlocked ? color : '#15151c';
+      ctx.fill();
+      ctx.strokeStyle = unlocked ? 'rgba(255,255,255,0.85)' : '#3d3d48';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = unlocked ? 'rgba(6,6,8,0.9)' : '#4a4a5c';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 14px "Segoe UI", sans-serif';
+      if (unlocked) {
+        ctx.fillText(String(p.k + 1), x, y + 1);
+      } else {
+        ctx.font = '12px "Segoe UI", sans-serif';
+        ctx.fillText('◆', x, y + 1);
+      }
+    }
+  }
 
+  ctx.beginPath();
+  ctx.arc(rootX, rootY, 9, 0, Math.PI * 2);
+  ctx.fillStyle = '#f1f5f9';
+  ctx.fill();
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '18px "Segoe UI", sans-serif';
+  ctx.fillText(displayName, W - 32, 28);
   return canvas.toBuffer('image/png');
 }
 
 /**
- * Même arrière-plan que le profil BLZ (blz_bg) pour une carte type « passeport staff ».
+ * Carte visuelle du temple (même ressource que le profil, flouté).
  * @param {object} p
- * @param {import('canvas').Image | null} [p.bgImage] — si déjà loadée
- * @param {string} p.displayName
- * @param {string} p.secu
- * @param {string} p.modScore
- * @param {string} p.candidature
- * @param {string} p.warnsBlock
+ * @param {number} p.points
+ * @param {string[]} p.keys
+ * @param {boolean} p.templeUnlocked
  */
+async function renderTemplePng(p) {
+  const width = 1100;
+  const height = 640;
+  const c = createCanvas(width, height);
+  const ctx = c.getContext('2d');
+  const bgPath = path.join(ASSETS, 'blz_bg.png');
+  if (fs.existsSync(bgPath)) {
+    const bg = await loadImage(fs.readFileSync(bgPath));
+    const div = 10;
+    const sw = Math.max(2, Math.floor(width / div));
+    const sh = Math.max(2, Math.floor(height / div));
+    const { createCanvas: CC } = require('canvas');
+    const t = CC(sw, sh);
+    t.getContext('2d').drawImage(bg, 0, 0, sw, sh);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(t, 0, 0, width, height);
+  } else {
+    const g = ctx.createLinearGradient(0, 0, width, height);
+    g.addColorStop(0, '#1a1035');
+    g.addColorStop(1, '#312e81');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, width, height);
+  }
+  ctx.fillStyle = 'rgba(4, 6, 20, 0.58)';
+  ctx.fillRect(0, 0, width, height);
+
+  const pad = 44;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#e9d5ff';
+  ctx.font = 'bold 38px "Segoe UI", sans-serif';
+  ctx.fillText('Temple — points de réussite', pad, pad + 6);
+  ctx.fillStyle = '#a78bfa';
+  ctx.font = '24px "Segoe UI", sans-serif';
+  const sub =
+    p.templeUnlocked
+      ? 'Statut : débloqué (5×5 arbre) — bravo.'
+      : 'Statut : verrouillé — finis toutes les branches 5/5 pour le prestige.';
+  ctx.fillText(sub, pad, pad + 52);
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '22px "Segoe UI", sans-serif';
+  ctx.fillText(`Points comptés :  ${p.points}`, pad, pad + 100);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '18px "Segoe UI", sans-serif';
+  const ktxt = p.keys && p.keys.length ? p.keys.join(' · ') : '— (aucune clé sur ce sync)';
+  const lines = [
+    'Système de gros objectifs, hors monnaie quotidienne. Les « clés » listent ce qui a été coché ici (sandbox).',
+    `Détail : ${ktxt}`.slice(0, 900),
+  ];
+  let y = pad + 150;
+  for (const line of lines) {
+    for (let i = 0; i < line.length; i += 80) {
+      ctx.fillText(line.slice(i, i + 80), pad, y);
+      y += 28;
+    }
+  }
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#6b7280';
+  ctx.font = '15px "Segoe UI", sans-serif';
+  ctx.fillText('REBORN sandbox', width - pad, height - 28);
+  return c.toBuffer('image/png');
+}
+
 async function renderPassportCardPng(p) {
   const width = 1200;
   const height = 700;
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
-  const assets = path.join(__dirname, '..', 'assets');
-  const bgPath = path.join(assets, 'blz_bg.png');
+  const bgPath = path.join(ASSETS, 'blz_bg.png');
   let bg;
   if (p.bgImage) {
     bg = p.bgImage;
@@ -143,20 +301,20 @@ async function renderPassportCardPng(p) {
     ``,
     `Derniers warns (aperçu)`,
   ].join('\n');
-  const lines = body.split('\n');
-  let y = pad + 120;
-  for (const line of lines) {
-    ctx.fillText(line, pad, y);
-    y += 32;
+  const lines2 = body.split('\n');
+  let y2 = pad + 120;
+  for (const line of lines2) {
+    ctx.fillText(line, pad, y2);
+    y2 += 32;
   }
   ctx.fillStyle = '#cbd5e1';
   const warnLines = (p.warnsBlock || 'Aucun.').split('\n').slice(0, 12);
-  y += 6;
+  y2 += 6;
   for (const w of warnLines) {
-    ctx.fillText(w.slice(0, 100), pad + 12, y);
-    y += 28;
+    ctx.fillText(w.slice(0, 100), pad + 12, y2);
+    y2 += 28;
   }
-  y += 16;
+  y2 += 16;
   ctx.fillStyle = '#64748b';
   ctx.font = '18px "Segoe UI", sans-serif';
   ctx.fillText('Régén. +2 pts / 30 j (affichage) · Données sandbox REBORN', pad, height - 36);
@@ -164,4 +322,4 @@ async function renderPassportCardPng(p) {
   return canvas.toBuffer('image/png');
 }
 
-module.exports = { renderSkillTreePng, renderPassportCardPng, W, H };
+module.exports = { renderSkillTreePng, renderPassportCardPng, renderTemplePng, W, H };
