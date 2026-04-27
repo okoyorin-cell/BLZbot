@@ -183,10 +183,6 @@ async function renderSkillTreePng(opts) {
     }
   }
 
-  ctx.beginPath();
-  ctx.arc(rootX, rootY, 9, 0, Math.PI * 2);
-  ctx.fillStyle = '#f1f5f9';
-  ctx.fill();
   ctx.textAlign = 'right';
   ctx.textBaseline = 'top';
   ctx.fillStyle = '#94a3b8';
