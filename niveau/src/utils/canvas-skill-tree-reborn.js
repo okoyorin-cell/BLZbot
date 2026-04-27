@@ -233,12 +233,12 @@ function drawSideNode(ctx, p, rgb, color, lit) {
   const r = SIDE_R;
 
   if (lit) {
-    const halo = ctx.createRadialGradient(x, y, r * 0.5, x, y, r * 2.4);
-    halo.addColorStop(0, rgba(rgb, 0.45));
+    const halo = ctx.createRadialGradient(x, y, r * 0.6, x, y, r * 1.8);
+    halo.addColorStop(0, rgba(rgb, 0.18));
     halo.addColorStop(1, rgba(rgb, 0));
     ctx.fillStyle = halo;
     ctx.beginPath();
-    ctx.arc(x, y, r * 2.4, 0, Math.PI * 2);
+    ctx.arc(x, y, r * 1.8, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -246,15 +246,15 @@ function drawSideNode(ctx, p, rgb, color, lit) {
   ctx.arc(x, y, r, 0, Math.PI * 2);
   if (lit) {
     const g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.15, x, y, r);
-    g.addColorStop(0, rgba(rgb.map((c) => Math.min(255, c + 40)), 1));
+    g.addColorStop(0, rgba(rgb.map((c) => Math.min(255, c + 25)), 1));
     g.addColorStop(1, color);
     ctx.fillStyle = g;
   } else {
-    ctx.fillStyle = '#13121a';
+    ctx.fillStyle = '#1d1a26';
   }
   ctx.fill();
-  ctx.lineWidth = lit ? 1.8 : 1.2;
-  ctx.strokeStyle = lit ? 'rgba(255,255,255,0.85)' : rgba(rgb, 0.35);
+  ctx.lineWidth = lit ? 1.4 : 1;
+  ctx.strokeStyle = lit ? 'rgba(255,255,255,0.6)' : rgba(rgb, 0.3);
   ctx.stroke();
 }
 
