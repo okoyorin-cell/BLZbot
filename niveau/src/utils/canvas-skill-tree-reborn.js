@@ -136,15 +136,15 @@ async function renderSkillTreePng(opts) {
       strokeCurve(ctx, from.x, from.y, to.x, to.y, color, 4, segmentLit);
     }
     if (list[0]) {
-      const tip = list[0];
+      const top = list.reduce((a, p) => (p.y < a.y ? p : a), list[0]);
+      const ly = Math.max(100, top.y - 32);
       ctx.textAlign = 'center';
       ctx.fillStyle = color;
       ctx.font = 'bold 20px "Segoe UI", sans-serif';
-      const ly = list.reduce((m, p) => Math.min(m, p.y), 9999) - 8;
-      ctx.fillText(label, tip.x, Math.max(120, ly));
+      ctx.fillText(label, top.x, ly);
       ctx.fillStyle = '#7f8c8d';
       ctx.font = '16px "Segoe UI", sans-serif';
-      ctx.fillText(`${s} / 5`, tip.x, Math.max(120, ly) + 20);
+      ctx.fillText(`${s} / 5`, top.x, ly + 20);
     }
   }
 
