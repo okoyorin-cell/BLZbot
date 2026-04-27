@@ -148,6 +148,14 @@ async function renderSkillTreePng(opts) {
     }
   }
 
+  ctx.beginPath();
+  ctx.arc(rootX, rootY, 10, 0, Math.PI * 2);
+  ctx.fillStyle = '#f8fafc';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
   for (const br of ORDER) {
     const list = byBranch.get(br) || [];
     const s = sOf(br);
