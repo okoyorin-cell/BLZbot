@@ -216,9 +216,11 @@ function drawTierChip(ctx, x, y, text, rgb, color, lit) {
  * Nœud principal : disque coloré (allumé) ou disque sombre + cadenas (verrouillé).
  * Le 5ᵉ nœud (capstone) est légèrement plus gros, comme dans ARC Raiders.
  */
-function drawMainNode(ctx, n, rgb, color, icon, lit, isCurrent, isCapstone) {
+function drawMainNode(ctx, n, rgb, color, icon, lit, isCurrent, isCapstone, sizes = {}) {
   const { x, y } = n;
-  const r = isCapstone ? CAP_R : MAIN_R;
+  const mainR = sizes.mainR ?? MAIN_R;
+  const capR = sizes.capR ?? CAP_R;
+  const r = isCapstone ? capR : mainR;
 
   // Halo coloré doux (allumé).
   if (lit) {
