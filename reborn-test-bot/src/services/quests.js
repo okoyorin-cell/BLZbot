@@ -97,8 +97,9 @@ function claimDaily(userId) {
     return { ok: false, error: `Encore **${DAILY_MSG_TARGET - (row.msgs_today || 0)}** message(s) sur ce serveur aujourd’hui.` };
   }
   db.prepare('UPDATE user_quest_state SET daily_claimed = 1 WHERE user_id = ?').run(userId);
-  users.addStars(userId, DAILY_REWARD);
-  return { ok: true, reward: DAILY_REWARD };
+  const reward = DAILY_REWARD * skillTree.questRewardMult(userId);
+  users.addStars(userId, reward);
+  return { ok: true, reward };
 }
 
 function claimWeekly(userId) {
@@ -109,8 +110,40 @@ function claimWeekly(userId) {
     return { ok: false, error: `**${WEEKLY_MSG_TARGET - (row.week_points || 0)}** points manquants (1 pt = 1 message cette semaine).` };
   }
   db.prepare('UPDATE user_quest_state SET weekly_claimed = 1 WHERE user_id = ?').run(userId);
-  users.addStars(userId, WEEKLY_REWARD);
-  return { ok: true, reward: WEEKLY_REWARD };
+  const reward = WEEKLY_REWARD * skillTree.questRewardMult(userId);
+  users.addStars(userId, reward);
+  return { ok: true, reward };
+}
+
+/** Consomme un skip et débloque la récompense daily (ou hebdo) sans devoir compléter la cible. */
+function skipDaily(userId) {
+  users.getOrCreate(userId, '');
+  let row = syncDayWeek(getState(userId));
+  if (row.daily_claimed) return { ok: false, error: 'Quête daily déjà validée.' };
+  const total = skillTree.questSkipsPerWeek(userId);
+  const used = row.weekly_skips_used || 0;
+  if (used >= total) {
+    return { ok: false, error: `Aucun skip disponible cette semaine (**${used}/${total}** utilisés).` };
+  }
+  db.prepare('UPDATE user_quest_state SET weekly_skips_used = ?, daily_claimed = 1 WHERE user_id = ?').run(used + 1, userId);
+  const reward = DAILY_REWARD * skillTree.questRewardMult(userId);
+  users.addStars(userId, reward);
+  return { ok: true, reward, skipsLeft: total - (used + 1) };
+}
+
+function skipWeekly(userId) {
+  users.getOrCreate(userId, '');
+  let row = syncDayWeek(getState(userId));
+  if (row.weekly_claimed) return { ok: false, error: 'Quête hebdo déjà validée.' };
+  const total = skillTree.questSkipsPerWeek(userId);
+  const used = row.weekly_skips_used || 0;
+  if (used >= total) {
+    return { ok: false, error: `Aucun skip disponible cette semaine (**${used}/${total}** utilisés).` };
+  }
+  db.prepare('UPDATE user_quest_state SET weekly_skips_used = ?, weekly_claimed = 1 WHERE user_id = ?').run(used + 1, userId);
+  const reward = WEEKLY_REWARD * skillTree.questRewardMult(userId);
+  users.addStars(userId, reward);
+  return { ok: true, reward, skipsLeft: total - (used + 1) };
 }
 
 function pickSelection(userId, selectionKey) {
