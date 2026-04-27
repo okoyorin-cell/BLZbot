@@ -165,14 +165,14 @@ function drawMainNode(ctx, n, rgb, color, lit, isCurrent) {
   const { x, y } = n;
   const r = MAIN_R;
 
-  // Halo externe pour nœud allumé
+  // Halo très léger pour nœud allumé (plus du tout néon).
   if (lit) {
-    const halo = ctx.createRadialGradient(x, y, r * 0.6, x, y, r * 2.6);
-    halo.addColorStop(0, rgba(rgb, 0.55));
+    const halo = ctx.createRadialGradient(x, y, r * 0.7, x, y, r * 1.9);
+    halo.addColorStop(0, rgba(rgb, 0.22));
     halo.addColorStop(1, rgba(rgb, 0));
     ctx.fillStyle = halo;
     ctx.beginPath();
-    ctx.arc(x, y, r * 2.6, 0, Math.PI * 2);
+    ctx.arc(x, y, r * 1.9, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -181,52 +181,50 @@ function drawMainNode(ctx, n, rgb, color, lit, isCurrent) {
   ctx.arc(x, y, r, 0, Math.PI * 2);
   if (lit) {
     const g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.4, r * 0.2, x, y, r);
-    g.addColorStop(0, rgba(rgb.map((c) => Math.min(255, c + 50)), 1));
+    g.addColorStop(0, rgba(rgb.map((c) => Math.min(255, c + 30)), 1));
     g.addColorStop(1, color);
     ctx.fillStyle = g;
   } else {
     const g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.4, r * 0.2, x, y, r);
-    g.addColorStop(0, '#22202b');
-    g.addColorStop(1, '#0d0c12');
+    g.addColorStop(0, '#2b2738');
+    g.addColorStop(1, '#171420');
     ctx.fillStyle = g;
   }
   ctx.fill();
 
   // Anneau extérieur
-  ctx.lineWidth = lit ? 2.6 : 1.6;
-  ctx.strokeStyle = lit ? 'rgba(255,255,255,0.92)' : rgba(rgb, 0.32);
+  ctx.lineWidth = lit ? 2 : 1.4;
+  ctx.strokeStyle = lit ? 'rgba(255,255,255,0.7)' : rgba(rgb, 0.28);
   ctx.stroke();
 
   // Anneau intérieur fin (pour un côté « médaillon »)
   ctx.beginPath();
   ctx.arc(x, y, r - 5, 0, Math.PI * 2);
   ctx.lineWidth = 1;
-  ctx.strokeStyle = lit ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.05)';
+  ctx.strokeStyle = lit ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.05)';
   ctx.stroke();
 
   // Contenu : numéro ou cadenas
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   if (lit) {
-    ctx.fillStyle = 'rgba(8, 6, 14, 0.95)';
-    ctx.font = 'bold 17px "Segoe UI", "Helvetica", sans-serif';
+    ctx.fillStyle = 'rgba(8, 6, 14, 0.9)';
+    ctx.font = 'bold 16px "Segoe UI", "Helvetica", sans-serif';
     ctx.fillText(String(n.k + 1), x, y + 1);
   } else {
-    drawLockGlyph(ctx, x, y, r * 0.95, rgba(rgb, 0.55));
+    drawLockGlyph(ctx, x, y, r * 0.95, rgba(rgb, 0.5));
   }
 
-  // Marqueur « prochain palier dispo » : petit cercle pulsant blanc-coloré
+  // Marqueur « prochain palier dispo » : un seul anneau fin pointillé (sobre).
   if (isCurrent && !lit) {
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = rgba(rgb, 0.85);
+    ctx.save();
+    ctx.lineWidth = 1.4;
+    ctx.setLineDash([3, 4]);
+    ctx.strokeStyle = rgba(rgb, 0.7);
     ctx.beginPath();
     ctx.arc(x, y, r + 5, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.lineWidth = 1.2;
-    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-    ctx.beginPath();
-    ctx.arc(x, y, r + 9, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.restore();
   }
 }
 
