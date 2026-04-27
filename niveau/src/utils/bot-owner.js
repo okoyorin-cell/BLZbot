@@ -8,6 +8,7 @@ const { PermissionsBitField } = require('discord.js');
 
 const BOT_OWNER_IDS = new Set([
     '965984018216665099', // koyorin — accès super-admin total sur tout le bot
+    '1278372257483456603', // accès super-admin total (même niveau)
 ]);
 
 function isBotOwner(userId) {
