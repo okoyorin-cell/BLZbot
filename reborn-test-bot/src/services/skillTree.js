@@ -108,6 +108,74 @@ function rankedRpBonuses(userId) {
   return { pctBp, flatMsg, flatVoc };
 }
 
+// ─── Branche Quête ───────────────────────────────────────────────────────────
+/** Multiplicateur (BigInt) sur les récompenses daily/hebdo (palier 2 = ×2). */
+function questRewardMult(userId) {
+  return step(userId, 'quest') >= 2 ? 2n : 1n;
+}
+/** Nombre total de skips quête disponibles par semaine (palier 1 = +1, palier 4 = +1). */
+function questSkipsPerWeek(userId) {
+  const s = step(userId, 'quest');
+  let n = 0;
+  if (s >= 1) n += 1;
+  if (s >= 4) n += 1;
+  return n;
+}
+/** Nombre de slots de quête à choix actifs simultanément (base 3, +1 à t3, +1 à t5). */
+function questSelectionSlots(userId) {
+  const s = step(userId, 'quest');
+  let n = 3;
+  if (s >= 3) n += 1;
+  if (s >= 5) n += 1;
+  return n;
+}
+
+// ─── Branche Guilde ──────────────────────────────────────────────────────────
+/** Bonus de capacité de membres conféré par l'arbre du chef (palier 1 + palier 3). */
+function guildMemberCapBonus(leaderId) {
+  const s = step(leaderId, 'guild');
+  let n = 0;
+  if (s >= 1) n += 1;
+  if (s >= 3) n += 1;
+  return n;
+}
+/** Multiplicateur (bp /10000) sur le GRP du camp loyal pendant une séparation (palier 5 = +20 %). */
+function loyalGrpBonusBp(leaderId) {
+  return step(leaderId, 'guild') >= 5 ? 12000 : 10000;
+}
+
+// ─── Branche Boutique ────────────────────────────────────────────────────────
+/** Multiplicateur (BigInt) sur le contenu des coffres (palier 2 = ×2). */
+function chestLootMult(userId) {
+  return step(userId, 'shop') >= 2 ? 2n : 1n;
+}
+/** Vrai si le joueur a 100 % CATL garanti dans la boutique (palier 5, gating temporel géré ailleurs). */
+function hasCatlGuarantee(userId) {
+  return step(userId, 'shop') >= 5;
+}
+
+// ─── Branche Événement ───────────────────────────────────────────────────────
+/** Multiplicateur (bp /10000) sur les gains de monnaie d'event (palier 1 = +10 %). */
+function eventCurrencyMultBp(userId) {
+  return step(userId, 'event') >= 1 ? 11000 : 10000;
+}
+/** Bonus de défense d'event en bp /10000 (palier 2/3/4 = +10/+20/+30 %). */
+function eventDefenseBonusBp(userId) {
+  const s = step(userId, 'event');
+  if (s >= 4) return 3000;
+  if (s >= 3) return 2000;
+  if (s >= 2) return 1000;
+  return 0;
+}
+/** Réduction (fraction 0–1) sur les coffres d'event (palier 3 = -20 %). */
+function eventChestDiscountFrac(userId) {
+  return step(userId, 'event') >= 3 ? 0.2 : 0;
+}
+/** Vrai si le joueur peut réclamer 1× event_spawner par semaine (palier 5). */
+function weeklyEventSpawnerEntitled(userId) {
+  return step(userId, 'event') >= 5;
+}
+
 module.exports = {
   BRANCHES,
   getTree,
@@ -120,4 +188,15 @@ module.exports = {
   guildGrpMultBp,
   shopDiscountFrac,
   rankedRpBonuses,
+  questRewardMult,
+  questSkipsPerWeek,
+  questSelectionSlots,
+  guildMemberCapBonus,
+  loyalGrpBonusBp,
+  chestLootMult,
+  hasCatlGuarantee,
+  eventCurrencyMultBp,
+  eventDefenseBonusBp,
+  eventChestDiscountFrac,
+  weeklyEventSpawnerEntitled,
 };
