@@ -26,7 +26,13 @@ module.exports = {
       const r = sep.startSeparation(hub, m.guild_id, uid);
       if (!r.ok) return interaction.reply({ content: r.error });
       return interaction.reply({
-        content: `Séparation lancée — ID **${r.separationId}**\nPhase 1 fin <t:${Math.floor(r.phase1End / 1000)}:R>`,
+        content: [
+          `⚔️ **Appel à la séparation lancé** — ID **${r.separationId}**`,
+          `Phase 1 (recrutement) — fin <t:${Math.floor(r.phase1End / 1000)}:R>`,
+          'Si **≥ 25 %** des membres rejoignent ton camp, **48 h de guerre GRP** démarrent.',
+          'Le camp gagnant reçoit **+25 % starss** (cap 1M / membre) et **+1 point Temple**.',
+          `Pour rejoindre : \`/separation rejoindre id:${r.separationId}\``,
+        ].join('\n'),
       });
     }
 
@@ -34,7 +40,7 @@ module.exports = {
       const id = interaction.options.getString('id', true).trim();
       const r = sep.joinSeparationCamp(hub, uid, id);
       if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({ content: 'Tu as rejoint le camp séparatiste.' });
+      return interaction.reply({ content: '✅ Tu as rejoint le **camp séparatiste**.' });
     }
 
     if (sub === 'statut') {
@@ -42,17 +48,20 @@ module.exports = {
       const rows = db.prepare('SELECT * FROM separations WHERE hub_discord_id = ? AND cancelled = 0').all(hub);
       const active = rows.filter((s) => !s.winner || String(s.winner).length === 0);
       if (!active.length) return interaction.reply({ content: 'Aucune séparation active.' });
-      const e = new EmbedBuilder().setTitle('Séparations').setColor(0xe74c3c);
+      const e = new EmbedBuilder().setTitle('Séparations en cours').setColor(0xe74c3c);
       for (const s of active.slice(0, 8)) {
         let camp = [];
-        try {
-          camp = JSON.parse(s.camp_split || '[]');
-        } catch {
-          camp = [];
-        }
+        try { camp = JSON.parse(s.camp_split || '[]'); } catch { camp = []; }
+        const total = pg.memberCount(s.guild_id);
+        const phaseLbl = s.phase === 1
+          ? `Phase 1 — recrutement (fin <t:${Math.floor(s.phase1_end_ms / 1000)}:R>)`
+          : `Phase 2 — guerre GRP (fin <t:${Math.floor(s.phase2_end_ms / 1000)}:R>)`;
+        const splitInfo = s.phase === 2
+          ? `\nGRP camp split snapshot **${BigInt(s.grp_snapshot_a || '0').toLocaleString('fr-FR')}** vs loyal **${BigInt(s.grp_snapshot_b || '0').toLocaleString('fr-FR')}**`
+          : '';
         e.addFields({
-          name: `ID \`${s.id}\` — phase ${s.phase}`,
-          value: `Guilde \`${s.guild_id}\` · camp : **${camp.length}** membre(s)`,
+          name: `ID \`${s.id}\` — ${phaseLbl}`,
+          value: `Guilde \`${s.guild_id}\` · camp split : **${camp.length}** / ${total} membre(s)${splitInfo}`,
           inline: false,
         });
       }
