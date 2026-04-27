@@ -1018,11 +1018,11 @@ function drawTorii(ctx, cx, cy, scale, unlocked) {
 
   // Sceau central sur le nuki.
   if (unlocked) {
-    ctx.fillStyle = '#fff1c2';
-    ctx.shadowColor = 'rgba(255, 220, 140, 0.9)';
-    ctx.shadowBlur = 8;
+    ctx.fillStyle = '#ffd6cf';
+    ctx.shadowColor = 'rgba(255, 90, 70, 0.95)';
+    ctx.shadowBlur = 10;
   } else {
-    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillStyle = 'rgba(255,200,200,0.18)';
   }
   ctx.beginPath();
   ctx.arc(0, -17, 4, 0, Math.PI * 2);
