@@ -19,18 +19,30 @@ const grpSeason = require('./services/grpSeason');
 
 cfg.assertToken();
 
+const fullIntents = [
+  GatewayIntentBits.Guilds,
+  GatewayIntentBits.GuildMembers,
+  GatewayIntentBits.GuildMessages,
+  GatewayIntentBits.GuildMessageReactions,
+  GatewayIntentBits.GuildVoiceStates,
+  GatewayIntentBits.GuildModeration,
+  GatewayIntentBits.MessageContent,
+  GatewayIntentBits.DirectMessages,
+  GatewayIntentBits.DirectMessageReactions,
+];
+/** Intents privilégiés côté portail : « Contenu des messages » + « Membres du serveur ». */
+const minimalIntents = fullIntents.filter(
+  (b) => b !== GatewayIntentBits.GuildMembers && b !== GatewayIntentBits.MessageContent,
+);
+
+if (cfg.minimalDiscordIntents) {
+  console.warn(
+    '[reborn-test-bot] REBORN_MINIMAL_DISCORD_INTENTS=1 : sans MessageContent / GuildMembers. Pour le mode complet, active les intents privilégiés (Portail Discord → ton app → Bot) et repasse la variable à 0 ou supprime-la.',
+  );
+}
+
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildMessageReactions,
-    GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GuildModeration,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.DirectMessages,
-    GatewayIntentBits.DirectMessageReactions,
-  ],
+  intents: cfg.minimalDiscordIntents ? minimalIntents : fullIntents,
   partials: [
     Partials.Channel,
     Partials.Message,
