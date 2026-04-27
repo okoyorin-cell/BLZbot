@@ -1243,15 +1243,15 @@ function drawKeyStar(ctx, p, angle) {
 
   // Label
   ctx.shadowColor = 'rgba(0,0,0,0.85)';
-  ctx.shadowBlur = 6;
+  ctx.shadowBlur = 7;
   ctx.fillStyle = labelColor;
-  ctx.font = `bold 19px "Segoe UI", "Helvetica", sans-serif`;
-  ctx.fillText(label, lx, ly - 11);
+  ctx.font = `bold 23px "Segoe UI", "Helvetica", sans-serif`;
+  ctx.fillText(label, lx, ly - 13);
 
-  ctx.shadowBlur = 4;
+  ctx.shadowBlur = 5;
   ctx.fillStyle = hintColor;
-  ctx.font = `14px "Segoe UI", "Helvetica", sans-serif`;
-  ctx.fillText(hint, lx, ly + 11);
+  ctx.font = `16px "Segoe UI", "Helvetica", sans-serif`;
+  ctx.fillText(hint, lx, ly + 14);
 
   ctx.restore();
 }
