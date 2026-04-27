@@ -31,7 +31,8 @@ async function buildBoutiquePayload(uid, username) {
   users.resetCatmIfNewDay(uid, shop.utcDateKey());
   const { count: catmCount } = users.getCatmState(uid);
 
-  const blz = getBlzAttachment();
+  // Bannière dédiée boutique (BLZSTARSS rouge).
+  const blz = getBoutiqueAttachment();
   const container = new ContainerBuilder();
   if (blz) {
     const gallery = new MediaGalleryBuilder().addItems({ media: { url: blz.mediaUrl } });
