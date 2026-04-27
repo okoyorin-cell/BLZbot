@@ -175,7 +175,9 @@ async function handlePanelInteraction(interaction) {
     return interaction.editReply({ files: p.files, components: p.components, flags: p.flags });
   }
 
-  if (interaction.customId === 'rb:tree:go') {
+  const goMatch = interaction.customId.match(/^rb:tree:go(?::(\w+))?$/);
+  if (goMatch) {
+    const lay = normalizeLayout(goMatch[1]);
     const br = pick.get(interaction.user.id, interaction.message.id);
     if (!br || !skillTree.BRANCHES.includes(br)) {
       return interaction.reply({ content: 'Sélectionne une **branche** dans le menu déroulant.', ephemeral: true });
@@ -187,6 +189,7 @@ async function handlePanelInteraction(interaction) {
       uid,
       interaction.member?.displayName || interaction.user.username,
       interaction.user.displayAvatarURL({ extension: 'png', size: 128 }),
+      lay,
     );
     if (!b) {
       return interaction.reply({
@@ -202,12 +205,15 @@ async function handlePanelInteraction(interaction) {
     });
   }
 
-  if (interaction.customId === 'rb:tree:re') {
+  const reMatch = interaction.customId.match(/^rb:tree:re(?::(\w+))?$/);
+  if (reMatch) {
+    const lay = normalizeLayout(reMatch[1]);
     await interaction.deferUpdate();
     const b = await buildArbreContainer(
       interaction.user.id,
       interaction.member?.displayName || interaction.user.username,
       interaction.user.displayAvatarURL({ extension: 'png', size: 128 }),
+      lay,
     );
     if (!b) {
       return interaction.followUp({ content: 'Génération image indisponible (canvas).', ephemeral: true });
