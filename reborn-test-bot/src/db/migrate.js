@@ -169,6 +169,37 @@ function migrate(db) {
       unlocked_ms INTEGER NOT NULL,
       PRIMARY KEY (user_id, trophy_id)
     );
+
+    CREATE TABLE IF NOT EXISTS events_active (
+      hub_discord_id TEXT NOT NULL,
+      event_key TEXT NOT NULL,
+      starts_ms INTEGER NOT NULL,
+      ends_ms INTEGER NOT NULL,
+      meta_json TEXT NOT NULL DEFAULT '{}',
+      PRIMARY KEY (hub_discord_id, event_key)
+    );
+
+    CREATE TABLE IF NOT EXISTS event_participation (
+      hub_discord_id TEXT NOT NULL,
+      event_key TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      score INTEGER NOT NULL DEFAULT 0,
+      contributed_ms INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (hub_discord_id, event_key, user_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS guild_channels (
+      guild_id TEXT PRIMARY KEY,
+      channel_id TEXT NOT NULL,
+      created_ms INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS quest_milestones (
+      user_id TEXT NOT NULL,
+      milestone_key TEXT NOT NULL,
+      claimed_ms INTEGER NOT NULL,
+      PRIMARY KEY (user_id, milestone_key)
+    );
   `);
 
   addColumnIfMissing(db, 'users', 'secu_points', 'INTEGER NOT NULL DEFAULT 10');
