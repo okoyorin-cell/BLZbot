@@ -152,12 +152,16 @@ async function handlePurchase(interaction, parts) {
       };
     }
     // Bonus arbre boutique palier 2 : ×2 contenu coffres (starss + XP + qty items).
+    // Les items « uniques » (diamant) et les jetons d'accès (hacker_token) restent en qty 1.
     const lootMult = skillTree.chestLootMult(uid);
     const lootMultN = Number(lootMult);
+    const NON_STACKABLE = new Set(['diamant', 'hacker_token']);
     if (lootMult > 1n) {
       loot.stars *= lootMult;
       loot.xp *= lootMultN;
-      loot.items = loot.items.map((it) => ({ ...it, qty: it.qty * lootMultN }));
+      loot.items = loot.items.map((it) =>
+        NON_STACKABLE.has(it.id) ? it : { ...it, qty: it.qty * lootMultN },
+      );
       loot.lines.push(`*(×${lootMultN} contenu — arbre boutique)*`);
     }
     totalStars += loot.stars;
