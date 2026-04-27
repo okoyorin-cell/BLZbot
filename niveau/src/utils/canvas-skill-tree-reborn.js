@@ -193,9 +193,13 @@ function drawMainNode(ctx, n, rgb, color, lit, isCurrent) {
   }
   ctx.fill();
 
-  // Anneau extérieur
-  ctx.lineWidth = lit ? 2 : 1.4;
-  ctx.strokeStyle = lit ? 'rgba(255,255,255,0.7)' : rgba(rgb, 0.28);
+  // Anneau extérieur (un peu plus marqué pour le « prochain palier dispo »).
+  ctx.lineWidth = lit ? 2 : isCurrent ? 1.8 : 1.4;
+  ctx.strokeStyle = lit
+    ? 'rgba(255,255,255,0.7)'
+    : isCurrent
+    ? rgba(rgb, 0.65)
+    : rgba(rgb, 0.28);
   ctx.stroke();
 
   // Anneau intérieur fin (pour un côté « médaillon »)
