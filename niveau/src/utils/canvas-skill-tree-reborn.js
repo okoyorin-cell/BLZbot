@@ -21,11 +21,11 @@ const BRANCH = {
 };
 const ORDER = ['quest', 'guild', 'shop', 'ranked', 'event'];
 
-const CENTER = { x: W / 2, y: H / 2 + 25 };
-const FIRST_NODE_DIST = 115;
-const NODE_GAP = 62;
+const CENTER = { x: W / 2, y: H / 2 + 80 };
+const FIRST_NODE_DIST = 112;
+const NODE_GAP = 58;
 const NODES_PER_BRANCH = 5;
-const TIP_OFFSET = 96;
+const TIP_OFFSET = 92;
 const MAIN_R = 28;
 const CAP_R = 33; // rayon « capstone » du dernier nœud
 const SIDE_R = 9;
