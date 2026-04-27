@@ -91,12 +91,12 @@ async function drawBackground(ctx) {
 }
 
 function drawAvatarRound(ctx, img, cx, cy, r) {
-  const halo = ctx.createRadialGradient(cx, cy, r * 0.85, cx, cy, r * 1.35);
-  halo.addColorStop(0, rgba(TITLE_RGB, 0.18));
+  const halo = ctx.createRadialGradient(cx, cy, r * 0.95, cx, cy, r * 1.2);
+  halo.addColorStop(0, rgba(TITLE_RGB, 0.08));
   halo.addColorStop(1, rgba(TITLE_RGB, 0));
   ctx.fillStyle = halo;
   ctx.beginPath();
-  ctx.arc(cx, cy, r * 1.35, 0, Math.PI * 2);
+  ctx.arc(cx, cy, r * 1.2, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.save();
