@@ -1,6 +1,7 @@
 const db = require('../db');
 const shop = require('./shop');
 const users = require('./users');
+const skillTree = require('./skillTree');
 
 const DAILY_MSG_TARGET = 5;
 const DAILY_REWARD = 25_000n;
