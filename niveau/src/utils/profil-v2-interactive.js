@@ -303,6 +303,14 @@ async function sendProfilV2WithButtons(interaction, session) {
             ) {
                 return;
             }
+            // Bypass: laisse reborn-test-bot prendre la main sur le bouton Guilde
+            // (le test-bot affiche le canvas /profil-guilde calibré sur niveau).
+            if (
+                process.env.REBORN_PROFIL_GUILD_BYPASS === '1' &&
+                i.customId.startsWith(`${GUILD}_`)
+            ) {
+                return;
+            }
 
             if (i.customId.startsWith(`${INV}_`)) {
                 await i.deferUpdate();
