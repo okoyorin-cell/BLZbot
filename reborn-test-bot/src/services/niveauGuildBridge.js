@@ -6,11 +6,12 @@ const db = require('../db');
  * dans `niveau/src/database/blzbot.sqlite`) et le système REBORN (table
  * `player_guilds` / `player_guild_members` dans `reborn-test-bot/data/reborn.sqlite`).
  *
- * Lorsqu'un joueur a une guilde côté niveau mais pas côté REBORN, on l'importe
- * automatiquement à la première lecture pour que toutes les features REBORN
- * (focus, séparation, salon privé, GXP, etc.) puissent fonctionner.
- *
- * L'import est non-destructif : les données niveau ne sont jamais modifiées.
+ * Comportement :
+ * - À chaque lecture (`getMembershipInHub`, `listGuildsOnHub`, `getGuild`), on
+ *   resynchronise depuis niveau pour refléter les changements (treasury, niveau,
+ *   nom, ajout/retrait de membres, dissolution).
+ * - Les guildes pontées portent un ID stable `niv_<idNiveau>` côté REBORN.
+ * - Les données niveau ne sont jamais modifiées par les lectures.
  */
 
 let niveauDbGuilds = null;
@@ -32,13 +33,42 @@ function rebornIdFromNiveau(niveauId) {
   return `niv_${niveauId}`;
 }
 
-function bridgedGuildExists(rebornId) {
-  return db.prepare('SELECT 1 FROM player_guilds WHERE id = ?').get(rebornId) != null;
+function niveauIdFromReborn(rebornId) {
+  if (!rebornId || !String(rebornId).startsWith('niv_')) return null;
+  const raw = String(rebornId).slice(4);
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function isBridged(rebornId) {
+  return /^niv_\d+$/.test(String(rebornId || ''));
+}
+
+function fetchNiveauGuild(niveauId) {
+  const niv = loadNiveau();
+  if (!niv) return null;
+  try {
+    if (typeof niv.getGuildById === 'function') return niv.getGuildById(niveauId);
+  } catch { /* ignore */ }
+  return null;
+}
+
+function fetchNiveauMembers(niveauId) {
+  const niv = loadNiveau();
+  if (!niv) return [];
+  try {
+    if (typeof niv.getGuildMembersWithDetails === 'function') {
+      return niv.getGuildMembersWithDetails(niveauId).map((m) => m.id || m.user_id).filter(Boolean);
+    }
+  } catch { /* ignore */ }
+  return [];
 }
 
 /**
- * Importe (ou met à jour) la guilde niveau dans la table REBORN.
- * Retourne l'ID REBORN si l'import a réussi, sinon null.
+ * Importe (ou rafraîchit) la guilde niveau dans la table REBORN.
+ * Crée la ligne `player_guilds` si absente, met à jour les champs miroir
+ * (nom, leader, member_cap, treasury) sinon, puis synchronise la liste
+ * des membres (insère les nouveaux, retire ceux qui ne sont plus là).
  */
 function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
   if (!niveauGuild || !niveauGuild.id) return null;
@@ -46,7 +76,8 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
   const now = Date.now();
   const memberCap = Math.max(5, Number(niveauGuild.member_slots) || 5);
   const treasury = String(BigInt(niveauGuild.treasury || 0));
-  if (!bridgedGuildExists(rebornId)) {
+  const existing = db.prepare('SELECT id FROM player_guilds WHERE id = ?').get(rebornId);
+  if (!existing) {
     db.prepare(
       `INSERT INTO player_guilds
          (id, hub_discord_id, name, leader_id, member_cap, treasury, gxp,
@@ -60,45 +91,61 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
       niveauGuild.owner_id,
       memberCap,
       treasury,
-      Number(niveauGuild.level) || 1,
+      Math.max(1, Number(niveauGuild.level) || 1),
       Number(niveauGuild.created_at) || now,
       niveauGuild.channel_id || null,
       null,
       null,
     );
   } else {
+    // Re-sync miroir (sans écraser les champs spécifiques REBORN : gxp, grade,
+    // anti_separation, last_focus_ms, salon_channel_id (si déjà setté), description).
     db.prepare(
       `UPDATE player_guilds
-       SET name = COALESCE(?, name),
-           leader_id = COALESCE(?, leader_id),
+       SET name = ?,
+           leader_id = ?,
            member_cap = MAX(member_cap, ?),
-           salon_channel_id = COALESCE(salon_channel_id, ?)
+           treasury = ?,
+           guild_level = MAX(guild_level, ?)
        WHERE id = ?`,
     ).run(
-      niveauGuild.name || null,
-      niveauGuild.owner_id || null,
+      niveauGuild.name || 'Guilde',
+      niveauGuild.owner_id,
       memberCap,
-      niveauGuild.channel_id || null,
+      treasury,
+      Math.max(1, Number(niveauGuild.level) || 1),
       rebornId,
     );
   }
+  // Sync des membres : on aligne le set REBORN sur le set niveau.
   if (Array.isArray(niveauMembers)) {
+    const wanted = new Set(niveauMembers.filter(Boolean));
+    if (niveauGuild.owner_id) wanted.add(niveauGuild.owner_id);
+    const current = db.prepare('SELECT user_id FROM player_guild_members WHERE guild_id = ?').all(rebornId);
+    const have = new Set(current.map((r) => r.user_id));
     const insMember = db.prepare(
       `INSERT OR IGNORE INTO player_guild_members (guild_id, user_id, joined_ms, perms_json)
        VALUES (?, ?, ?, ?)`,
     );
     const leaderPerms = '{"depot":1,"retrait":1,"kick":1,"roles":1,"focus":1}';
     const memberPerms = '{"depot":1,"retrait":0,"kick":0,"roles":0,"focus":0}';
-    for (const uid of niveauMembers) {
-      const perms = uid === niveauGuild.owner_id ? leaderPerms : memberPerms;
-      insMember.run(rebornId, uid, now, perms);
+    for (const uid of wanted) {
+      if (!have.has(uid)) {
+        const perms = uid === niveauGuild.owner_id ? leaderPerms : memberPerms;
+        insMember.run(rebornId, uid, now, perms);
+      }
+    }
+    const delMember = db.prepare('DELETE FROM player_guild_members WHERE guild_id = ? AND user_id = ?');
+    for (const uid of have) {
+      if (!wanted.has(uid)) delMember.run(rebornId, uid);
     }
   }
   return rebornId;
 }
 
 /**
- * Cherche une guilde niveau pour ce joueur et l'importe dans REBORN si nécessaire.
+ * Cherche la guilde niveau de ce joueur et l'importe / la rafraîchit dans REBORN.
+ * Si l'utilisateur a quitté côté niveau, retire aussi la membership REBORN bridée.
  * Retourne `{ rebornGuildId }` si trouvé, sinon `null`.
  */
 function bridgeMembership(userId, hubDiscordId) {
@@ -110,16 +157,146 @@ function bridgeMembership(userId, hubDiscordId) {
   } catch {
     return null;
   }
-  if (!g) return null;
-  let members = [];
-  try {
-    if (typeof niv.getGuildMembersWithDetails === 'function') {
-      members = niv.getGuildMembersWithDetails(g.id).map((m) => m.id || m.user_id).filter(Boolean);
-    }
-  } catch { /* ignore */ }
-  if (!members.length) members = [g.owner_id];
-  const rid = importNiveauGuild(hubDiscordId, g, members);
+  if (!g) {
+    // Le joueur n'est plus dans une guilde niveau → s'il était dans une bridée, on retire.
+    try {
+      db.prepare(
+        `DELETE FROM player_guild_members
+         WHERE user_id = ?
+           AND guild_id IN (SELECT id FROM player_guilds WHERE id LIKE 'niv_%' AND hub_discord_id = ?)`,
+      ).run(userId, hubDiscordId);
+    } catch { /* ignore */ }
+    return null;
+  }
+  const members = fetchNiveauMembers(g.id);
+  const list = members.length ? members : [g.owner_id];
+  const rid = importNiveauGuild(hubDiscordId, g, list);
   return rid ? { rebornGuildId: rid } : null;
 }
 
-module.exports = { bridgeMembership, importNiveauGuild, rebornIdFromNiveau };
+/**
+ * Resync explicite d'une guilde REBORN bridée (lecture).
+ * Si la guilde n'existe plus côté niveau, on supprime la copie REBORN.
+ */
+function refreshBridgedGuild(rebornId) {
+  const nivId = niveauIdFromReborn(rebornId);
+  if (!nivId) return;
+  const g = fetchNiveauGuild(nivId);
+  if (!g) {
+    // niveau guild deleted → cleanup REBORN bridge
+    try {
+      const row = db.prepare('SELECT hub_discord_id FROM player_guilds WHERE id = ?').get(rebornId);
+      if (row) {
+        db.prepare('DELETE FROM player_guild_members WHERE guild_id = ?').run(rebornId);
+        db.prepare('DELETE FROM player_guilds WHERE id = ?').run(rebornId);
+      }
+    } catch { /* ignore */ }
+    return;
+  }
+  const row = db.prepare('SELECT hub_discord_id FROM player_guilds WHERE id = ?').get(rebornId);
+  if (!row) return;
+  const members = fetchNiveauMembers(g.id);
+  const list = members.length ? members : [g.owner_id];
+  importNiveauGuild(row.hub_discord_id, g, list);
+}
+
+/**
+ * Importe toutes les guildes niveau présentes dans la base sur ce hub.
+ * Utilisé par `listGuildsOnHub` pour offrir une vue unifiée.
+ */
+function importAllNiveauGuilds(hubDiscordId) {
+  const niv = loadNiveau();
+  if (!niv?.getAllGuilds) return 0;
+  let count = 0;
+  try {
+    const all = niv.getAllGuilds();
+    for (const g of all) {
+      const members = fetchNiveauMembers(g.id);
+      const list = members.length ? members : [g.owner_id];
+      importNiveauGuild(hubDiscordId, g, list);
+      count++;
+    }
+  } catch (e) {
+    console.warn('[niveauGuildBridge] importAll:', e?.message || e);
+  }
+  return count;
+}
+
+/**
+ * Crée une guilde côté niveau (utilisé quand `/guilde creer` REBORN crée une
+ * guilde — on la propage à niveau pour que `/profil` la voie aussi).
+ * Retourne l'ID niveau créé, ou null.
+ */
+function createNiveauGuild(name, ownerId, emoji = '🛡️') {
+  const niv = loadNiveau();
+  if (!niv?.createGuild || !niv?.addMemberToGuild) return null;
+  try {
+    const existing = typeof niv.getGuildByName === 'function' ? niv.getGuildByName(name) : null;
+    if (existing) return existing.id;
+    const id = niv.createGuild(name, ownerId, emoji);
+    try { niv.addMemberToGuild(ownerId, id); } catch { /* maybe already inside */ }
+    return id || null;
+  } catch (e) {
+    console.warn('[niveauGuildBridge] createNiveauGuild:', e?.message || e);
+    return null;
+  }
+}
+
+/** Ajoute un membre côté niveau (best-effort). */
+function addNiveauMember(niveauId, userId) {
+  const niv = loadNiveau();
+  if (!niv?.addMemberToGuild) return false;
+  try {
+    niv.addMemberToGuild(userId, niveauId);
+    return true;
+  } catch (e) {
+    return false; // déjà membre ou autre contrainte
+  }
+}
+
+/** Retire un membre côté niveau (best-effort). */
+function removeNiveauMember(userId) {
+  const niv = loadNiveau();
+  if (!niv?.removeMemberFromGuild) return false;
+  try {
+    niv.removeMemberFromGuild(userId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Dissout une guilde niveau (best-effort, utilisé par `/guilde dissoudre`). */
+function dissolveNiveauGuild(niveauId) {
+  const niv = loadNiveau();
+  if (!niv) return false;
+  try {
+    if (typeof niv.deleteGuild === 'function') {
+      niv.deleteGuild(niveauId);
+      return true;
+    }
+    // fallback : DELETE direct si la fonction n'existe pas
+    const path2 = require('path');
+    const ndb = require(path2.join(__dirname, '..', '..', '..', 'niveau', 'src', 'database', 'database'));
+    ndb.prepare('DELETE FROM guild_members WHERE guild_id = ?').run(niveauId);
+    ndb.prepare('DELETE FROM guilds WHERE id = ?').run(niveauId);
+    return true;
+  } catch (e) {
+    console.warn('[niveauGuildBridge] dissolveNiveauGuild:', e?.message || e);
+    return false;
+  }
+}
+
+module.exports = {
+  bridgeMembership,
+  importNiveauGuild,
+  importAllNiveauGuilds,
+  refreshBridgedGuild,
+  rebornIdFromNiveau,
+  niveauIdFromReborn,
+  isBridged,
+  createNiveauGuild,
+  addNiveauMember,
+  removeNiveauMember,
+  dissolveNiveauGuild,
+};
