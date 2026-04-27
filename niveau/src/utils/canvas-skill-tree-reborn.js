@@ -420,10 +420,78 @@ function buildLayout() {
 
 /* ---------- rendu principal ---------- */
 
-function drawHeader(ctx, displayName, points, sOf, bg) {
-  const headH = 92;
+const HEADER_TITLE_COLOR = '#f5c842';
+const HEADER_TITLE_RGB = [245, 200, 66];
+
+async function loadAvatarSafe(url) {
+  if (!url) return null;
+  try {
+    return await loadImage(url);
+  } catch {
+    return null;
+  }
+}
+
+/** Avatar circulaire avec anneau doré et halo doux. */
+function drawAvatarRound(ctx, img, cx, cy, r) {
+  // Halo
+  const halo = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, r * 1.6);
+  halo.addColorStop(0, rgba(HEADER_TITLE_RGB, 0.32));
+  halo.addColorStop(1, rgba(HEADER_TITLE_RGB, 0));
+  ctx.fillStyle = halo;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 1.6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Cadre cercle (arrière-plan sombre si pas d’avatar)
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+  if (img) {
+    ctx.drawImage(img, cx - r, cy - r, r * 2, r * 2);
+  } else {
+    const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+    g.addColorStop(0, '#3a2e22');
+    g.addColorStop(1, '#1a1410');
+    ctx.fillStyle = g;
+    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+  }
+  ctx.restore();
+
+  // Anneau doré
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 1, 0, Math.PI * 2);
+  ctx.lineWidth = 2.4;
+  ctx.strokeStyle = HEADER_TITLE_COLOR;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 5, 0, Math.PI * 2);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = rgba(HEADER_TITLE_RGB, 0.35);
+  ctx.stroke();
+}
+
+function truncateText(ctx, text, maxWidth) {
+  if (!text) return '';
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  const ell = '…';
+  let lo = 0;
+  let hi = text.length;
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi + 1) / 2);
+    if (ctx.measureText(text.slice(0, mid) + ell).width <= maxWidth) lo = mid;
+    else hi = mid - 1;
+  }
+  return text.slice(0, lo) + ell;
+}
+
+function drawHeader(ctx, displayName, points, sOf, bg, avatarImg) {
+  const headH = 96;
   const bandG = ctx.createLinearGradient(0, 0, 0, headH);
-  bandG.addColorStop(0, 'rgba(0,0,0,0.82)');
+  bandG.addColorStop(0, 'rgba(0,0,0,0.85)');
   bandG.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = bandG;
   ctx.fillRect(0, 0, W, headH);
@@ -434,38 +502,58 @@ function drawHeader(ctx, displayName, points, sOf, bg) {
   ctx.lineTo(W, headH);
   ctx.stroke();
 
-  // Petit chip "SKILL TREE" tout à gauche, façon ARC Raiders.
-  ctx.textAlign = 'left';
+  // --- Titre centré, jaune ---
+  ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = '#f3f0ff';
-  ctx.font = 'bold 13px "Segoe UI", "Helvetica", sans-serif';
-  ctx.fillText('SKILL TREE', 36, 28);
+  ctx.shadowColor = 'rgba(245, 200, 66, 0.55)';
+  ctx.shadowBlur = 16;
+  ctx.fillStyle = HEADER_TITLE_COLOR;
+  ctx.font = 'bold 36px "Segoe UI", "Helvetica", sans-serif';
+  ctx.fillText('Arbre de compétences', W / 2, 50);
+  ctx.shadowBlur = 0;
 
-  ctx.fillStyle = '#f3f0ff';
-  ctx.font = 'bold 28px "Segoe UI", "Helvetica", sans-serif';
-  ctx.fillText('Arbre de compétences REBORN', 36, 58);
-
-  ctx.fillStyle = '#a4a3b8';
-  ctx.font = '16px "Segoe UI", "Helvetica", sans-serif';
+  // Sous-titre discret sous le titre
   const totalUnlocked = ORDER.reduce((acc, b) => acc + sOf(b), 0);
-  ctx.fillText(
-    `Coût palier n = n  ·  5 branches × 5 paliers  ·  Paliers : ${totalUnlocked}/25`,
-    36,
-    80,
-  );
-
-  ctx.textAlign = 'right';
-  ctx.fillStyle = '#dad6ee';
-  ctx.font = 'bold 22px "Segoe UI", "Helvetica", sans-serif';
-  ctx.fillText(displayName, W - 32, 40);
-
-  ctx.fillStyle = '#7a7993';
+  ctx.fillStyle = '#cdb88a';
   ctx.font = '14px "Segoe UI", "Helvetica", sans-serif';
   ctx.fillText(
-    `Points dispo : ${points}   ·   Fond : ${bg === 'noir' ? 'Noir' : 'Profil'}`,
-    W - 32,
-    64,
+    `REBORN  ·  5 branches × 5 paliers  ·  Coût palier n = n`,
+    W / 2,
+    74,
   );
+
+  // --- Bloc gauche : stats du joueur ---
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#dad6ee';
+  ctx.font = 'bold 14px "Segoe UI", "Helvetica", sans-serif';
+  ctx.fillText(`Points dispo : ${points}`, 36, 36);
+  ctx.fillStyle = '#a4a3b8';
+  ctx.font = '13px "Segoe UI", "Helvetica", sans-serif';
+  ctx.fillText(`Paliers : ${totalUnlocked} / 25`, 36, 56);
+  ctx.fillText(`Fond : ${bg === 'noir' ? 'Noir' : 'Profil'}`, 36, 74);
+
+  // --- Bloc droit : pseudo + avatar ---
+  const avatarR = 30;
+  const avatarCx = W - 36 - avatarR;
+  const avatarCy = headH / 2;
+  drawAvatarRound(ctx, avatarImg, avatarCx, avatarCy, avatarR);
+
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 22px "Segoe UI", "Helvetica", sans-serif';
+  const nameMaxW = 360;
+  const safeName = truncateText(ctx, displayName, nameMaxW);
+  ctx.shadowColor = 'rgba(0,0,0,0.85)';
+  ctx.shadowBlur = 6;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(safeName, avatarCx - avatarR - 14, avatarCy - 6);
+
+  ctx.shadowBlur = 0;
+  ctx.font = '13px "Segoe UI", "Helvetica", sans-serif';
+  ctx.fillStyle = '#a4a3b8';
+  ctx.fillText('Joueur', avatarCx - avatarR - 14, avatarCy + 16);
+
+  ctx.textBaseline = 'alphabetic';
 }
 
 function drawBranchTipLabel(ctx, tree, step) {
