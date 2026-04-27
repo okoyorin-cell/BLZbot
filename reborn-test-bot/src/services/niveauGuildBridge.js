@@ -271,20 +271,18 @@ function dissolveNiveauGuild(niveauId) {
   const niv = loadNiveau();
   if (!niv) return false;
   try {
+    if (typeof niv.dissolveGuild === 'function') {
+      niv.dissolveGuild(niveauId);
+      return true;
+    }
     if (typeof niv.deleteGuild === 'function') {
       niv.deleteGuild(niveauId);
       return true;
     }
-    // fallback : DELETE direct si la fonction n'existe pas
-    const path2 = require('path');
-    const ndb = require(path2.join(__dirname, '..', '..', '..', 'niveau', 'src', 'database', 'database'));
-    ndb.prepare('DELETE FROM guild_members WHERE guild_id = ?').run(niveauId);
-    ndb.prepare('DELETE FROM guilds WHERE id = ?').run(niveauId);
-    return true;
   } catch (e) {
     console.warn('[niveauGuildBridge] dissolveNiveauGuild:', e?.message || e);
-    return false;
   }
+  return false;
 }
 
 module.exports = {
