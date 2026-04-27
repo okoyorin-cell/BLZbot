@@ -112,47 +112,43 @@ function getNiveauPageQuests(userId, page) {
 }
 
 // ─── Page 0 : REBORN ────────────────────────────────────────────────────────
-function buildRebornPage(userId, niveauPages) {
+async function buildRebornPage(userId, niveauPages, ctx = {}) {
   const s = quests.summary(userId);
   const c = new ContainerBuilder();
 
   const dailyDone = s.daily_claimed;
   const weeklyDone = s.weekly_claimed;
-
-  const dailyLine = dailyDone
-    ? `🌅 **Quête quotidienne** — ✅ Validée · **+${s.daily_reward.toLocaleString('fr-FR')}** starss`
-    : `🌅 **Quête quotidienne** — \`${bar(s.msgs_today, s.daily_target)}\` **${s.msgs_today}/${s.daily_target}** msg · récompense **${s.daily_reward.toLocaleString('fr-FR')}** starss *(auto)*`;
-
-  const weeklyLine = weeklyDone
-    ? `📅 **Quête hebdo** — ✅ Validée · **+${s.weekly_reward.toLocaleString('fr-FR')}** starss`
-    : `📅 **Quête hebdo** — \`${bar(s.week_points, s.weekly_target)}\` **${s.week_points}/${s.weekly_target}** msg · récompense **${s.weekly_reward.toLocaleString('fr-FR')}** starss *(auto)*`;
-
-  const selLine = `🎲 **Quête à choix** — ${s.selection_line}`;
-
-  const bonusLine =
-    `✨ **Arbre quête** : récompenses ×${s.reward_mult} · skips **${s.skips_left}/${s.skips_total}** · slots **${s.selection_slots}**`;
-
   const sp = spawnerStatus(userId);
-  let spawnerLine;
-  if (sp.locked) spawnerLine = '🔒 *Event Spawner hebdo : palier 5 Événement.*';
-  else if (sp.available) spawnerLine = '🎁 **Event Spawner hebdo disponible !**';
-  else spawnerLine = `🎁 *Event Spawner — prochain claim dans **${fmtTimeLeft(sp.msLeft)}**.*`;
 
-  c.addTextDisplayComponents(
-    new TextDisplayBuilder().setContent(
-      [
-        '# 🎯 Quêtes — REBORN',
-        '*Récompenses **automatiques** dès le seuil atteint.*',
-        '',
-        dailyLine,
-        weeklyLine,
-        selLine,
-        '',
-        bonusLine,
-        spawnerLine,
-      ].join('\n'),
-    ),
-  );
+  // Fiche canvas REBORN
+  let canvasFile = null;
+  try {
+    const buf = await renderQuetesRebornPng({
+      displayName: ctx.displayName || 'Joueur',
+      avatarUrl: ctx.avatarUrl || null,
+      summary: s,
+      spawner: sp,
+    });
+    canvasFile = new AttachmentBuilder(buf, { name: 'quetes_reborn.png' });
+    c.addMediaGalleryComponents(
+      new MediaGalleryBuilder().addItems({ media: { url: 'attachment://quetes_reborn.png' } }),
+    );
+  } catch (e) {
+    console.warn('[quetesPanel] canvas REBORN KO:', e?.message || e);
+    // Fallback texte si le canvas ne tourne pas
+    const dailyLine = dailyDone
+      ? `🌅 **Quête quotidienne** — ✅ Validée · **+${s.daily_reward.toLocaleString('fr-FR')}** starss`
+      : `🌅 **Quête quotidienne** — \`${bar(s.msgs_today, s.daily_target)}\` **${s.msgs_today}/${s.daily_target}** msg · récompense **${s.daily_reward.toLocaleString('fr-FR')}** starss *(auto)*`;
+    const weeklyLine = weeklyDone
+      ? `📅 **Quête hebdo** — ✅ Validée · **+${s.weekly_reward.toLocaleString('fr-FR')}** starss`
+      : `📅 **Quête hebdo** — \`${bar(s.week_points, s.weekly_target)}\` **${s.week_points}/${s.weekly_target}** msg · récompense **${s.weekly_reward.toLocaleString('fr-FR')}** starss *(auto)*`;
+    const selLine = `🎲 **Quête à choix** — ${s.selection_line}`;
+    c.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        ['# 🎯 Quêtes — REBORN', '', dailyLine, weeklyLine, selLine].join('\n'),
+      ),
+    );
+  }
 
   const rows = [];
 
