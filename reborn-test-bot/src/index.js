@@ -256,11 +256,13 @@ client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
   const cmd = client.commands.get(interaction.commandName);
   if (!cmd) return;
-  // Garde-fou : si l'interaction est déjà obsolète (token > 3 s), abandon silencieux.
-  // Cela arrive après un redémarrage si l'utilisateur a tapé une commande avant que
-  // le bot ne soit complètement prêt (websocket / chargement modules niveau).
+  // Garde-fou : si l'interaction est déjà très vieille (>1.5 s), abandon
+  // silencieux — la fenêtre de 3 s pour ack est trop serrée vu le round-trip
+  // réseau Discord (~500 ms) + l'event loop éventuellement chargé. Cela arrive
+  // typiquement après un redémarrage si l'utilisateur tape une commande avant
+  // que le bot ne soit pleinement prêt (loaders canvas, niveau modules…).
   const interactionAgeMs = Date.now() - interaction.createdTimestamp;
-  if (interactionAgeMs > 2500) {
+  if (interactionAgeMs > 1500) {
     return;
   }
   try {
