@@ -212,6 +212,14 @@ function migrate(db) {
   addColumnIfMissing(db, 'user_quest_state', 'lifetime_msgs', 'INTEGER NOT NULL DEFAULT 0');
   addColumnIfMissing(db, 'user_quest_state', 'weekly_skips_used', 'INTEGER NOT NULL DEFAULT 0');
   addColumnIfMissing(db, 'users', 'last_event_spawner_claim_ms', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'shop_catl_last_claim_ms', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'shop_reset_used_week_key', "TEXT NOT NULL DEFAULT ''");
+  addColumnIfMissing(db, 'users', 'hacker_role_until_ms', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'separations_won', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'voice_minutes_total', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'player_guilds', 'salon_channel_id', "TEXT NOT NULL DEFAULT ''");
+  addColumnIfMissing(db, 'player_guilds', 'description', "TEXT NOT NULL DEFAULT ''");
+  addColumnIfMissing(db, 'player_guilds', 'icon_url', "TEXT NOT NULL DEFAULT ''");
 
   addColumnIfMissing(db, 'users', 'xp_total', 'INTEGER NOT NULL DEFAULT 0');
   addColumnIfMissing(db, 'users', 'rp_last_activity_ms', 'INTEGER NOT NULL DEFAULT 0');
