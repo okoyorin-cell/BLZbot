@@ -33,12 +33,12 @@ const BRANCH_ANGLES = {
 };
 const CENTERS = {
   star: { x: W / 2, y: H / 2 + 80 },
-  demi: { x: W / 2, y: H - 100 },
+  demi: { x: W / 2, y: H - 140 },
 };
-// Paramètres organiques par layout : amplitude de la courbure latérale et écart des nœuds.
+// Paramètres organiques par layout : amplitude de la courbure latérale, écart des nœuds, taille.
 const LAYOUT_TUNING = {
-  star: { bulge: 22, sideMin: 38, sideJitter: 14, alongJitter: 22, firstDist: 112, gap: 58 },
-  demi: { bulge: 8, sideMin: 30, sideJitter: 10, alongJitter: 16, firstDist: 120, gap: 64 },
+  star: { bulge: 22, sideMin: 38, sideJitter: 14, alongJitter: 22, firstDist: 112, gap: 58, mainR: 28, capR: 33, sideR: 9 },
+  demi: { bulge: 14, sideMin: 40, sideJitter: 14, alongJitter: 20, firstDist: 160, gap: 92, mainR: 32, capR: 38, sideR: 11 },
 };
 const FIRST_NODE_DIST = 112;
 const NODE_GAP = 58;
