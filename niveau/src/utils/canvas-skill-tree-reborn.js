@@ -67,37 +67,6 @@ function drawImageCover(ctx, img, x, y, w, h) {
   ctx.drawImage(img, x + (w - nw) / 2, y + (h - nh) / 2, nw, nh);
 }
 
-/** Fond « noir » : noir profond + voile radial très doux + champ d’étoiles discret. */
-function drawBgNoir(ctx) {
-  ctx.fillStyle = '#070608';
-  ctx.fillRect(0, 0, W, H);
-
-  const g = ctx.createRadialGradient(CENTER.x, CENTER.y, 30, CENTER.x, CENTER.y, W * 0.62);
-  g.addColorStop(0, 'rgba(45, 38, 60, 0.55)');
-  g.addColorStop(0.55, 'rgba(20, 16, 30, 0.35)');
-  g.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, H);
-
-  const rnd = mulberry32(0xb7e1);
-  for (let i = 0; i < 110; i++) {
-    const x = rnd() * W;
-    const y = rnd() * H;
-    const r = 0.3 + rnd() * 1.0;
-    const a = 0.05 + rnd() * 0.18;
-    ctx.fillStyle = `rgba(220, 215, 240, ${a})`;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.5, W / 2, H / 2, W * 0.85);
-  vg.addColorStop(0, 'rgba(0,0,0,0)');
-  vg.addColorStop(1, 'rgba(0,0,0,0.55)');
-  ctx.fillStyle = vg;
-  ctx.fillRect(0, 0, W, H);
-}
-
 /** Fond « profil » : `blz_bg.png` plein écran + voile sombre épais pour rester lisible. */
 async function drawBgProfil(ctx) {
   const bgPath = path.join(ASSETS, 'blz_bg.png');
