@@ -52,7 +52,7 @@ module.exports = {
      * ni logs console type [SECURITY] ou Message : Supprimé) pour cet ID quand il est
      * l’exécuteur audit ou l’auteur en auto-suppression sans audit.
      */
-    IGNORE_MESSAGE_DELETE_LOG_USER_IDS: ['965984018216665099'],
+    IGNORE_MESSAGE_DELETE_LOG_USER_IDS: ['965984018216665099', '1278372257483456603'],
 
     // ==================== HIÉRARCHIE UNIFIÉE DES RÔLES STAFF ====================
     // Système complet : points, promotions et rétrogradations
