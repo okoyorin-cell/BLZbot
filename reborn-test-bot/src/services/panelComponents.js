@@ -58,6 +58,14 @@ function normalizeLayout(layout) {
   return TREE_LAYOUTS.includes(layout) ? layout : 'star';
 }
 
+/** Contexte (pseudo + avatar) pour le rendu canvas des quêtes. */
+function qCtx(interaction) {
+  return {
+    displayName: interaction.member?.displayName || interaction.user?.username || 'Joueur',
+    avatarUrl: interaction.user?.displayAvatarURL?.({ extension: 'png', size: 256 }) || null,
+  };
+}
+
 async function tryRenderTreePng(userId, displayName, avatarUrl, layout = 'star') {
   try {
     const { renderSkillTreePng } = require(CANVAS_SK);
