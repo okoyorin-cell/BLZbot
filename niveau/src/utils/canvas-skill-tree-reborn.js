@@ -2,25 +2,33 @@ const { createCanvas, loadImage } = require('canvas');
 const path = require('node:path');
 const fs = require('node:fs');
 
-const W = 1400;
-const H = 820;
+/* ---------- arbre de compétences (style ARC Raiders) ---------- */
+
+const W = 1500;
+const H = 900;
 const ASSETS = path.join(__dirname, '..', 'assets');
 
+/**
+ * Branches : 5 voies organisées en pétales (72° entre chaque), labels colorés au bout.
+ * `angle` est en degrés, 0 = droite, -90 = haut, +90 = bas (repère canvas).
+ */
 const BRANCH = {
-  quest: { label: 'QUÊTE', color: '#7CFF8B', rgb: [124, 255, 139], icon: '⚔' },
-  guild: { label: 'GUILDE', color: '#C39BFF', rgb: [195, 155, 255], icon: '⚜' },
-  shop: { label: 'BOUTIQUE', color: '#FFB867', rgb: [255, 184, 103], icon: '◈' },
-  ranked: { label: 'RANKED', color: '#7DC2FF', rgb: [125, 194, 255], icon: '★' },
-  event: { label: 'ÉVÉNEMENT', color: '#FF7B7B', rgb: [255, 123, 123], icon: '✦' },
+  quest:  { label: 'QUÊTE',     color: '#7CFF8B', rgb: [124, 255, 139], icon: '⚔', angle: -162 }, // haut-gauche
+  guild:  { label: 'GUILDE',    color: '#C39BFF', rgb: [195, 155, 255], icon: '⚜', angle:  -90 }, // haut
+  shop:   { label: 'BOUTIQUE',  color: '#FFB867', rgb: [255, 184, 103], icon: '◈', angle:  -18 }, // haut-droite
+  ranked: { label: 'RANKED',    color: '#7DC2FF', rgb: [125, 194, 255], icon: '★', angle:   54 }, // bas-droite
+  event:  { label: 'ÉVÉNEMENT', color: '#FF7B7B', rgb: [255, 123, 123], icon: '✦', angle:  126 }, // bas-gauche
 };
 const ORDER = ['quest', 'guild', 'shop', 'ranked', 'event'];
 
-const ROOT = { x: W / 2, y: H - 88 };
-const SPREAD_DEG = 90;
-const FIRST_NODE_DIST = 160;
-const NODE_GAP = 108;
-const MAIN_R = 26;
-const SIDE_R = 11;
+const CENTER = { x: W / 2, y: H / 2 + 25 };
+const FIRST_NODE_DIST = 115;
+const NODE_GAP = 62;
+const NODES_PER_BRANCH = 5;
+const TIP_OFFSET = 78;
+const MAIN_R = 28;
+const CAP_R = 33; // rayon « capstone » du dernier nœud
+const SIDE_R = 9;
 
 /* ---------- helpers ---------- */
 
