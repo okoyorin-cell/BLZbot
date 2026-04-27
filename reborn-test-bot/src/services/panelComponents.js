@@ -108,10 +108,7 @@ async function buildArbreContainer(userId, displayName) {
   return { file, container: c, flags: MessageFlags.IsComponentsV2 };
 }
 
-const { buildPassportTextV2 } = require('../lib/passportV2Ui');
-
 /**
- * @param {import('discord.js').Client} client
  * @param {import('discord.js').Interaction} interaction
  */
 async function handlePanelInteraction(interaction) {
