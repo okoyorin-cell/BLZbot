@@ -9,6 +9,16 @@ const { creerIssueGitHub } = require('./github-issues');
  * @param {Client} client - Le client Discord (optionnel, sera récupéré depuis interaction.client)
  */
 async function handleCommandError(interaction, error, client = null) {
+    // Courses bénignes Discord (token expiré / déjà acknowledged) : on ignore
+    // silencieusement. Cela arrive typiquement quand :
+    //   - le bot vient juste de démarrer et le client n'a pas eu le temps de
+    //     consommer l'interaction dans les 3 s ;
+    //   - reborn-test-bot a pris la main sur un bouton avant que le collector
+    //     niveau ne tente son `i.update`.
+    // Pas de logger.error, pas de bug-report : ce ne sont pas de vraies erreurs.
+    if (error && (error.code === 10062 || error.code === 40060)) {
+        return;
+    }
     const discordClient = client || interaction.client;
     const bugId = `bug-${Date.now()}`;
     logger.error(`[ERREUR ${bugId}] Une erreur est survenue lors de l'exécution de la commande '${interaction.commandName}':`, error);
