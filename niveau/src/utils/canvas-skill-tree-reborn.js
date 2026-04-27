@@ -371,35 +371,34 @@ function drawRoot(ctx) {
 
 function buildLayout() {
   const trees = [];
-  const N = ORDER.length;
-  const spread = (SPREAD_DEG * Math.PI) / 180;
-
-  for (let i = 0; i < N; i++) {
-    const tNorm = N === 1 ? 0 : i / (N - 1) - 0.5;
-    const ang = -Math.PI / 2 + spread * tNorm;
+  for (let i = 0; i < ORDER.length; i++) {
+    const branchKey = ORDER[i];
+    const ang = (BRANCH[branchKey].angle * Math.PI) / 180;
     const perp = ang + Math.PI / 2;
-    const sign = i < N / 2 ? -1 : i > (N - 1) / 2 ? 1 : 0;
-    const rnd = mulberry32(0x99 + i * 17);
+    const rnd = mulberry32(0xa00 + i * 31);
 
     const main = [];
-    for (let k = 0; k < 5; k++) {
+    for (let k = 0; k < NODES_PER_BRANCH; k++) {
       const d = FIRST_NODE_DIST + k * NODE_GAP;
-      const wob = (rnd() - 0.5) * 22 + Math.sin(i * 1.7 + k * 1.3) * 12;
-      const x = ROOT.x + d * Math.cos(ang) + wob * Math.cos(perp);
-      const y = ROOT.y + d * Math.sin(ang) + wob * Math.sin(perp);
+      // Bombement organique : sin sur la longueur + petite oscillation déterministe.
+      const t = NODES_PER_BRANCH === 1 ? 0 : k / (NODES_PER_BRANCH - 1);
+      const baseCurve = Math.sin(t * Math.PI) * 22 * (i % 2 === 0 ? 1 : -1);
+      const wob = (rnd() - 0.5) * 14;
+      const off = baseCurve + wob;
+      const x = CENTER.x + d * Math.cos(ang) + off * Math.cos(perp);
+      const y = CENTER.y + d * Math.sin(ang) + off * Math.sin(perp);
       main.push({ x, y, k });
     }
 
     const sides = [];
-    for (let k = 0; k < 5; k++) {
+    for (let k = 0; k < NODES_PER_BRANCH; k++) {
       const m = main[k];
-      const count = k === 0 ? 0 : (k === 4 ? 2 : (rnd() < 0.7 ? 1 : 2));
+      const count = k === 0 ? 0 : k === NODES_PER_BRANCH - 1 ? 2 : rnd() < 0.55 ? 1 : 2;
       for (let s = 0; s < count; s++) {
         const dir = (s + k + i) % 2 === 0 ? 1 : -1;
-        const sa = perp * dir + (rnd() - 0.5) * 0.4;
-        const sd = 42 + rnd() * 14;
-        // Petit décalage le long du trunk pour que les côtés ne soient pas exactement à la même hauteur
-        const along = (rnd() - 0.5) * 24;
+        const sa = perp * dir + (rnd() - 0.5) * 0.45;
+        const sd = 38 + rnd() * 14;
+        const along = (rnd() - 0.5) * 22;
         sides.push({
           x: m.x + sd * Math.cos(sa) + along * Math.cos(ang),
           y: m.y + sd * Math.sin(sa) + along * Math.sin(ang),
@@ -408,13 +407,12 @@ function buildLayout() {
       }
     }
 
-    const tipD = FIRST_NODE_DIST + 4 * NODE_GAP + 88;
-    const tipX = ROOT.x + tipD * Math.cos(ang);
-    const tipY = ROOT.y + tipD * Math.sin(ang);
+    const tipD = FIRST_NODE_DIST + (NODES_PER_BRANCH - 1) * NODE_GAP + TIP_OFFSET;
+    const tipX = CENTER.x + tipD * Math.cos(ang);
+    const tipY = CENTER.y + tipD * Math.sin(ang);
 
-    trees.push({ branch: ORDER[i], ang, perp, main, sides, tipX, tipY, sign });
+    trees.push({ branch: branchKey, ang, perp, main, sides, tipX, tipY });
   }
-
   return trees;
 }
 
