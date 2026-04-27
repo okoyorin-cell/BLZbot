@@ -9,7 +9,7 @@ const { renderTemplePng } = require('./canvas-skill-tree-reborn');
     ['locked', { points: 320, keys: ['arbre_full', 'rp_100k'], templeUnlocked: false }],
     ['unlocked', {
       points: 999,
-      keys: ['arbre_full', 'rp_100k', 'diamant', 'codex_full', 'guild_star', 'grp_200k'],
+      keys: ['classes', 'max_rp', 'grp_star', 'guild_grade_star', 'diamond', 'index_full'],
       templeUnlocked: true,
     }],
   ]) {
