@@ -163,7 +163,7 @@ function joinGuild(hubDiscordId, userId, username, guildId) {
   if (!g || g.hub_discord_id !== hubDiscordId) return { ok: false, error: 'Guilde introuvable sur ce serveur.' };
   if (getMembershipInHub(userId, hubDiscordId)) return { ok: false, error: 'Tu es déjà dans une guilde.' };
   const n = memberCount(guildId);
-  const cap = g.member_cap || memberCapForGuildLevel(g.guild_level || 1);
+  const cap = effectiveMemberCap(g);
   if (n >= cap) return { ok: false, error: 'Guilde pleine.' };
   users.getOrCreate(userId, username);
   db.prepare('INSERT INTO player_guild_members (guild_id, user_id, joined_ms, perms_json) VALUES (?, ?, ?, ?)').run(
