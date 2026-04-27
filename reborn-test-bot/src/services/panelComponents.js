@@ -237,7 +237,7 @@ async function handlePanelInteraction(interaction) {
       );
       c.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-          '### Passeport — **vue carte**\n*Arrière-plan : même \`blz_bg\` que le profil BLZ.*',
+          '### Passeport — **vue carte**\n*Mise en page type \`/profil-staff\` (fond \`profile.png\` modération ou \`blz_bg\`).*',
         ),
       );
       c.addActionRowComponents(
