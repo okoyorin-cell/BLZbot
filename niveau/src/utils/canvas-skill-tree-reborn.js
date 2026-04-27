@@ -220,17 +220,6 @@ function drawMainNode(ctx, n, rgb, color, lit, isCurrent) {
     drawLockGlyph(ctx, x, y, r * 0.95, rgba(rgb, 0.5));
   }
 
-  // Marqueur « prochain palier dispo » : un seul anneau fin pointillé (sobre).
-  if (isCurrent && !lit) {
-    ctx.save();
-    ctx.lineWidth = 1.4;
-    ctx.setLineDash([3, 4]);
-    ctx.strokeStyle = rgba(rgb, 0.7);
-    ctx.beginPath();
-    ctx.arc(x, y, r + 5, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  }
 }
 
 function drawSideNode(ctx, p, rgb, color, lit) {
