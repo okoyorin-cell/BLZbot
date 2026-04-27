@@ -5,7 +5,7 @@ const fs = require('node:fs');
 /* ---------- arbre de compétences (style ARC Raiders) ---------- */
 
 const W = 1500;
-const H = 900;
+const H = 980;
 const ASSETS = path.join(__dirname, '..', 'assets');
 
 /**
