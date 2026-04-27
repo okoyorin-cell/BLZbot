@@ -153,7 +153,7 @@ async function handlePanelInteraction(interaction) {
       const r = quests.pickSelection(interaction.user.id, interaction.values[0]);
       if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
       await interaction.deferUpdate();
-      const p = buildQuetesPayload(interaction.user.id);
+      const p = await buildQuetesPayload(interaction.user.id, 0);
       return interaction.editReply(p);
     }
     return;
