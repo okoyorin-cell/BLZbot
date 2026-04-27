@@ -160,16 +160,10 @@ function drawProgressBar(ctx, x, y, w, h, ratio, accent, accentRgb) {
   if (r > 0) {
     rr(ctx, x, y, fw, h, h / 2);
     const g = ctx.createLinearGradient(x, y, x + fw, y);
-    g.addColorStop(0, rgba(accentRgb, 0.95));
+    g.addColorStop(0, rgba(accentRgb, 0.92));
     g.addColorStop(1, accent);
     ctx.fillStyle = g;
     ctx.fill();
-
-    ctx.shadowColor = rgba(accentRgb, 0.55);
-    ctx.shadowBlur = 14;
-    rr(ctx, x, y, fw, h, h / 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
   }
 }
 
