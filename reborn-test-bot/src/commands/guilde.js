@@ -286,7 +286,61 @@ module.exports = {
       const mode = interaction.options.getString('mode', true);
       const r = pg.useFocus(hub, m.guild_id, target, mode, uid);
       if (!r.ok) return interaction.reply({ content: r.error });
-      return interaction.reply({ content: 'Focus appliqué.' });
+      const modeLabels = {
+        '1': '-500 GRP par membre cible',
+        '2': '-3 000 GRP répartis',
+        '3': '÷2 GRP cible pendant 2 h',
+      };
+      return interaction.reply({ content: `🎯 Focus **${modeLabels[mode] || mode}** appliqué — 500 000 starss prélevés.` });
+    }
+
+    if (sub === 'salon') {
+      const m = pg.getMembershipInHub(uid, hub);
+      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
+      const g = pg.getGuild(m.guild_id);
+      if (g.leader_id !== uid) return interaction.reply({ content: 'Chef uniquement.' });
+      if (g.salon_channel_id) {
+        return interaction.reply({ content: `Salon déjà associé : <#${g.salon_channel_id}>.` });
+      }
+      try {
+        const everyone = interaction.guild.roles.everyone.id;
+        const memberRows = require('../db')
+          .prepare('SELECT user_id FROM player_guild_members WHERE guild_id = ?')
+          .all(g.id);
+        const overwrites = [
+          { id: everyone, deny: ['ViewChannel'] },
+          { id: interaction.client.user.id, allow: ['ViewChannel', 'SendMessages', 'ManageChannels'] },
+        ];
+        for (const { user_id } of memberRows) {
+          overwrites.push({ id: user_id, allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory'] });
+        }
+        const ch = await interaction.guild.channels.create({
+          name: `guilde-${(g.name || 'guilde').slice(0, 32).toLowerCase().replace(/[^a-z0-9-]/g, '-')}`,
+          type: 0,
+          topic: `Salon privé — guilde ${g.name} (${g.id})`,
+          permissionOverwrites: overwrites,
+        });
+        require('../db')
+          .prepare('UPDATE player_guilds SET salon_channel_id = ? WHERE id = ?')
+          .run(ch.id, g.id);
+        require('../db')
+          .prepare('INSERT OR REPLACE INTO guild_channels (guild_id, channel_id, created_ms) VALUES (?, ?, ?)')
+          .run(g.id, ch.id, Date.now());
+        return interaction.reply({ content: `Salon créé : <#${ch.id}>` });
+      } catch (e) {
+        console.error('[guilde salon]', e);
+        return interaction.reply({ content: `❌ Impossible de créer le salon : \`${e?.message || e}\` (donne au bot **Manage Channels**).` });
+      }
+    }
+
+    if (sub === 'decrire') {
+      const m = pg.getMembershipInHub(uid, hub);
+      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
+      const g = pg.getGuild(m.guild_id);
+      if (g.leader_id !== uid) return interaction.reply({ content: 'Chef uniquement.' });
+      const txt = interaction.options.getString('texte', true).slice(0, 200);
+      require('../db').prepare('UPDATE player_guilds SET description = ? WHERE id = ?').run(txt, g.id);
+      return interaction.reply({ content: `Description mise à jour :\n> ${txt}` });
     }
   },
 };
