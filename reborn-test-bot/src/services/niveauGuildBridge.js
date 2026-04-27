@@ -227,6 +227,7 @@ function bridgeMembership(userId, hubDiscordId) {
  * Si la guilde n'existe plus côté niveau, on supprime la copie REBORN.
  */
 function refreshBridgedGuild(rebornId) {
+  if (_isCached(guildSyncCache, rebornId)) return;
   const nivId = niveauIdFromReborn(rebornId);
   if (!nivId) return;
   const g = fetchNiveauGuild(nivId);
@@ -239,6 +240,7 @@ function refreshBridgedGuild(rebornId) {
         db.prepare('DELETE FROM player_guilds WHERE id = ?').run(rebornId);
       }
     } catch { /* ignore */ }
+    _cache(guildSyncCache, rebornId);
     return;
   }
   const row = db.prepare('SELECT hub_discord_id FROM player_guilds WHERE id = ?').get(rebornId);
@@ -246,6 +248,7 @@ function refreshBridgedGuild(rebornId) {
   const members = fetchNiveauMembers(g.id);
   const list = members.length ? members : [g.owner_id];
   importNiveauGuild(row.hub_discord_id, g, list);
+  _cache(guildSyncCache, rebornId);
 }
 
 /**
