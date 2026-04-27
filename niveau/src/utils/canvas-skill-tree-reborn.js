@@ -131,9 +131,7 @@ async function drawBgProfil(ctx) {
   ctx.fillRect(0, 0, W, H);
 }
 
-/**
- * Courbe de Bézier quadratique avec une saillie perpendiculaire pour un trait organique.
- */
+/** Courbe de Bézier quadratique avec une saillie perpendiculaire pour un trait organique. */
 function quadStroke(ctx, x0, y0, x1, y1, bulge) {
   const mx = (x0 + x1) / 2;
   const my = (y0 + y1) / 2;
@@ -148,22 +146,39 @@ function quadStroke(ctx, x0, y0, x1, y1, bulge) {
   ctx.stroke();
 }
 
-function drawConnection(ctx, a, b, rgb, lit, intensity = 1, bulge = 22) {
+/** Spine principale : courbe colorée épaisse quand allumée, fil fin et froid quand verrouillée. */
+function drawConnection(ctx, a, b, rgb, lit, bulge = 9) {
   ctx.lineCap = 'round';
   if (lit) {
-    // Voile très léger pour donner un peu de matière sans néon.
-    ctx.strokeStyle = rgba(rgb, 0.12 * intensity);
-    ctx.lineWidth = 8;
+    // Halo coloré doux (sans devenir néon).
+    ctx.strokeStyle = rgba(rgb, 0.18);
+    ctx.lineWidth = 13;
     quadStroke(ctx, a.x, a.y, b.x, b.y, bulge);
-    // Trait coloré principal, sobre.
-    ctx.strokeStyle = rgba(rgb, 0.85);
-    ctx.lineWidth = 3.4;
+    // Trait coloré principal — bien marqué, façon ARC Raiders.
+    ctx.strokeStyle = rgba(rgb, 0.95);
+    ctx.lineWidth = 5;
     quadStroke(ctx, a.x, a.y, b.x, b.y, bulge);
-  } else {
-    ctx.strokeStyle = 'rgba(190, 190, 215, 0.14)';
+    // Reflet clair central.
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
     ctx.lineWidth = 1.6;
     quadStroke(ctx, a.x, a.y, b.x, b.y, bulge);
+  } else {
+    // Verrouillée : fil bleu-gris, fin, sans glow.
+    ctx.strokeStyle = 'rgba(170, 178, 205, 0.22)';
+    ctx.lineWidth = 1.8;
+    quadStroke(ctx, a.x, a.y, b.x, b.y, bulge);
   }
+}
+
+/** Liaisons côté (toujours fines, légèrement teintées si parent allumé). */
+function drawSideConnection(ctx, parent, side, rgb, lit) {
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = lit ? rgba(rgb, 0.45) : 'rgba(170, 178, 205, 0.22)';
+  ctx.lineWidth = lit ? 2 : 1.4;
+  ctx.beginPath();
+  ctx.moveTo(parent.x, parent.y);
+  ctx.lineTo(side.x, side.y);
+  ctx.stroke();
 }
 
 function drawLockGlyph(ctx, cx, cy, size, color) {
