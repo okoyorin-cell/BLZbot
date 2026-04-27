@@ -220,13 +220,13 @@ function summary(userId) {
   const row = syncDayWeek(getState(userId));
   const sid = row.selection_id || '';
   const def = sid ? SELECTIONS[sid] : null;
-  let selLine = 'Aucune quête à choix (prends-en une avec `/quete choisir`).';
+  let selLine = 'Aucune quête à choix sélectionnée — choisis-en une dans le menu ci-dessous.';
   if (def) {
     if (row.selection_claimed) selLine = `**${def.label}** — terminée cette semaine.`;
     else if (def.kind === 'msgs') {
-      selLine = `**${def.label}** — **${row.selection_progress || 0}** / **${def.target}**`;
+      selLine = `**${def.label}** — **${row.selection_progress || 0}** / **${def.target}** *(auto)*`;
     } else {
-      selLine = `**${def.label}** — prêt à réclamer si tu as l’item (voir \`/quete reclamer_selection\`).`;
+      selLine = `**${def.label}** — utilise le bouton « Réclamer » dès que tu as l’item.`;
     }
   }
   const mult = skillTree.questRewardMult(userId);
