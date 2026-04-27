@@ -136,9 +136,6 @@ async function renderSkillTreePng(opts) {
       strokeCurve(ctx, from.x, from.y, to.x, to.y, color, 4, segmentLit);
     }
     if (list[0]) {
-      strokeCurve(ctx, rootX, rootY, list[0].x, list[0].y, color, 4, s > 0);
-    }
-    if (list[0]) {
       const tip = list[0];
       ctx.textAlign = 'center';
       ctx.fillStyle = color;
