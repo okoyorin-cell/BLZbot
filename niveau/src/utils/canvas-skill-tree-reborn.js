@@ -278,13 +278,15 @@ function drawMainNode(ctx, n, rgb, color, icon, lit, isCurrent, isCapstone, size
   // Icône au centre — sombre sur nœud allumé, teintée sur nœud verrouillé.
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  const iconLit = Math.round(r * (isCapstone ? 0.91 : 0.93));
+  const iconLock = Math.round(r * 0.78);
   if (lit) {
     ctx.fillStyle = 'rgba(10, 8, 20, 0.92)';
-    ctx.font = `bold ${isCapstone ? 30 : 26}px "Segoe UI Symbol", "Segoe UI", "Helvetica", sans-serif`;
+    ctx.font = `bold ${iconLit}px "Segoe UI Symbol", "Segoe UI", "Helvetica", sans-serif`;
     ctx.fillText(icon, x, y + 1);
   } else {
     ctx.fillStyle = rgba(rgb, 0.55);
-    ctx.font = `bold ${isCapstone ? 26 : 22}px "Segoe UI Symbol", "Segoe UI", "Helvetica", sans-serif`;
+    ctx.font = `bold ${iconLock}px "Segoe UI Symbol", "Segoe UI", "Helvetica", sans-serif`;
     ctx.fillText(icon, x, y + 1);
     // Petit cadenas en surimpression bas-droite (très discret).
     drawLockGlyph(ctx, x + r * 0.55, y + r * 0.55, r * 0.55, rgba(rgb, 0.55));
