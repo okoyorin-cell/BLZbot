@@ -45,14 +45,18 @@ function rollCatm() {
 /** CATL : orienté gros gains (doc coffre légendaire). */
 function rollCatl() {
   const kind = pick([
-    ['stars', 25],
+    ['stars', 23],
     ['item_myth', 35],
     ['item_goat', 25],
     ['crystal', 15],
+    ['hacker_token', 2],
   ]);
   if (kind === 'stars') return { lines: ['+400 000 starss'], stars: 400_000n, xp: 0, items: [] };
   if (kind === 'item_myth') return { lines: ['Quasar'], stars: 100_000n, xp: 0, items: [{ id: 'quasar', qty: 1 }] };
   if (kind === 'item_goat') return { lines: ['Galaxie'], stars: 150_000n, xp: 0, items: [{ id: 'galaxie', qty: 1 }] };
+  if (kind === 'hacker_token') {
+    return { lines: ['Jeton **Accès Hacker** (consommable rôle)'], stars: 0n, xp: 0, items: [{ id: 'hacker_token', qty: 1 }] };
+  }
   return { lines: ['Crystal (Goatesque)'], stars: 200_000n, xp: 0, items: [{ id: 'crystal', qty: 1 }] };
 }
 
