@@ -15,7 +15,7 @@ const { getBlzAttachment } = require('./blzBackground');
  * @param {string} hub
  * @param {string[]} wlines -- warn text lines
  */
-function buildPassportTextV2({ target, u, hub, wlines, blzFiles }) {
+function buildPassportTextV2({ target, u, hub, wlines }) {
   const blz = getBlzAttachment();
   const container = new ContainerBuilder();
   if (blz) {
