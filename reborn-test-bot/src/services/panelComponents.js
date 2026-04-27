@@ -103,29 +103,7 @@ async function buildArbreContainer(userId, displayName, avatarUrl) {
     .setPlaceholder('Branche (prochain achat)')
     .addOptions(options);
 
-  const curBg = getArbreBg(userId);
-  const bgSelect = new StringSelectMenuBuilder()
-    .setCustomId('rb:tree:bg')
-    .setPlaceholder('Fond de l’arbre')
-    .addOptions(
-      {
-        label: 'Fond — Profil (blz_bg)',
-        value: 'profil',
-        description: 'Photo /profil + voile sombre',
-        default: curBg === 'profil',
-        emoji: '🖼️',
-      },
-      {
-        label: 'Fond — Noir',
-        value: 'noir',
-        description: 'Noir profond + étoiles discrètes',
-        default: curBg === 'noir',
-        emoji: '⬛',
-      },
-    );
-
   const row0 = new ActionRowBuilder().addComponents(select);
-  const rowBg = new ActionRowBuilder().addComponents(bgSelect);
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('rb:tree:go')
@@ -138,7 +116,7 @@ async function buildArbreContainer(userId, displayName, avatarUrl) {
       .setStyle(ButtonStyle.Secondary)
       .setEmoji('🔄'),
   );
-  c.addActionRowComponents(row0, rowBg, row1);
+  c.addActionRowComponents(row0, row1);
   return { file, container: c, flags: MessageFlags.IsComponentsV2 };
 }
 
