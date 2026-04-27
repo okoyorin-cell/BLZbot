@@ -1086,11 +1086,11 @@ function drawKeyStar(ctx, p, angle) {
   ctx.arc(x, y, 22, 0, Math.PI * 2);
   if (lit) {
     const g = ctx.createRadialGradient(x - 6, y - 8, 2, x, y, 22);
-    g.addColorStop(0, '#fff5d6');
-    g.addColorStop(1, '#c79830');
+    g.addColorStop(0, '#ffe0d8');
+    g.addColorStop(1, '#7c1410');
     ctx.fillStyle = g;
   } else {
-    ctx.fillStyle = '#15101e';
+    ctx.fillStyle = '#1a0a0a';
   }
   ctx.fill();
 
