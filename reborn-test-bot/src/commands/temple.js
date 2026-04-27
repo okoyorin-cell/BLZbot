@@ -12,8 +12,8 @@ module.exports = {
     const uid = interaction.user.id;
     users.getOrCreate(uid, interaction.user.username);
     const hub = interaction.guildId || null;
-    const u = users.getUser(uid);
     const r = temple.sync(uid, hub);
+    const u = users.getUser(uid);
     const unlocked = u.temple_unlocked
       ? '**Temple débloqué** : les **5** branches de l’arbre sont complètes (5/5 chacune).'
       : '**Temple verrouillé** : termine **tous** les paliers des **5** branches (`/arbre`) pour l’ouvrir.';
