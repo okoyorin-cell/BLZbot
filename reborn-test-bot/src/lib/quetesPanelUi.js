@@ -150,6 +150,21 @@ async function buildRebornPage(userId, niveauPages, ctx = {}) {
     );
   }
 
+  // Ladder lifetime — résumé texte sous le canvas
+  const ladderLine = (() => {
+    if (!s.ladder?.length) return '';
+    const next = s.ladder.find((m) => !m.claimed);
+    const claimed = s.ladder.filter((m) => m.claimed).length;
+    if (!next) {
+      return `🪜 **Ladder lifetime** — **${claimed}/${s.ladder.length}** paliers claim · *complet* 🏁`;
+    }
+    const left = Math.max(0, next.target - s.lifetime_msgs);
+    return `🪜 **Ladder lifetime** — *prochain* **${next.label}** · ${s.lifetime_msgs}/${next.target} (-${left}) · +${next.reward.toLocaleString('fr-FR')} ⭐ *(auto)*`;
+  })();
+  if (ladderLine) {
+    c.addTextDisplayComponents(new TextDisplayBuilder().setContent(ladderLine));
+  }
+
   const rows = [];
 
   if (!s.selection_id || /terminée/i.test(s.selection_line)) {
