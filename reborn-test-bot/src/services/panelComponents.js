@@ -73,6 +73,7 @@ async function tryRenderTreePng(userId, displayName) {
       displayName: displayName || 'Joueur',
       points: u?.skill_points ?? 0,
       steps,
+      bg: getArbreBg(userId),
     });
   } catch (e) {
     console.error('[arbre canvas]', e?.message || e);
