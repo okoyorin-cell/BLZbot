@@ -151,6 +151,15 @@ async function handlePurchase(interaction, parts) {
         rollAgain: extra.rollAgain,
       };
     }
+    // Bonus arbre boutique palier 2 : ×2 contenu coffres (starss + XP + qty items).
+    const lootMult = skillTree.chestLootMult(uid);
+    const lootMultN = Number(lootMult);
+    if (lootMult > 1n) {
+      loot.stars *= lootMult;
+      loot.xp *= lootMultN;
+      loot.items = loot.items.map((it) => ({ ...it, qty: it.qty * lootMultN }));
+      loot.lines.push(`*(×${lootMultN} contenu — arbre boutique)*`);
+    }
     totalStars += loot.stars;
     totalXp += loot.xp;
     for (const it of loot.items) allItems.push(it);
