@@ -178,11 +178,11 @@ async function handlePanelInteraction(interaction) {
   }
 
   if (interaction.customId === 'rb:tree:re') {
+    await interaction.deferUpdate();
     const b = await buildArbreContainer(interaction.user.id, interaction.user.username);
     if (!b) {
-      return interaction.reply({ content: 'Génération image indisponible (canvas).', ephemeral: true });
+      return interaction.followUp({ content: 'Génération image indisponible (canvas).', ephemeral: true });
     }
-    await interaction.deferUpdate();
     return interaction.editReply({ files: [b.file], components: [b.container], flags: b.flags });
   }
 
