@@ -160,12 +160,21 @@ function createGuild(hubDiscordId, leaderId, leaderName, name, options = {}) {
   if (getMembershipInHub(leaderId, hubDiscordId)) {
     return { ok: false, error: 'Tu es déjà dans une guilde sur ce serveur.' };
   }
-  const id = genId();
+  const safeName = String(name || 'Guilde').slice(0, 80);
   const now = Date.now();
+  // Stratégie de fusion : on tente d'abord de créer la guilde côté niveau ;
+  // en cas de succès, l'ID REBORN est dérivé pour rester pontée.
+  let id = genId();
+  let bridgedNiveauId = null;
+  try {
+    const bridge = require('./niveauGuildBridge');
+    bridgedNiveauId = bridge.createNiveauGuild(safeName, leaderId, '🛡️');
+    if (bridgedNiveauId) id = bridge.rebornIdFromNiveau(bridgedNiveauId);
+  } catch { /* optional */ }
   db.prepare(
     `INSERT INTO player_guilds (id, hub_discord_id, name, leader_id, created_ms, member_cap, gxp, guild_level, grade, treasury, anti_separation, last_focus_ms)
      VALUES (?, ?, ?, ?, ?, ?, '0', 1, '', '0', 0, 0)`,
-  ).run(id, hubDiscordId, name.slice(0, 80), leaderId, now, 5);
+  ).run(id, hubDiscordId, safeName, leaderId, now, 5);
   db.prepare(
     'INSERT INTO player_guild_members (guild_id, user_id, joined_ms, perms_json) VALUES (?, ?, ?, ?)',
   ).run(id, leaderId, now, permsJsonString(LEADER_PERMS));
