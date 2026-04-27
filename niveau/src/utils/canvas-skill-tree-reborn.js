@@ -361,6 +361,7 @@ function drawRoot(ctx, center) {
 function buildLayout(layout = 'star') {
   const center = CENTERS[layout] || CENTERS.star;
   const angles = BRANCH_ANGLES[layout] || BRANCH_ANGLES.star;
+  const tune = LAYOUT_TUNING[layout] || LAYOUT_TUNING.star;
   const trees = [];
   for (let i = 0; i < ORDER.length; i++) {
     const branchKey = ORDER[i];
@@ -370,11 +371,11 @@ function buildLayout(layout = 'star') {
 
     const main = [];
     for (let k = 0; k < NODES_PER_BRANCH; k++) {
-      const d = FIRST_NODE_DIST + k * NODE_GAP;
+      const d = tune.firstDist + k * tune.gap;
       // Bombement organique : sin sur la longueur + petite oscillation déterministe.
       const t = NODES_PER_BRANCH === 1 ? 0 : k / (NODES_PER_BRANCH - 1);
-      const baseCurve = Math.sin(t * Math.PI) * 22 * (i % 2 === 0 ? 1 : -1);
-      const wob = (rnd() - 0.5) * 14;
+      const baseCurve = Math.sin(t * Math.PI) * tune.bulge * (i % 2 === 0 ? 1 : -1);
+      const wob = (rnd() - 0.5) * (tune.bulge * 0.55);
       const off = baseCurve + wob;
       const x = center.x + d * Math.cos(ang) + off * Math.cos(perp);
       const y = center.y + d * Math.sin(ang) + off * Math.sin(perp);
@@ -388,8 +389,8 @@ function buildLayout(layout = 'star') {
       for (let s = 0; s < count; s++) {
         const dir = (s + k + i) % 2 === 0 ? 1 : -1;
         const sa = perp * dir + (rnd() - 0.5) * 0.45;
-        const sd = 38 + rnd() * 14;
-        const along = (rnd() - 0.5) * 22;
+        const sd = tune.sideMin + rnd() * tune.sideJitter;
+        const along = (rnd() - 0.5) * tune.alongJitter;
         sides.push({
           x: m.x + sd * Math.cos(sa) + along * Math.cos(ang),
           y: m.y + sd * Math.sin(sa) + along * Math.sin(ang),
@@ -398,7 +399,7 @@ function buildLayout(layout = 'star') {
       }
     }
 
-    const tipD = FIRST_NODE_DIST + (NODES_PER_BRANCH - 1) * NODE_GAP + TIP_OFFSET;
+    const tipD = tune.firstDist + (NODES_PER_BRANCH - 1) * tune.gap + TIP_OFFSET;
     const tipX = center.x + tipD * Math.cos(ang);
     const tipY = center.y + tipD * Math.sin(ang);
 
