@@ -6,11 +6,48 @@ const {
   MediaGalleryBuilder,
   TextDisplayBuilder,
   MessageFlags,
+  Routes,
 } = require('discord.js');
 const temple = require('../services/temple');
 const users = require('../services/users');
 
 const RENDER = path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'utils', 'canvas-skill-tree-reborn');
+
+/**
+ * Récupère l'URL de la PP du serveur principal BLZ même si le bot n'y est pas membre.
+ * Ordre des tentatives :
+ *   1. Cache local des guildes (bot membre).
+ *   2. `client.guilds.fetch(id)` (bot membre).
+ *   3. `GET /guilds/:id/preview` (fonctionne pour les serveurs lurkables/community).
+ * Renvoie null si aucune source ne permet d'obtenir l'icône.
+ */
+async function fetchMainGuildIconUrl(client, guildId) {
+  try {
+    const cached = client.guilds.cache.get(guildId);
+    if (cached?.iconURL) {
+      const u = cached.iconURL({ extension: 'png', size: 256 });
+      if (u) return u;
+    }
+  } catch { /* ignore */ }
+
+  try {
+    const g = await client.guilds.fetch(guildId);
+    const u = g?.iconURL?.({ extension: 'png', size: 256 });
+    if (u) return u;
+  } catch { /* le bot n'est pas membre — on tente l'API preview ci-dessous */ }
+
+  try {
+    const preview = await client.rest.get(Routes.guildPreview(guildId));
+    if (preview?.icon) {
+      const ext = String(preview.icon).startsWith('a_') ? 'gif' : 'png';
+      return `https://cdn.discordapp.com/icons/${guildId}/${preview.icon}.${ext}?size=256`;
+    }
+  } catch (e) {
+    console.warn('[temple] guildPreview KO', guildId, e?.message || e);
+  }
+
+  return null;
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
