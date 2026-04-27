@@ -132,7 +132,7 @@ function applyRandomReward(userId) {
       users.addStars(userId, amount);
       rewardName = reward.name;
       rewardType = 'stars';
-      rewardAmount = Number(amount <= BigInt(Number.MAX_SAFE_INTEGER) ? amount : amount / 10n ** 6n);
+      rewardAmount = Number(amount);
       rewardEmoji = '⭐';
       break;
     }
