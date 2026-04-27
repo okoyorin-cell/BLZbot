@@ -355,11 +355,13 @@ function drawRoot(ctx, center) {
 
 /* ---------- géométrie de l’arbre ---------- */
 
-function buildLayout() {
+function buildLayout(layout = 'star') {
+  const center = CENTERS[layout] || CENTERS.star;
+  const angles = BRANCH_ANGLES[layout] || BRANCH_ANGLES.star;
   const trees = [];
   for (let i = 0; i < ORDER.length; i++) {
     const branchKey = ORDER[i];
-    const ang = (BRANCH[branchKey].angle * Math.PI) / 180;
+    const ang = ((angles[branchKey] ?? 0) * Math.PI) / 180;
     const perp = ang + Math.PI / 2;
     const rnd = mulberry32(0xa00 + i * 31);
 
@@ -371,8 +373,8 @@ function buildLayout() {
       const baseCurve = Math.sin(t * Math.PI) * 22 * (i % 2 === 0 ? 1 : -1);
       const wob = (rnd() - 0.5) * 14;
       const off = baseCurve + wob;
-      const x = CENTER.x + d * Math.cos(ang) + off * Math.cos(perp);
-      const y = CENTER.y + d * Math.sin(ang) + off * Math.sin(perp);
+      const x = center.x + d * Math.cos(ang) + off * Math.cos(perp);
+      const y = center.y + d * Math.sin(ang) + off * Math.sin(perp);
       main.push({ x, y, k });
     }
 
@@ -394,12 +396,12 @@ function buildLayout() {
     }
 
     const tipD = FIRST_NODE_DIST + (NODES_PER_BRANCH - 1) * NODE_GAP + TIP_OFFSET;
-    const tipX = CENTER.x + tipD * Math.cos(ang);
-    const tipY = CENTER.y + tipD * Math.sin(ang);
+    const tipX = center.x + tipD * Math.cos(ang);
+    const tipY = center.y + tipD * Math.sin(ang);
 
     trees.push({ branch: branchKey, ang, perp, main, sides, tipX, tipY });
   }
-  return trees;
+  return { center, trees };
 }
 
 /* ---------- rendu principal ---------- */
