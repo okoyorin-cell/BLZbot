@@ -1164,27 +1164,27 @@ function drawTempleHeader(ctx, points, unlocked, keysCount, keysTotal) {
   // Titre principal.
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = '#ffe8a8';
-  ctx.shadowColor = 'rgba(255, 200, 100, 0.45)';
-  ctx.shadowBlur = 10;
+  ctx.fillStyle = TEMPLE_TEXT_HOT;
+  ctx.shadowColor = 'rgba(255, 90, 70, 0.55)';
+  ctx.shadowBlur = 12;
   ctx.font = 'bold 32px "Segoe UI", "Helvetica", sans-serif';
   ctx.fillText('Temple de l’Ascension', 36, 42);
 
   ctx.shadowBlur = 0;
-  ctx.fillStyle = '#a89cc8';
+  ctx.fillStyle = TEMPLE_TEXT_DIM;
   ctx.font = '16px "Segoe UI", "Helvetica", sans-serif';
   ctx.fillText('Carte céleste des grandes réussites — sanctuaire du prestige.', 36, 64);
 
   // Bandeau d’infos à droite.
   ctx.textAlign = 'right';
-  ctx.fillStyle = unlocked ? '#7CFFB8' : '#FFB47A';
-  ctx.shadowColor = unlocked ? 'rgba(124,255,184,0.45)' : 'rgba(255,180,122,0.4)';
-  ctx.shadowBlur = 10;
+  ctx.fillStyle = unlocked ? '#9CFFC8' : '#ff7f6a';
+  ctx.shadowColor = unlocked ? 'rgba(124,255,184,0.45)' : 'rgba(255, 90, 70, 0.55)';
+  ctx.shadowBlur = 12;
   ctx.font = 'bold 22px "Segoe UI", "Helvetica", sans-serif';
   ctx.fillText(unlocked ? 'TEMPLE OUVERT' : 'TEMPLE SCELLÉ', TEMPLE_W - 36, 42);
 
   ctx.shadowBlur = 0;
-  ctx.fillStyle = '#cdb6e0';
+  ctx.fillStyle = TEMPLE_TEXT_DIM;
   ctx.font = '14px "Segoe UI", "Helvetica", sans-serif';
   ctx.fillText(
     `Points : ${points}  ·  Clés ${keysCount} / ${keysTotal}`,
