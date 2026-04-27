@@ -1289,8 +1289,8 @@ async function renderTemplePng({ points = 0, keys = [], templeUnlocked = false }
   ctx.save();
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = templeUnlocked ? '#ffe8a8' : '#5a566e';
-  ctx.shadowColor = templeUnlocked ? 'rgba(255, 200, 100, 0.55)' : 'rgba(0,0,0,0)';
+  ctx.fillStyle = templeUnlocked ? TEMPLE_TEXT_HOT : '#7a4a4a';
+  ctx.shadowColor = templeUnlocked ? 'rgba(255, 90, 70, 0.65)' : 'rgba(0,0,0,0)';
   ctx.shadowBlur = 6;
   ctx.font = `bold 13px "Segoe UI", "Helvetica", sans-serif`;
   ctx.fillText('SANCTVM', cx, cy + 80);
