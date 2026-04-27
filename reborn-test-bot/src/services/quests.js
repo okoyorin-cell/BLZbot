@@ -66,7 +66,7 @@ function syncDayWeek(row) {
   return row;
 }
 
-/** Compteur messages + progression (appelé depuis earn). */
+/** Compteur messages + progression + auto-claim si seuil atteint. */
 function onMessage(userId) {
   users.getOrCreate(userId, '');
   let row = getState(userId);
@@ -81,12 +81,44 @@ function onMessage(userId) {
     userId,
   );
   row = { ...row, msgs_today: msgs, week_points: wp, lifetime_msgs: life };
+
+  let selProgress = row.selection_progress || 0;
   const sid = row.selection_id || '';
-  if (sid && !row.selection_claimed && SELECTIONS[sid]?.kind === 'msgs') {
-    const p = (row.selection_progress || 0) + 1;
-    db.prepare('UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?').run(p, userId);
+  const def = sid ? SELECTIONS[sid] : null;
+  if (sid && !row.selection_claimed && def?.kind === 'msgs') {
+    selProgress += 1;
+    db.prepare('UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?').run(selProgress, userId);
   }
-  return { msgs_today: msgs, week_points: wp, day_key: row.day_key, lifetime_msgs: life };
+
+  const unlocked = { daily: null, weekly: null, selection: null };
+  const mult = skillTree.questRewardMult(userId);
+
+  if (!row.daily_claimed && msgs >= DAILY_MSG_TARGET) {
+    db.prepare('UPDATE user_quest_state SET daily_claimed = 1 WHERE user_id = ?').run(userId);
+    const reward = DAILY_REWARD * mult;
+    users.addStars(userId, reward);
+    unlocked.daily = { reward, label: 'Quête quotidienne' };
+  }
+  if (!row.weekly_claimed && wp >= WEEKLY_MSG_TARGET) {
+    db.prepare('UPDATE user_quest_state SET weekly_claimed = 1 WHERE user_id = ?').run(userId);
+    const reward = WEEKLY_REWARD * mult;
+    users.addStars(userId, reward);
+    unlocked.weekly = { reward, label: 'Quête hebdomadaire' };
+  }
+  if (def?.kind === 'msgs' && !row.selection_claimed && selProgress >= def.target) {
+    db.prepare('UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?').run(userId);
+    const reward = def.reward * mult;
+    users.addStars(userId, reward);
+    unlocked.selection = { reward, label: def.label };
+  }
+
+  return {
+    msgs_today: msgs,
+    week_points: wp,
+    day_key: row.day_key,
+    lifetime_msgs: life,
+    unlocked,
+  };
 }
 
 function claimDaily(userId) {
