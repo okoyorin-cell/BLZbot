@@ -1,26 +1,17 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const users = require('../services/users');
-const { getItem } = require('../reborn/catalog');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
+const { buildInventairePayload } = require('../lib/shopV2Ui');
 
 module.exports = {
-  data: new SlashCommandBuilder().setName('inventaire').setDescription('Liste ton inventaire (items achetés).'),
+  data: new SlashCommandBuilder().setName('inventaire').setDescription('Inventaire (même bannière que le profil + menu).'),
+  /**
+   * @param {import('discord.js').ChatInputCommandInteraction} interaction
+   */
   async execute(interaction) {
-    const uid = interaction.user.id;
-    users.getOrCreate(uid, interaction.user.username);
-    const rows = users.getInventory(uid);
-    if (!rows.length) {
-      await interaction.reply({ content: 'Inventaire vide.', ephemeral: true });
-      return;
-    }
-    const lines = rows.map((r) => {
-      const it = getItem(r.item_id);
-      const name = it?.name || r.item_id;
-      return `• **${name}** ×${r.qty}`;
+    const p = await buildInventairePayload(interaction.user.id, interaction.user.username);
+    return interaction.reply({
+      files: p.files,
+      components: p.components,
+      flags: p.flags | MessageFlags.Ephemeral,
     });
-    const embed = new EmbedBuilder()
-      .setTitle('🎒 Inventaire')
-      .setDescription(lines.join('\n').slice(0, 4000))
-      .setColor(0x2ecc71);
-    await interaction.reply({ embeds: [embed], ephemeral: true });
   },
 };
