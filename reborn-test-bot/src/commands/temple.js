@@ -30,7 +30,21 @@ module.exports = {
     let buf;
     try {
       const { renderTemplePng } = require(RENDER);
-      const guildIconUrl = interaction.guild?.iconURL({ extension: 'png', size: 256 }) || null;
+      // PP du serveur principal BLZ — peut être surchargée par BLZ_MAIN_GUILD_ID.
+      const MAIN_GUILD_ID = String(process.env.BLZ_MAIN_GUILD_ID || '1097110036192448656').trim();
+      let guildIconUrl = null;
+      try {
+        const mainGuild =
+          interaction.client.guilds.cache.get(MAIN_GUILD_ID) ||
+          (await interaction.client.guilds.fetch(MAIN_GUILD_ID).catch(() => null));
+        guildIconUrl = mainGuild?.iconURL({ extension: 'png', size: 256 }) || null;
+      } catch {
+        /* ignore — fallback ci-dessous */
+      }
+      // Fallback : icône du serveur courant si on n'a pas pu charger celle du main.
+      if (!guildIconUrl) {
+        guildIconUrl = interaction.guild?.iconURL({ extension: 'png', size: 256 }) || null;
+      }
       buf = await renderTemplePng({
         points: r.points,
         keys: r.keys,
