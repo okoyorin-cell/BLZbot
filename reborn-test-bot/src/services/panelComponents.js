@@ -186,6 +186,27 @@ async function handlePanelInteraction(interaction) {
     return interaction.editReply({ files: p.files, components: p.components, flags: p.flags });
   }
 
+  if (interaction.customId === 'rb:shop:reset') {
+    const shopExtras = require('./shopExtras');
+    const r = shopExtras.useShopReset(interaction.user.id);
+    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+    await interaction.deferUpdate();
+    const p = await buildBoutiquePayload(interaction.user.id, interaction.user.username);
+    return interaction.editReply({ files: p.files, components: p.components, flags: p.flags });
+  }
+
+  if (interaction.customId === 'rb:shop:claim_catl') {
+    const shopExtras = require('./shopExtras');
+    const r = shopExtras.claimGuaranteedCatl(interaction.user.id);
+    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+    await interaction.deferUpdate();
+    const p = await buildBoutiquePayload(interaction.user.id, interaction.user.username);
+    await interaction.editReply({ files: p.files, components: p.components, flags: p.flags });
+    return interaction.followUp({
+      content: '🎁 **CATL gratuit ajouté à ton inventaire** — ouvre-le via `/inventaire` ou rachètes-en plus tard.',
+    });
+  }
+
   if (interaction.customId === 'rb:inv:re') {
     await interaction.deferUpdate();
     const p = await buildInventairePayload(interaction.user.id, interaction.user.username);
