@@ -179,6 +179,8 @@ function migrate(db) {
   addColumnIfMissing(db, 'trades', 'to_items_json', "TEXT NOT NULL DEFAULT '[]'");
   addColumnIfMissing(db, 'player_guild_members', 'perms_json', "TEXT NOT NULL DEFAULT '{}'");
   addColumnIfMissing(db, 'user_quest_state', 'lifetime_msgs', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'user_quest_state', 'weekly_skips_used', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'last_event_spawner_claim_ms', 'INTEGER NOT NULL DEFAULT 0');
 
   addColumnIfMissing(db, 'users', 'xp_total', 'INTEGER NOT NULL DEFAULT 0');
   addColumnIfMissing(db, 'users', 'rp_last_activity_ms', 'INTEGER NOT NULL DEFAULT 0');
