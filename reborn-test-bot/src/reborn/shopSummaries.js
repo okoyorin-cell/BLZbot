@@ -1,3 +1,5 @@
+const { getItem } = require('./catalog');
+
 /**
  * Textes courts pour le menu déroulant Discord (max 100 caractères par option).
  * @param {string} itemId
@@ -6,6 +8,10 @@
 function summaryForItemId(itemId) {
   const s = ITEM_BLURBS[itemId];
   if (s) return s.slice(0, 100);
+  const it = getItem(itemId);
+  if (it) {
+    return `${it.rarity} — ${it.kind || 'item'} — voir doc REBORN.`.slice(0, 100);
+  }
   return 'Objet REBORN — voir doc / inventaire pour le détail.';
 }
 
