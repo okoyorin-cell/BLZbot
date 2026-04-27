@@ -184,6 +184,48 @@ async function handlePanelInteraction(interaction) {
     return interaction.editReply({ files: p.files, components: p.components, flags: p.flags });
   }
 
+  // ─── Panel Quêtes ──────────────────────────────────────────────────────────
+  if (interaction.customId === 'rb:q:re') {
+    await interaction.deferUpdate();
+    const p = buildQuetesPayload(interaction.user.id);
+    return interaction.editReply(p);
+  }
+  if (interaction.customId === 'rb:q:skip:d') {
+    const r = quests.skipDaily(interaction.user.id);
+    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+    await interaction.deferUpdate();
+    return interaction.editReply(buildQuetesPayload(interaction.user.id));
+  }
+  if (interaction.customId === 'rb:q:skip:w') {
+    const r = quests.skipWeekly(interaction.user.id);
+    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+    await interaction.deferUpdate();
+    return interaction.editReply(buildQuetesPayload(interaction.user.id));
+  }
+  if (interaction.customId === 'rb:q:sel_claim') {
+    const r = quests.claimSelection(interaction.user.id);
+    if (!r.ok) return interaction.reply({ content: `❌ ${r.error}` });
+    await interaction.deferUpdate();
+    return interaction.editReply(buildQuetesPayload(interaction.user.id));
+  }
+  if (interaction.customId === 'rb:q:spawner') {
+    const uid = interaction.user.id;
+    if (!skillTree.weeklyEventSpawnerEntitled(uid)) {
+      return interaction.reply({ content: '❌ Réservé au palier 5 Événement (`/arbre`).' });
+    }
+    const u = users.getUser(uid);
+    const last = u?.last_event_spawner_claim_ms || 0;
+    const now = Date.now();
+    const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+    if (now - last < WEEK_MS) {
+      return interaction.reply({ content: '❌ Déjà réclamé cette semaine.' });
+    }
+    db.prepare('UPDATE users SET last_event_spawner_claim_ms = ? WHERE id = ?').run(now, uid);
+    users.addInventory(uid, 'event_spawner', 1);
+    await interaction.deferUpdate();
+    return interaction.editReply(buildQuetesPayload(uid));
+  }
+
   const goMatch = interaction.customId.match(/^rb:tree:go(?::(\w+))?$/);
   if (goMatch) {
     const lay = normalizeLayout(goMatch[1]);
