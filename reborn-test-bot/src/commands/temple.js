@@ -23,7 +23,7 @@ module.exports = {
       .setTitle('⛩️ Temple REBORN — points de réussite')
       .setDescription(
         [
-          '**En bref** : le **temple** est un **compteur de “points de réussite**” (objectifs lourds) **distinct** de l’XP / Starss. Il sert de **paliers de fin de progression** (style “tout a été maîtrisé”) plutôt que de la monnaie du quotidien.',
+          '**En bref** : le **temple** est un compteur de **points de réussite** (gros objectifs) **séparé** de l’XP / Starss. C’est plutôt un **système de paliers** de fin de progression (type « tout est complété ») qu’une monnaie du quotidien.',
           '',
           'Tant que le temple est **verrouillé**, tu peux quand même **gagner** des points listés par la sandbox ; le **déblocage** “temple” est une **étape de prestige** (arbre 5×5).',
         ].join('\n'),
