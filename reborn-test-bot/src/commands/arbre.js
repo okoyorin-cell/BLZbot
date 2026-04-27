@@ -49,6 +49,9 @@ module.exports = {
     const sp = u.skill_points ?? 0;
 
     if (sub === 'voir') {
+      // Le rendu canvas + fetch de l’avatar Discord peut dépasser les 3 s.
+      // On défère immédiatement pour éviter `Unknown interaction` (10062).
+      await interaction.deferReply();
       const b = await buildArbreContainer(
         uid,
         interaction.member?.displayName || interaction.user.username,
@@ -56,7 +59,7 @@ module.exports = {
         'demi',
       );
       if (b) {
-        return interaction.reply({
+        return interaction.editReply({
           files: [b.file],
           components: [b.container],
           flags: b.flags,
@@ -75,7 +78,7 @@ module.exports = {
         ].join('\n'),
       );
       const c = new ContainerBuilder().addTextDisplayComponents(txt);
-      return interaction.reply({
+      return interaction.editReply({
         components: [c],
         flags: MessageFlags.IsComponentsV2,
       });
