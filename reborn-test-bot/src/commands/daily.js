@@ -204,7 +204,7 @@ module.exports = {
     .setDescription('Réclame ta récompense journalière (carte canvas, comme le bot principal).'),
 
   async execute(interaction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply();
 
     const userId = interaction.user.id;
     users.getOrCreate(userId, interaction.user.username);
