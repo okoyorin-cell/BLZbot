@@ -202,7 +202,8 @@ function refreshBridgedGuild(rebornId) {
 }
 
 /**
- * Importe toutes les guildes niveau présentes dans la base sur ce hub.
+ * Importe toutes les guildes niveau présentes dans la base sur ce hub
+ * + nettoie les guildes pontées REBORN qui n'existent plus côté niveau.
  * Utilisé par `listGuildsOnHub` pour offrir une vue unifiée.
  */
 function importAllNiveauGuilds(hubDiscordId) {
@@ -211,11 +212,25 @@ function importAllNiveauGuilds(hubDiscordId) {
   let count = 0;
   try {
     const all = niv.getAllGuilds();
+    const liveNiveauIds = new Set(all.map((g) => Number(g.id)));
     for (const g of all) {
       const members = fetchNiveauMembers(g.id);
       const list = members.length ? members : [g.owner_id];
       importNiveauGuild(hubDiscordId, g, list);
       count++;
+    }
+    // Cleanup : guildes pontées REBORN dont la source niveau a disparu.
+    const orphans = db
+      .prepare("SELECT id FROM player_guilds WHERE hub_discord_id = ? AND id LIKE 'niv_%'")
+      .all(hubDiscordId);
+    for (const { id } of orphans) {
+      const nivId = niveauIdFromReborn(id);
+      if (nivId == null || !liveNiveauIds.has(Number(nivId))) {
+        try {
+          db.prepare('DELETE FROM player_guild_members WHERE guild_id = ?').run(id);
+          db.prepare('DELETE FROM player_guilds WHERE id = ?').run(id);
+        } catch { /* ignore */ }
+      }
     }
   } catch (e) {
     console.warn('[niveauGuildBridge] importAll:', e?.message || e);
