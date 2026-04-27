@@ -67,37 +67,37 @@ async function buildBoutiquePayload(uid, username) {
   const priceLine = (n) => `${fmt(n)} ⭐`;
   options.push(
     {
-      label: 'Coffre classique',
+      label: 'Coffre Au Trésor Classique',
       value: 'c:classic',
       description: `${priceLine(CHEST_CLASSIC)} — ${summaryChest('classic')}`.slice(0, 100),
     },
     {
-      label: 'CATM',
+      label: 'Coffre Au Trésor Mieux (CATM)',
       value: 'c:catm',
       description: `Lim. jour — ${priceLine(CHEST_CATM)} — ${summaryChest('catm')}`.slice(0, 100),
     },
     {
-      label: 'CATL (légendaire)',
+      label: 'Coffre Au Trésor Légendaire (CATL)',
       value: 'c:catl',
       description: `${priceLine(CHEST_CATL)} — ${summaryChest('catl')}`.slice(0, 100),
     },
     {
-      label: 'CATS (star)',
+      label: 'Coffre Au Trésor Starss (CATS)',
       value: 'c:cats',
       description: `${priceLine(CHEST_CATS)} — ${summaryChest('cats')}`.slice(0, 100),
     },
     {
-      label: '×2 XP (1h)',
+      label: 'Boost ×2 XP — 1h',
       value: 'b:xp',
       description: `${priceLine(BOOST_ROW_PRICE)} — ${summaryBoost('xp')}`.slice(0, 100),
     },
     {
-      label: '×2 GXP (1h)',
+      label: 'Boost ×2 GXP — 1h',
       value: 'b:gxp',
       description: `${priceLine(BOOST_ROW_PRICE)} — ${summaryBoost('gxp')}`.slice(0, 100),
     },
     {
-      label: '×2 Starss (1h)',
+      label: 'Boost ×2 Starss — 1h',
       value: 'b:starss',
       description: `${priceLine(BOOST_ROW_PRICE)} — ${summaryBoost('starss')}`.slice(0, 100),
     },
