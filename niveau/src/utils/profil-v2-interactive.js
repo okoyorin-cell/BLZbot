@@ -295,6 +295,15 @@ async function sendProfilV2WithButtons(interaction, session) {
                 return i.reply({ components: [errorContainer], flags: MessageFlags.IsComponentsV2, ephemeral: true });
             }
 
+            // Bypass: laisse reborn-test-bot prendre la main sur le bouton Quêtes
+            // (le test-bot affiche son propre canvas /quetes via un handler dédié).
+            if (
+                process.env.REBORN_PROFIL_QUEST_BYPASS === '1' &&
+                i.customId.startsWith(`${Q_PREFIX}_`)
+            ) {
+                return;
+            }
+
             if (i.customId.startsWith(`${INV}_`)) {
                 await i.deferUpdate();
             } else {
