@@ -193,8 +193,9 @@ async function buildRebornPage(userId, niveauPages, ctx = {}) {
     );
     actionCount += 1;
   }
+  // « Retour » → bouton du collector niveau qui ramène au /profil principal.
   actionRow.addComponents(
-    new ButtonBuilder().setCustomId('rb:q:re').setLabel('Rafraîchir').setStyle(ButtonStyle.Secondary).setEmoji('🔄'),
+    new ButtonBuilder().setCustomId(`pv2_back_${userId}`).setLabel('Retour').setStyle(ButtonStyle.Secondary).setEmoji('⬅️'),
   );
   actionCount += 1;
   if (actionCount > 0) rows.push(actionRow);
