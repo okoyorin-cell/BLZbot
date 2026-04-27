@@ -12,6 +12,8 @@ const users = require('./users');
 const shop = require('./shop');
 const meta = require('./meta');
 const skillTree = require('./skillTree');
+const quests = require('./quests');
+const trophies = require('./trophies');
 
 function discountedPrice(userId, base) {
   const b = typeof base === 'bigint' ? base : BigInt(base);
