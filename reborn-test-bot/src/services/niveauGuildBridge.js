@@ -98,10 +98,12 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
   } else {
     // Re-sync miroir (sans écraser les champs spécifiques REBORN : gxp, grade,
     // anti_separation, last_focus_ms, salon_channel_id (si déjà setté), description).
+    // On met à jour `hub_discord_id` pour suivre le serveur courant.
     db.prepare(
       `UPDATE player_guilds
        SET name = ?,
            leader_id = ?,
+           hub_discord_id = ?,
            member_cap = MAX(member_cap, ?),
            treasury = ?,
            guild_level = MAX(guild_level, ?)
@@ -109,6 +111,7 @@ function importNiveauGuild(hubDiscordId, niveauGuild, niveauMembers) {
     ).run(
       niveauGuild.name || 'Guilde',
       niveauGuild.owner_id,
+      hubDiscordId,
       memberCap,
       treasury,
       Math.max(1, Number(niveauGuild.level) || 1),
