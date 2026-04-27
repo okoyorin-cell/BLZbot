@@ -171,8 +171,8 @@ function drawCard(ctx, x, y, w, h, theme, data) {
   bg.addColorStop(1, 'rgba(14,8,22,0.94)');
   ctx.fillStyle = bg;
   ctx.fill();
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = rgba(theme.accentRgb, 0.32);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = rgba(theme.accentRgb, 0.18);
   ctx.stroke();
 
   ctx.save();
