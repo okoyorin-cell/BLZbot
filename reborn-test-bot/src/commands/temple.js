@@ -1,11 +1,21 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const path = require('path');
+const {
+  SlashCommandBuilder,
+  AttachmentBuilder,
+  ContainerBuilder,
+  MediaGalleryBuilder,
+  TextDisplayBuilder,
+  MessageFlags,
+} = require('discord.js');
 const temple = require('../services/temple');
 const users = require('../services/users');
+
+const RENDER = path.join(__dirname, '..', '..', '..', 'niveau', 'src', 'utils', 'canvas-skill-tree-reborn');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('temple')
-    .setDescription('Points « temple » (réussite) — regroupe des accomplissements REBORN.')
+    .setDescription('Points « temple » (carte canvas + rappel texte).')
     .addSubcommand((sc) => sc.setName('voir').setDescription('Points + statut (recalcul auto)'))
     .addSubcommand((sc) => sc.setName('sync').setDescription('Forcer le recalcul (serveur actuel)')),
   async execute(interaction) {
@@ -14,32 +24,67 @@ module.exports = {
     const hub = interaction.guildId || null;
     const r = temple.sync(uid, hub);
     const u = users.getUser(uid);
+
+    let buf;
+    try {
+      const { renderTemplePng } = require(RENDER);
+      buf = await renderTemplePng({
+        points: r.points,
+        keys: r.keys,
+        templeUnlocked: Boolean(u.temple_unlocked),
+      });
+    } catch (e) {
+      console.error('[temple canvas]', e);
+    }
+
+    if (buf) {
+      const file = new AttachmentBuilder(buf, { name: 'temple_reborn.png' });
+      const t = new TextDisplayBuilder().setContent(
+        [
+          '# ⛩️ Temple — **vue carte**',
+          'Lecture rapide : **gros objectifs** & prestige (hors Starss/XP du jour). Synchronisé sur ce **sync**.',
+          u.temple_unlocked
+            ? '**État** : *débloqué* (5×5 sur toutes les branches de l’arbre).'
+            : '**État** : *verrouillé* — remplis les **5** paliers de chaque **branche** (`/arbre`).',
+        ].join('\n'),
+      );
+      const c = new ContainerBuilder();
+      c.addTextDisplayComponents(t);
+      c.addMediaGalleryComponents(
+        new MediaGalleryBuilder().addItems({ media: { url: 'attachment://temple_reborn.png' } }),
+      );
+      c.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+          '**Détail des clés** (dernier recalcul) : ' +
+            (r.keys.length ? r.keys.map((k) => `\`${k}\``).join(', ') : '—') +
+            '\n\n*En production, d’autres événements alimentent aussi le temple.*',
+        ),
+      );
+      return interaction.reply({
+        files: [file],
+        components: [c],
+        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      });
+    }
+
     const unlocked = u.temple_unlocked
       ? '**Temple débloqué** : les **5** branches de l’arbre sont complètes (5/5 chacune).'
       : '**Temple verrouillé** : termine **tous** les paliers des **5** branches (`/arbre`) pour l’ouvrir.';
-
+    const { EmbedBuilder } = require('discord.js');
     const embed = new EmbedBuilder()
       .setColor(0x5b21b6)
-      .setTitle('⛩️ Temple REBORN — points de réussite')
+      .setTitle('⛩️ Temple REBORN — points de réussite (texte)')
       .setDescription(
         [
-          '**En bref** : le **temple** est un compteur de **points de réussite** (gros objectifs) **séparé** de l’XP / Starss. C’est plutôt un **système de paliers** de fin de progression (type « tout est complété ») qu’une monnaie du quotidien.',
-          '',
-          'Tant que le temple est **verrouillé**, tu peux quand même **gagner** des points listés par la sandbox ; le **déblocage** “temple” est une **étape de prestige** (arbre 5×5).',
+          'Même sémantique que d’habitude, sans image (module **canvas** indisponible).',
+          'Le **temple** compte des **réussites lourdes** — pas la monnaie du quotidien.',
         ].join('\n'),
       )
       .addFields(
-        { name: 'Tes points', value: `**${r.points}** (sources partielles en test)`, inline: true },
+        { name: 'Tes points', value: `**${r.points}**`, inline: true },
         { name: 'Statut', value: unlocked, inline: false },
-        { name: 'Clés comptées (ce sync)', value: r.keys.length ? r.keys.map((k) => `\`${k}\``).join(', ') : '—', inline: false },
-        {
-          name: 'Défense / séparations / Hacker / index event',
-          value: 'En prod, d’**autres** sources alimenteraient le temple ; ici c’est un **aperçu** de la logique.',
-          inline: false,
-        },
-      )
-      .setFooter({ text: 'REBORN sandbox — /temple sync recalcule les conditions sur ce serveur' });
-
+        { name: 'Clés (sync)', value: r.keys.length ? r.keys.map((k) => `\`${k}\``).join(', ') : '—', inline: false },
+      );
     return interaction.reply({ embeds: [embed], ephemeral: true });
   },
 };
