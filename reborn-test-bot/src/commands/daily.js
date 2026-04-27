@@ -1,10 +1,34 @@
-const { SlashCommandBuilder } = require('discord.js');
+const path = require('node:path');
+const {
+  SlashCommandBuilder,
+  AttachmentBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
+  ComponentType,
+} = require('discord.js');
 const users = require('../services/users');
 const { getItem } = require('../reborn/catalog');
 const meta = require('../services/meta');
 const cfg = require('../config');
+const { totalToLevelState, T_START, MAX_LEVEL } = require('../reborn/xpCurve');
+
+const { renderDailyCard } = require(path.join(
+  __dirname,
+  '..',
+  '..',
+  '..',
+  'niveau',
+  'src',
+  'utils',
+  'canvas-daily',
+));
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Même texte d’appui que le canvas (MAJ REBORN / sandbox). */
+const REBORN_MAJ_LINE =
+  'REBORN : coffres doc, double daily, arbre de compétences — bot de test';
 
 function msToTime(ms) {
   const seconds = Math.floor((ms / 1000) % 60)
@@ -70,43 +94,120 @@ function invQty(userId, itemId) {
   return row ? row.qty : 0;
 }
 
+/**
+ * Objet `user` attendu par `renderDailyCard` (stars, level, xp, xp_needed).
+ * @param {import('better-sqlite3').RunResult} u
+ */
+function buildCanvasUser(u) {
+  if (!u) return null;
+  const sb = users.B(u.stars);
+  const stars = sb <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(sb) : Number(sb / 10n ** 6n) / 1e6;
+  const t = u.xp_total ?? 0;
+  const st = totalToLevelState(t);
+  const lv = st.level;
+  let xpNeeded = 1;
+  if (lv < MAX_LEVEL) {
+    xpNeeded = T_START[lv + 1] - T_START[lv];
+  }
+  return {
+    stars: Number.isFinite(stars) ? stars : 0,
+    level: lv,
+    xp: st.xpInto,
+    xp_needed: Math.max(1, xpNeeded),
+  };
+}
+
+/**
+ * @returns {{ rewardName: string, rewardType: string, rewardAmount: number | null, rewardEmoji: string }}
+ */
 function applyRandomReward(userId) {
   const reward = getRandomReward();
-  let rewardLine = { title: reward.name, emoji: '✅' };
+  let rewardName = reward.name;
+  let rewardType = reward.type;
+  let rewardAmount = reward.type === 'item' ? null : reward.amount;
+  let rewardEmoji = '✅';
+
   switch (reward.type) {
     case 'stars': {
       const base = BigInt(reward.amount);
       const amount = users.applyStarssMultiplier(userId, base);
       users.addStars(userId, amount);
-      rewardLine = { title: `+**${amount.toLocaleString('fr-FR')}** starss — ${reward.name}`, emoji: '⭐' };
+      rewardName = reward.name;
+      rewardType = 'stars';
+      rewardAmount = Number(amount <= BigInt(Number.MAX_SAFE_INTEGER) ? amount : amount / 10n ** 6n);
+      rewardEmoji = '⭐';
       break;
     }
     case 'xp':
       users.addXp(userId, reward.amount);
-      rewardLine = { title: `${reward.name} gagnés`, emoji: '🚀' };
+      rewardName = reward.name;
+      rewardType = 'xp';
+      rewardAmount = reward.amount;
+      rewardEmoji = '🚀';
       break;
     case 'points':
       users.addPoints(userId, BigInt(reward.amount));
-      rewardLine = { title: `${reward.name} gagnés`, emoji: '🏆' };
+      rewardName = reward.name;
+      rewardType = 'points';
+      rewardAmount = reward.amount;
+      rewardEmoji = '🏆';
       break;
     case 'item': {
       users.addInventory(userId, reward.itemId, 1);
       const def = getItem(reward.itemId);
-      rewardLine = { title: `${def?.name || reward.name} → inventaire`, emoji: '🎁' };
+      rewardName = def?.name || reward.name;
+      rewardType = 'item';
+      rewardAmount = null;
+      rewardEmoji = '🎁';
       break;
     }
     default:
       break;
   }
-  return rewardLine;
+  return { rewardName, rewardType, rewardAmount, rewardEmoji };
+}
+
+function buildCloseRow() {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('daily_close').setLabel('Fermer').setStyle(ButtonStyle.Secondary),
+  );
+}
+
+async function sendDailyCanvasReply(interaction, pngBuffer) {
+  const file = new AttachmentBuilder(pngBuffer, { name: 'daily.png' });
+  const message = await interaction.editReply({
+    files: [file],
+    components: [buildCloseRow()],
+  });
+
+  const collector = message.createMessageComponentCollector({
+    componentType: ComponentType.Button,
+    time: 5 * 60 * 1000,
+  });
+
+  collector.on('collect', async (i) => {
+    if (i.user.id !== interaction.user.id) {
+      return i.reply({ content: "Seul l'auteur de la commande peut utiliser ce bouton.", ephemeral: true });
+    }
+    if (i.customId === 'daily_close') {
+      try {
+        await i.update({ components: [] });
+      } catch {
+        /* ignore */
+      }
+      collector.stop();
+    }
+  });
 }
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('daily')
-    .setDescription('Récompense journalière (texte, sans grosse mise en forme v2).'),
+    .setDescription('Réclame ta récompense journalière (carte canvas, comme le bot principal).'),
 
   async execute(interaction) {
+    await interaction.deferReply();
+
     const userId = interaction.user.id;
     users.getOrCreate(userId, interaction.user.username);
 
@@ -134,36 +235,108 @@ module.exports = {
       invQty(userId, 'double_daily') > 0 &&
       (cfg.TEST_NO_LIMITS || pruneDoubleRolls(userId).length < 3);
 
+    const member = await interaction.guild?.members.fetch(userId).catch(() => null);
+    const displayName = member?.displayName || interaction.user.username;
+    const highestRoleName =
+      member?.roles.highest?.name !== '@everyone' ? member?.roles.highest?.name : 'Membre';
+    const avatarURL = member?.displayAvatarURL({ extension: 'png', size: 256 });
+
     if (naturalOk || tryDouble) {
       if (tryDouble) {
         if (!users.takeInventory(userId, 'double_daily', 1)) {
           const tomorrowMidnight = new Date(midnightLocal);
           tomorrowMidnight.setDate(tomorrowMidnight.getDate() + 1);
           const remainingTime = msToTime(tomorrowMidnight.getTime() - now.getTime());
-          return interaction.reply({
-            content: `⏳ **Prochain daily** : **${remainingTime}** · *Double Daily* indisponible (objet / limite 24h).`,
-            ephemeral: true,
-          });
+          const uRow = users.getUser(userId);
+          const userForCard = buildCanvasUser(uRow);
+          let png;
+          try {
+            png = await renderDailyCard({
+              user: userForCard,
+              username: interaction.user.username,
+              displayName,
+              highestRoleName,
+              avatarURL,
+              remainingTime,
+              doubleDailyCount: invQty(userId, 'double_daily'),
+              isSuccess: false,
+              footerBrand: 'REBORN test',
+            });
+          } catch {
+            return interaction.editReply({
+              content: `⏳ **Prochain daily** : **${remainingTime}** · *Double Daily* indisponible (objet / limite 24h).`,
+            });
+          }
+          return sendDailyCanvasReply(interaction, png);
         }
         pushDoubleRoll(userId);
       }
-      const rewardLine = applyRandomReward(userId);
+
+      const { rewardName, rewardType, rewardAmount, rewardEmoji } = applyRandomReward(userId);
       if (naturalOk) users.setDailyLastMs(userId, Date.now());
-      return interaction.reply({
-        content: `## ${rewardLine.emoji} Daily\n${rewardLine.title}\n\nSolde : **${users
-          .getStars(userId)
-          .toLocaleString('fr-FR')}** starss`,
-        ephemeral: true,
-      });
+
+      const uAfter = users.getUser(userId);
+      const userForCard = buildCanvasUser(uAfter);
+
+      let png;
+      try {
+        png = await Promise.race([
+          renderDailyCard({
+            user: userForCard,
+            username: interaction.user.username,
+            displayName,
+            highestRoleName,
+            avatarURL,
+            rewardName,
+            rewardType,
+            rewardAmount,
+            rewardEmoji,
+            isSuccess: true,
+            footerBrand: 'REBORN test',
+            rebornMajLine: REBORN_MAJ_LINE,
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000)),
+        ]);
+      } catch {
+        return interaction.editReply({
+          content: `## ${rewardEmoji} Daily\n**${rewardName}**\n\nSolde : **${users
+            .getStars(userId)
+            .toLocaleString('fr-FR')}** starss`,
+        });
+      }
+
+      return sendDailyCanvasReply(interaction, png);
     }
 
     const tomorrowMidnight = new Date(midnightLocal);
     tomorrowMidnight.setDate(tomorrowMidnight.getDate() + 1);
     const remainingTime = msToTime(tomorrowMidnight.getTime() - now.getTime());
     const ddc = invQty(userId, 'double_daily');
-    return interaction.reply({
-      content: `⏳ **Prochain daily** : **${remainingTime}**${ddc > 0 ? ` · *Double daily* : **${ddc}**` : ''}`,
-      ephemeral: true,
-    });
+    const uRow = users.getUser(userId);
+    const userForCard = buildCanvasUser(uRow);
+
+    let png;
+    try {
+      png = await Promise.race([
+        renderDailyCard({
+          user: userForCard,
+          username: interaction.user.username,
+          displayName,
+          highestRoleName,
+          avatarURL,
+          remainingTime,
+          doubleDailyCount: ddc,
+          isSuccess: false,
+          footerBrand: 'REBORN test',
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000)),
+      ]);
+    } catch {
+      return interaction.editReply({
+        content: `⏳ **Prochain daily** : **${remainingTime}**${ddc > 0 ? ` · *Double daily* : **${ddc}**` : ''}`,
+      });
+    }
+
+    return sendDailyCanvasReply(interaction, png);
   },
 };
