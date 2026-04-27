@@ -207,22 +207,15 @@ async function renderPassportCardStaffStyle(data) {
   ctx.fillText('Synthèse', mainX + 12, statsY + 28);
 
   const col1 = mainX + 12;
-  const col2 = mainX + mainW / 2 + 4;
   const l1 = statsY + 54;
   const l2 = statsY + 82;
   const l3 = statsY + 110;
-  const l4 = statsY + 138;
   ctx.font = '600 16px Inter, Arial';
   ctx.fillStyle = THEME.text;
   ctx.fillText(`Points de sécurité : ${data.secuPoints ?? '—'}`, col1, l1);
   ctx.fillText(`Score tests mod : ${data.modScore ?? 0} / 100`, col1, l2);
   const cand = String(data.candidature || 'aucune');
   ctx.fillText(`Candidature : ${truncateText(ctx, cand, 240)}`, col1, l3);
-  ctx.fillStyle = THEME.sub;
-  ctx.font = '500 15px Inter, Arial';
-  ctx.fillText('+2 pts / 30 j si baisse (rappel)', col2, l1);
-  ctx.fillText('Cible : futurs modérateurs & suivi', col2, l2);
-  ctx.fillText('REBORN MAJ (sandbox)', col2, l3);
 
   const bottomY = statsY + statsH + 8;
   const bottomH = innerH - (bottomY - y0) - 4;
