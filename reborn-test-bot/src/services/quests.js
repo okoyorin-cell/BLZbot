@@ -362,7 +362,10 @@ module.exports = {
   pickSelection,
   claimSelection,
   summary,
+  trackCatlOpen,
+  trackStarssGain,
   SELECTIONS,
+  LIFETIME_LADDER,
   DAILY_MSG_TARGET,
   WEEKLY_MSG_TARGET,
 };
