@@ -105,7 +105,8 @@ async function renderSkillTreePng(opts) {
 
   const rootX = W / 2;
   const rootY = H - 52;
-  const byBranch = new Map(ORDER.map((b) => [b, placeNodes(rootX, rootY).filter((n) => n.branch === b)]));
+  const allNodes = placeNodes(rootX, rootY);
+  const byBranch = new Map(ORDER.map((b) => [b, allNodes.filter((n) => n.branch === b)]));
   const sOf = (br) => Math.min(5, Math.max(0, Math.floor(steps[br] || 0)));
 
   ctx.textAlign = 'left';
