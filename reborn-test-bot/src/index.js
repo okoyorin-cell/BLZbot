@@ -209,6 +209,21 @@ client.on('interactionCreate', async (interaction) => {
     }
   }
 
+  // Boutons « Liste / Carrières / Quêtes » du canvas /profil-guilde — handler
+  // global (au lieu d'un collector lié au message) car ce canvas peut être
+  // rendu depuis /profil-guilde OU depuis le bouton « Guilde » du /profil.
+  if (interaction.isButton() && interaction.customId.startsWith('rb_pg_')) {
+    try {
+      const { handleRebornGuildButton } = require('./commands/profil-guilde');
+      await handleRebornGuildButton(interaction);
+    } catch (e) {
+      if (e?.code !== 10062 && e?.code !== 40060) {
+        console.error('[rb_pg_*]', e?.message || e);
+      }
+    }
+    return;
+  }
+
   if (interaction.isButton() && interaction.customId.startsWith('rb:')) {
     if (
       interaction.customId.startsWith('rb:shop:') ||
