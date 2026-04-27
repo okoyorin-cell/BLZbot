@@ -22,6 +22,7 @@ const { renderGuildProfileV2 } = require(path.join(
   __dirname,
   '..',
   '..',
+  '..',
   'niveau',
   'src',
   'utils',
