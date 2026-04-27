@@ -58,20 +58,51 @@ async function buildBoutiquePayload(uid, username) {
   for (const s of slots) {
     const it = getItem(s.item_id);
     const name = it?.name || s.item_id;
+    const blurb = summaryForItemId(s.item_id);
+    const desc = `${fmt(s.price)} ⭐ · ${blurb}`.slice(0, 100);
     options.push({
       label: name.slice(0, 100),
       value: `s:${s.slot}`,
-      description: `Slot — ${fmt(s.price)} ⭐`.slice(0, 100),
+      description: desc,
     });
   }
+  const priceLine = (n) => `${fmt(n)} ⭐`;
   options.push(
-    { label: 'Coffre classique', value: 'c:classic', description: fmt(CHEST_CLASSIC) + ' ⭐' },
-    { label: 'CATM', value: 'c:catm', description: `Limite / jour · ${fmt(CHEST_CATM)} ⭐` },
-    { label: 'CATL (légendaire)', value: 'c:catl', description: fmt(CHEST_CATL) + ' ⭐' },
-    { label: 'CATS (star)', value: 'c:cats', description: fmt(CHEST_CATS) + ' ⭐' },
-    { label: '×2 XP (1h)', value: 'b:xp', description: fmt(BOOST_ROW_PRICE) + ' ⭐' },
-    { label: '×2 GXP (1h)', value: 'b:gxp', description: fmt(BOOST_ROW_PRICE) + ' ⭐' },
-    { label: '×2 Starss (1h)', value: 'b:starss', description: fmt(BOOST_ROW_PRICE) + ' ⭐' },
+    {
+      label: 'Coffre classique',
+      value: 'c:classic',
+      description: `${priceLine(CHEST_CLASSIC)} — ${summaryChest('classic')}`.slice(0, 100),
+    },
+    {
+      label: 'CATM',
+      value: 'c:catm',
+      description: `Lim. jour — ${priceLine(CHEST_CATM)} — ${summaryChest('catm')}`.slice(0, 100),
+    },
+    {
+      label: 'CATL (légendaire)',
+      value: 'c:catl',
+      description: `${priceLine(CHEST_CATL)} — ${summaryChest('catl')}`.slice(0, 100),
+    },
+    {
+      label: 'CATS (star)',
+      value: 'c:cats',
+      description: `${priceLine(CHEST_CATS)} — ${summaryChest('cats')}`.slice(0, 100),
+    },
+    {
+      label: '×2 XP (1h)',
+      value: 'b:xp',
+      description: `${priceLine(BOOST_ROW_PRICE)} — ${summaryBoost('xp')}`.slice(0, 100),
+    },
+    {
+      label: '×2 GXP (1h)',
+      value: 'b:gxp',
+      description: `${priceLine(BOOST_ROW_PRICE)} — ${summaryBoost('gxp')}`.slice(0, 100),
+    },
+    {
+      label: '×2 Starss (1h)',
+      value: 'b:starss',
+      description: `${priceLine(BOOST_ROW_PRICE)} — ${summaryBoost('starss')}`.slice(0, 100),
+    },
   );
   if (options.length > 25) options.length = 25;
 
