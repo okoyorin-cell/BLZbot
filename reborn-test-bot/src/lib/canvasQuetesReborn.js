@@ -265,8 +265,8 @@ function drawFooter(ctx, footerLines) {
   rr(ctx, 32, y0, W - 64, 70, 18);
   ctx.fillStyle = 'rgba(20,12,30,0.85)';
   ctx.fill();
-  ctx.strokeStyle = 'rgba(245,200,66,0.45)';
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(245,200,66,0.22)';
+  ctx.lineWidth = 1;
   ctx.stroke();
 
   ctx.font = '600 18px Inter, Arial';
