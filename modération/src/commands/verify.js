@@ -11,7 +11,13 @@
  * on garde ces deux valeurs ici (et pas en config du module) parce qu'elles changent
  * en dev/prod et doivent rester hors du code source.
  */
-const { SlashCommandBuilder, MessageFlags } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    MessageFlags,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+} = require('discord.js');
 const {
     getGuildConfig,
     findVerifiedInGuild,
