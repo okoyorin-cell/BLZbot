@@ -60,21 +60,6 @@ module.exports = {
     )
     .addSubcommand((sc) =>
       sc
-        .setName('timeout')
-        .setDescription('Mettre un membre en timeout Discord (admin / owner).')
-        .addUserOption((o) => o.setName('membre').setDescription('Cible').setRequired(true))
-        .addIntegerOption((o) =>
-          o
-            .setName('minutes')
-            .setDescription('Durée (minutes, 1 → 10080)')
-            .setRequired(true)
-            .setMinValue(1)
-            .setMaxValue(10080),
-        )
-        .addStringOption((o) => o.setName('raison').setDescription('Raison (≤ 500)')),
-    )
-    .addSubcommand((sc) =>
-      sc
         .setName('audit')
         .setDescription('Audit staff (admin / owner) : actions récentes sur le serveur.')
         .addUserOption((o) => o.setName('membre').setDescription('Filtrer par cible'))
