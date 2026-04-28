@@ -371,5 +371,56 @@ module.exports = {
       require('../db').prepare('UPDATE player_guilds SET description = ? WHERE id = ?').run(txt, g.id);
       return interaction.reply({ content: `Description mise à jour :\n> ${txt}` });
     }
+
+    if (sub === 'role_set') {
+      const m = pg.getMembershipInHub(uid, hub);
+      if (!m) return interaction.reply({ content: 'Pas de guilde.' });
+      const target = interaction.options.getUser('membre', true);
+      const lbl = interaction.options.getString('label', true);
+      const r = pg.setInternalRole(m.guild_id, uid, target.id, lbl);
+      if (!r.ok) return interaction.reply({ content: r.error });
+      if (!r.label) return interaction.reply({ content: `Rôle interne **retiré** pour ${target}.` });
+      return interaction.reply({ content: `Rôle interne **${r.label}** attribué à ${target}.` });
+    }
+
+    if (sub === 'grade_info') {
+      const lines = [];
+      for (const grade of ORDER) {
+        if (!grade) continue;
+        const r = NEXT_REQUIREMENTS[grade];
+        if (!r) continue;
+        const parts = [
+          `**${label(grade)}**`,
+          `≥ **${Number(r.stars).toLocaleString('fr-FR')}** starss`,
+          `rang GR ≥ **${r.minGrpRank}**`,
+        ];
+        if (r.mythic) parts.push(`${r.mythic}× mythique`);
+        if (r.crystal) parts.push(`${r.crystal}× crystal/goatesque`);
+        if (r.needDiamond) parts.push('**Diamant** requis');
+        if (grade === 'star') parts.push('**Anti-séparation** acquise');
+        lines.push(`• ${parts.join(' · ')}`);
+      }
+      const e = new EmbedBuilder()
+        .setTitle('Grades guilde — exigences')
+        .setColor(0xf1c40f)
+        .setDescription(lines.join('\n'))
+        .setFooter({ text: 'Tu peux acheter le prochain grade avec /guilde grade_up (chef).' });
+      return interaction.reply({ embeds: [e] });
+    }
+
+    if (sub === 'classement') {
+      const top = ladder.ladderForHub(hub).slice(0, 10);
+      if (!top.length) return interaction.reply({ content: 'Aucune guilde sur ce serveur.' });
+      const lines = top.map((g, i) => {
+        const star = i < 3 ? '🛡️' : '•';
+        return `${star} **${i + 1}.** **${g.name}** \`${g.id}\` — nv **${g.guild_level}** — grade **${label(g.grade || '')}** — GRP total **${g.totalGrp.toLocaleString('fr-FR')}** · ${g.members} membre(s)`;
+      });
+      const e = new EmbedBuilder()
+        .setTitle('Classement guildes (par GRP total)')
+        .setColor(0xe67e22)
+        .setDescription(lines.join('\n').slice(0, 4000))
+        .setFooter({ text: 'Top 3 = protégé contre les séparations (règle haut de ladder).' });
+      return interaction.reply({ embeds: [e] });
+    }
   },
 };
