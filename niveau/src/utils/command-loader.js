@@ -32,7 +32,12 @@ function loadTopLevelCommands(client) {
         if (!fs.existsSync(dir)) continue;
         const commandFiles = fs
             .readdirSync(dir)
-            .filter((file) => file.endsWith('.js') && !isArchivedSlashCommandFile(file));
+            .filter(
+                (file) =>
+                    file.endsWith('.js') &&
+                    !isArchivedSlashCommandFile(file) &&
+                    !isLegacyTestProfilFile(file),
+            );
         for (const file of commandFiles) {
             const filePath = path.join(dir, file);
             const command = require(filePath);
