@@ -316,6 +316,10 @@ function installVerificationSystem(client, opts) {
         console.log(`[verif] Rôle non-vérifié à retirer : @&${unverifiedRoleId}`);
     }
 
+    // On mute `opts` pour que les handlers enfants (handleVerifyButton, handleManualReview)
+    // partagent la valeur normalisée sans avoir à la propager en argument.
+    opts.unverifiedRoleId = unverifiedRoleId;
+
     const dispatchOptions = { ownerDmIds, vpnNoticeChannelId };
 
     const { server } = createVerifyServer({
