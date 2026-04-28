@@ -115,10 +115,12 @@ function tickSeparations() {
       const win = gainA > gainB ? 'split' : gainA < gainB ? 'loyal' : 'loyal';
       db.prepare('UPDATE separations SET winner = ?, phase = 0 WHERE id = ?').run(win, s.id);
 
-      // Récompense gagnant : +25% des starss courants (cap 1M / membre) + point Temple + compteur trophée.
+      // Récompense gagnant : +25% des starss courants (cap 1M / membre, +bonus
+      // arbre séparatiste pour le camp split) + point Temple + +1 point séparatiste.
       try {
         const users = require('./users');
         const temple = require('./temple');
+        const skillTree = require('./skillTree');
         const winners = win === 'split' ? camp : loyalIds;
         const cap = 1_000_000n;
         for (const uid of winners) {
@@ -126,12 +128,25 @@ function tickSeparations() {
           let bonus = (cur * 25n) / 100n;
           if (bonus > cap) bonus = cap;
           if (bonus < 5_000n) bonus = 5_000n;
+          // Côté séparatiste : +10 % sur la victoire (palier 3) puis ×2 (palier 5).
+          if (win === 'split') {
+            const bp = BigInt(skillTree.separatistVictoryBonusBp(uid));
+            bonus = (bonus * bp) / 10000n;
+            if (skillTree.separatistVictoryDoubled(uid)) bonus *= 2n;
+          }
           users.addStars(uid, bonus);
           temple.markKey(uid, 'separation_won');
           try {
             db.prepare('UPDATE users SET separations_won = COALESCE(separations_won, 0) + 1 WHERE id = ?').run(uid);
           } catch { /* ignore */ }
+          // 1 point séparatiste pour le gagnant côté split (récompense de la voie).
+          if (win === 'split') {
+            try { skillTree.addSeparatistPoints(uid, 1); } catch { /* ignore */ }
+          }
         }
+        // Côté perdant : si camp split a perdu, on applique éventuellement la
+        // réduction de pertes (cosmétique pour l'instant — les snapshots ne
+        // retirent pas de starss, mais on note dans audit pour cohérence).
       } catch (e) {
         console.error('[separation reward]', e?.message || e);
       }
