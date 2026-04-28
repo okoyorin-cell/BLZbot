@@ -26,4 +26,28 @@ async function removeGuildMemberRole(botToken, guildId, userId, roleId) {
     }
 }
 
-module.exports = { addGuildMemberRole, removeGuildMemberRole };
+/**
+ * Attribue le rôle vérifié et, si fourni, retire le rôle "non vérifié" / "Compte Suspect".
+ * Le retrait du rôle non-vérifié est best-effort : on log l'erreur mais on ne fait pas
+ * échouer la vérification si Discord refuse (rôle déjà absent, hiérarchie, etc.).
+ *
+ * @param {string} botToken
+ * @param {string} guildId
+ * @param {string} userId
+ * @param {string} verifiedRoleId
+ * @param {string|null} [unverifiedRoleId]
+ */
+async function grantVerifiedRole(botToken, guildId, userId, verifiedRoleId, unverifiedRoleId = null) {
+    await addGuildMemberRole(botToken, guildId, userId, verifiedRoleId);
+    if (unverifiedRoleId) {
+        try {
+            await removeGuildMemberRole(botToken, guildId, userId, unverifiedRoleId);
+        } catch (e) {
+            console.warn(
+                `[verif] retrait rôle non-vérifié ${unverifiedRoleId} sur ${userId} échoué : ${e.message || e}`,
+            );
+        }
+    }
+}
+
+module.exports = { addGuildMemberRole, removeGuildMemberRole, grantVerifiedRole };
