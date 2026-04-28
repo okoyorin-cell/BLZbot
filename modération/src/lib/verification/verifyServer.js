@@ -235,6 +235,7 @@ function createVerifyServer(opts) {
                 guildId,
                 userId: discordUserId,
                 success: false,
+                kind: 'failed',
                 reason:
                     'Serveur non configuré (rôle vérifié manquant). Un administrateur doit utiliser /setup-verification.',
             });
@@ -250,6 +251,8 @@ function createVerifyServer(opts) {
         }
 
         // Si déjà vérifié → rebrancher le rôle (cas du membre qui a quitté/revenu).
+        // Pas de re-check VPN ici : si le compte a déjà passé l'épreuve une fois,
+        // on ne le pénalise pas s'il revient sur un VPN (cas légit : voyage, école…).
         const already = findVerifiedInGuild(guildId, discordUserId);
         if (already) {
             try {
@@ -259,6 +262,7 @@ function createVerifyServer(opts) {
                 guildId,
                 userId: discordUserId,
                 success: true,
+                kind: 'success',
                 reason: 'Déjà vérifié — rôle réappliqué.',
             });
             sendHtml(
@@ -272,11 +276,71 @@ function createVerifyServer(opts) {
             return;
         }
 
-        // emailHash placeholder unique par utilisateur : on garde la contrainte UNIQUE
-        // de la table `guild_verifications` (pas de double insertion par user) sans
-        // pour autant lier le membre à un email réel.
-        const emailHashPlaceholder = hashEmail(`noverif:${discordUserId}`);
+        // 1) Récupération géo + détection VPN/proxy/hosting AVANT toute action.
+        let geo = null;
+        try {
+            geo = await lookupIp(ip);
+        } catch { /* géo indisponible : on continue sans */ }
+
+        if (geo && isVpnOrProxy(geo)) {
+            await emitLog(ip, userAgent, {
+                guildId,
+                userId: discordUserId,
+                success: false,
+                kind: 'vpn_blocked',
+                geo,
+                reason: 'Connexion VPN/proxy/datacenter détectée — vérification refusée.',
+            });
+            sendHtml(
+                res,
+                403,
+                page(
+                    '🚫 Vérification refusée — VPN détecté',
+                    `<p class="err">Un VPN, proxy ou service de tunneling a été détecté sur ta connexion.</p>
+           <p>Pour des raisons de sécurité (anti double-compte), la vérification est refusée tant qu'un VPN est actif.</p>
+           <ul>
+             <li>Désactive ton VPN / proxy / Tor</li>
+             <li>Reviens sur Discord et utilise le bouton 🔐 Vérifier ou la commande <code>/verify</code></li>
+           </ul>`,
+                ),
+            );
+            return;
+        }
+
+        // 2) Détection d'alts par IP exacte. Si match → on N'attribue PAS le rôle :
+        //    un staff doit valider via le bouton "Vérifier manuellement". On n'écrit
+        //    rien en DB non plus, pour pouvoir retenter la vérif si le staff refuse.
         const ipH = hashIp(ip);
+        let alts = [];
+        try {
+            alts = findAltsByIp(guildId, ipH, discordUserId) || [];
+        } catch { alts = []; }
+
+        if (alts.length > 0) {
+            await emitLog(ip, userAgent, {
+                guildId,
+                userId: discordUserId,
+                success: false,
+                kind: 'pending_alt',
+                geo,
+                alts,
+                reason: `Alt détecté (${alts.length} compte(s) déjà vérifié(s) sur cette IP). Validation manuelle requise.`,
+            });
+            sendHtml(
+                res,
+                202,
+                page(
+                    '⏸️ Vérification en attente',
+                    `<p class="warn">Un compte alternatif a été détecté sur ce serveur depuis ta connexion.</p>
+           <p>Le rôle vérifié n'a <strong>pas</strong> été attribué automatiquement.</p>
+           <p>Un membre du staff va examiner ta demande. Tu n'as rien à faire — tu peux fermer cette page.</p>`,
+                ),
+            );
+            return;
+        }
+
+        // 3) Cas nominal : pas de VPN, pas d'alt → on attribue le rôle + on persiste.
+        const emailHashPlaceholder = hashEmail(`noverif:${discordUserId}`);
 
         try {
             await addGuildMemberRole(opts.botToken, guildId, discordUserId, cfg.verified_role_id);
@@ -285,6 +349,8 @@ function createVerifyServer(opts) {
                 guildId,
                 userId: discordUserId,
                 success: false,
+                kind: 'failed',
+                geo,
                 reason: `Impossible d'attribuer le rôle vérifié : ${String(roleErr.message || roleErr)}`,
             });
             sendHtml(
@@ -305,11 +371,11 @@ function createVerifyServer(opts) {
                 guildId,
                 userId: discordUserId,
                 success: false,
+                kind: 'failed',
+                geo,
                 reason: `Erreur enregistrement base : ${String(e.message || e)}`,
             });
             console.error('[verify/submit] saveVerifiedForGuild', e);
-            // On ne retire pas le rôle volontairement : le membre est sanctionné par la DB
-            // mais peut au moins entrer le temps qu'un admin investigue.
             sendHtml(res, 500, page('Erreur', '<p class="err">Erreur technique lors de l\'enregistrement.</p>'));
             return;
         }
@@ -318,6 +384,8 @@ function createVerifyServer(opts) {
             guildId,
             userId: discordUserId,
             success: true,
+            kind: 'success',
+            geo,
             reason: 'Vérification terminée, rôle attribué.',
         });
 
