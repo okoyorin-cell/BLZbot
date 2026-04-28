@@ -3,11 +3,15 @@
  *
  * Effets :
  *   1. Retire le rôle vérifié (si présent)
- *   2. Remet le rôle "non vérifié" / Compte Suspect (`UNVERIFIED_ROLE_ID`) si défini
- *   3. Supprime l'entrée DB de vérification (l'IP est libérée du registre d'alts
+ *   2. Supprime l'entrée DB de vérification (l'IP est libérée du registre d'alts
  *      pour cette guilde — la prochaine personne qui vient sur cette IP n'est plus
  *      considérée comme alt de l'ancien membre)
- *   4. Log dans le salon de logs sans IP (configuré via /setup-verification)
+ *   3. Log dans le salon de logs sans IP (configuré via /setup-verification)
+ *
+ * **NB** : le rôle "non vérifié" (`UNVERIFIED_ROLE_ID`) n'est *pas* remis automatiquement.
+ * Il est attribué manuellement par le staff quand un compte est flagué suspect ;
+ * `unverify` se contente de retirer le rôle vérifié et de purger la DB, le staff reste
+ * libre de remettre ou non un rôle de surveillance derrière.
  *
  * Réservé aux staff disposant d'une des permissions de modération courantes
  * (Administrator, ManageGuild, BanMembers, KickMembers, ModerateMembers) — même
@@ -24,7 +28,7 @@ const {
     findVerifiedInGuild,
     deleteVerifiedForGuild,
 } = require('../lib/verification/database');
-const { removeGuildMemberRole, addGuildMemberRole } = require('../lib/verification/discordApi');
+const { removeGuildMemberRole } = require('../lib/verification/discordApi');
 
 function isStaff(memberPermissions) {
     if (!memberPermissions) return false;
