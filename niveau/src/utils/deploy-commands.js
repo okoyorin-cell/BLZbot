@@ -4,6 +4,7 @@ const path = require('node:path');
 const {
     MAIN_COMMAND_SUBDIRS: mainCommandSubdirs,
     isArchivedSlashCommandFile,
+    isLegacyTestProfilFile,
 } = require('./command-loader');
 const { getEventState: getHalloweenState } = require('./db-halloween');
 const { getEventState: getChristmasState } = require('./db-noel');
