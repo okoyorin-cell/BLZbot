@@ -339,7 +339,13 @@ function installVerificationSystem(client, opts) {
             if (member.roles.cache.has(cfg.verified_role_id)) return;
             const row = findVerifiedInGuild(member.guild.id, member.id);
             if (!row) return;
-            await addGuildMemberRole(client.token, member.guild.id, member.id, cfg.verified_role_id);
+            await grantVerifiedRole(
+                client.token,
+                member.guild.id,
+                member.id,
+                cfg.verified_role_id,
+                unverifiedRoleId,
+            );
         } catch (e) {
             console.error('[verif/GuildMemberAdd]', e.message || e);
         }
