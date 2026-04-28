@@ -278,6 +278,7 @@ function buildVerifyUrl(cfg, discordUserId, guildId) {
  *   stateSecret: string,
  *   httpPort: number,
  *   ownerDmIds: string[],
+ *   vpnNoticeChannelId?: string,
  * }} opts
  */
 function installVerificationSystem(client, opts) {
@@ -290,6 +291,7 @@ function installVerificationSystem(client, opts) {
     }
     const httpPort = Number.isFinite(opts.httpPort) && opts.httpPort > 0 ? opts.httpPort : 3782;
     const ownerDmIds = Array.isArray(opts.ownerDmIds) ? opts.ownerDmIds : [];
+    const vpnNoticeChannelId = String(opts.vpnNoticeChannelId || '').trim() || null;
 
     if (ownerDmIds.length === 0) {
         console.warn(
@@ -300,12 +302,22 @@ function installVerificationSystem(client, opts) {
         console.log(`[verif] Logs avec IP → DM à ${ownerDmIds.length} owner(s).`);
     }
 
+    if (vpnNoticeChannelId) {
+        console.log(`[verif] Salon avis VPN : #${vpnNoticeChannelId}`);
+    } else {
+        console.warn(
+            '[verif] VPN_NOTICE_CHANNEL_ID non défini — les membres bloqués pour VPN ne seront pas pingués en salon.',
+        );
+    }
+
+    const dispatchOptions = { ownerDmIds, vpnNoticeChannelId };
+
     const { server } = createVerifyServer({
         botToken: opts.botToken,
         publicBaseUrl: opts.publicBaseUrl,
         stateSecret: opts.stateSecret,
         httpPort,
-        onVerificationLog: (payload) => dispatchVerificationLog(client, ownerDmIds, payload),
+        onVerificationLog: (payload) => dispatchVerificationLog(client, dispatchOptions, payload),
     });
 
     client.on(Events.GuildMemberAdd, async (member) => {
