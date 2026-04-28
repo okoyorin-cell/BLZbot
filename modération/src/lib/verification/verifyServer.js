@@ -1,7 +1,12 @@
 /**
- * Serveur HTTP de vérification — version SANS OAuth (pas besoin de Client Secret).
+ * Serveur HTTP de vérification — version SANS OAuth, SANS Express.
  *
- * Pourquoi cette version : OAuth Discord exige un client_secret stocké côté serveur,
+ * Pourquoi pas d'Express : l'environnement Pebble Host n'a pas de manière fiable
+ * d'installer des packages npm avant l'exécution du bot, ce qui causait un
+ * `Error: Cannot find module 'express'` au démarrage. On utilise donc le module
+ * `http` natif de Node.js : pas de dépendance externe, tout marche dès le clone.
+ *
+ * Pourquoi pas d'OAuth : OAuth Discord exige un client_secret stocké côté serveur,
  * inaccessible quand le compte Dev Portal du propriétaire de l'app est suspendu.
  * On contourne en remplaçant la preuve "Discord a vérifié l'identité" par un
  * token HMAC envoyé en DM par le bot lui-même : seul le destinataire du DM peut
@@ -23,10 +28,15 @@
  *      et DM les owners (avec IP brute).
  *
  * IP : récupérée via `x-forwarded-for` (premier élément) si présent, sinon
- *      `req.socket.remoteAddress`. `app.set('trust proxy', 1)` est obligatoire
- *      derrière un reverse proxy (Cloudflare Tunnel, ngrok, Nginx, Render…).
+ *      `req.socket.remoteAddress`. On fait toujours confiance à `x-forwarded-for`
+ *      car le bot est censé tourner derrière un reverse proxy (Pebble Host /
+ *      Cloudflare Tunnel / ngrok / Nginx). Si tu exposes le port en direct,
+ *      pense à filtrer ce header avant.
  */
-const express = require('express');
+const http = require('node:http');
+const { URL } = require('node:url');
+const querystring = require('node:querystring');
+
 const { verifyState, hashEmail, hashIp } = require('./cryptoUtil');
 const {
     saveVerifiedForGuild,
@@ -62,17 +72,51 @@ function page(title, bodyHtml) {
   </head><body><h1>${escapeHtml(title)}</h1>${bodyHtml}</body></html>`;
 }
 
-function firstQueryString(val) {
-    if (val == null) return null;
-    if (Array.isArray(val)) return typeof val[0] === 'string' ? val[0] : null;
-    return typeof val === 'string' ? val : null;
-}
-
 function clientIp(req) {
     const xff = req.headers['x-forwarded-for'];
     if (typeof xff === 'string' && xff.trim()) return xff.split(',')[0].trim();
     if (Array.isArray(xff) && xff[0]) return String(xff[0]).split(',')[0].trim();
     return req.socket?.remoteAddress || 'inconnue';
+}
+
+/** Lit un corps `application/x-www-form-urlencoded` borné en taille (4 Ko). */
+function readUrlEncodedBody(req, maxBytes = 4 * 1024) {
+    return new Promise((resolve, reject) => {
+        let received = 0;
+        const chunks = [];
+        req.on('data', (chunk) => {
+            received += chunk.length;
+            if (received > maxBytes) {
+                req.destroy();
+                reject(new Error('payload too large'));
+                return;
+            }
+            chunks.push(chunk);
+        });
+        req.on('end', () => {
+            try {
+                const raw = Buffer.concat(chunks).toString('utf8');
+                resolve(querystring.parse(raw));
+            } catch (e) {
+                reject(e);
+            }
+        });
+        req.on('error', reject);
+    });
+}
+
+function sendHtml(res, status, html) {
+    res.writeHead(status, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store',
+        'X-Content-Type-Options': 'nosniff',
+    });
+    res.end(html);
+}
+
+function sendText(res, status, text) {
+    res.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.end(text);
 }
 
 /**
@@ -94,14 +138,6 @@ function clientIp(req) {
  * }) => Promise<void>} [opts.onVerificationLog]
  */
 function createVerifyServer(opts) {
-    const app = express();
-    app.set('trust proxy', 1);
-    app.use(express.urlencoded({ extended: false, limit: '4kb' }));
-
-    app.get('/health', (_req, res) => {
-        res.type('text').send('ok');
-    });
-
     /** Émet un log enrichi (géo + alts) si le callback `onVerificationLog` est branché. */
     const emitLog = async (ip, userAgent, payload) => {
         if (!opts.onVerificationLog) return;
@@ -123,15 +159,17 @@ function createVerifyServer(opts) {
         }
     };
 
-    app.get('/verify/start', (req, res) => {
-        const state = firstQueryString(req.query.state);
+    async function handleStart(req, res, parsedUrl) {
+        const state = parsedUrl.searchParams.get('state');
         if (!state) {
-            res.status(400).send(page('Lien invalide', '<p>Paramètre <code>state</code> manquant.</p>'));
+            sendHtml(res, 400, page('Lien invalide', '<p>Paramètre <code>state</code> manquant.</p>'));
             return;
         }
         const decoded = verifyState(state, opts.stateSecret);
         if (!decoded) {
-            res.status(400).send(
+            sendHtml(
+                res,
+                400,
                 page(
                     'Lien expiré',
                     '<p>Le lien de vérification a expiré ou est invalide. Retourne sur Discord et utilise de nouveau le bouton ou la commande <code>/verify</code>.</p>',
@@ -156,21 +194,31 @@ function createVerifyServer(opts) {
         <p style="margin-top:1rem;font-size:.9em;opacity:.7">Lien à usage unique, expire 30 minutes après son émission.</p>
       </div>
     `;
-        res.send(page('🔐 Vérification', body));
-    });
+        sendHtml(res, 200, page('🔐 Vérification', body));
+    }
 
-    app.post('/verify/submit', async (req, res) => {
+    async function handleSubmit(req, res, parsedUrl) {
         const ip = clientIp(req);
         const userAgent = String(req.headers['user-agent'] || '').slice(0, 300);
-        const state = firstQueryString(req.body?.state) || firstQueryString(req.query.state);
+
+        let bodyParams;
+        try {
+            bodyParams = await readUrlEncodedBody(req);
+        } catch {
+            sendHtml(res, 413, page('Requête trop grande', '<p>Payload refusé.</p>'));
+            return;
+        }
+        const stateBody = bodyParams?.state;
+        const state =
+            (Array.isArray(stateBody) ? stateBody[0] : stateBody) || parsedUrl.searchParams.get('state');
 
         if (!state) {
-            res.status(400).send(page('Requête invalide', '<p>Paramètre <code>state</code> manquant.</p>'));
+            sendHtml(res, 400, page('Requête invalide', '<p>Paramètre <code>state</code> manquant.</p>'));
             return;
         }
         const decoded = verifyState(state, opts.stateSecret);
         if (!decoded) {
-            res.status(400).send(page('Lien expiré', '<p>State invalide ou expiré.</p>'));
+            sendHtml(res, 400, page('Lien expiré', '<p>State invalide ou expiré.</p>'));
             return;
         }
         const { discordUserId, guildId } = decoded;
@@ -184,7 +232,9 @@ function createVerifyServer(opts) {
                 reason:
                     'Serveur non configuré (rôle vérifié manquant). Un administrateur doit utiliser /setup-verification.',
             });
-            res.status(503).send(
+            sendHtml(
+                res,
+                503,
                 page(
                     'Configuration manquante',
                     '<p>Ce serveur n\'a pas encore terminé la configuration de la vérification.</p>',
@@ -205,7 +255,9 @@ function createVerifyServer(opts) {
                 success: true,
                 reason: 'Déjà vérifié — rôle réappliqué.',
             });
-            res.send(
+            sendHtml(
+                res,
+                200,
                 page(
                     '✅ Déjà vérifié',
                     '<p class="ok">Tu étais déjà enregistré comme vérifié sur ce serveur. Le rôle a été ré-attribué. Tu peux fermer cette page.</p>',
@@ -229,7 +281,9 @@ function createVerifyServer(opts) {
                 success: false,
                 reason: `Impossible d'attribuer le rôle vérifié : ${String(roleErr.message || roleErr)}`,
             });
-            res.status(502).send(
+            sendHtml(
+                res,
+                502,
                 page(
                     'Rôle non attribué',
                     '<p class="err">Le bot n\'a pas pu te donner le rôle (hiérarchie des rôles ou permissions). Contacte un administrateur, puis réessaie avec <code>/verify</code>.</p>',
@@ -250,7 +304,7 @@ function createVerifyServer(opts) {
             console.error('[verify/submit] saveVerifiedForGuild', e);
             // On ne retire pas le rôle volontairement : le membre est sanctionné par la DB
             // mais peut au moins entrer le temps qu'un admin investigue.
-            res.status(500).send(page('Erreur', '<p class="err">Erreur technique lors de l\'enregistrement.</p>'));
+            sendHtml(res, 500, page('Erreur', '<p class="err">Erreur technique lors de l\'enregistrement.</p>'));
             return;
         }
 
@@ -261,19 +315,56 @@ function createVerifyServer(opts) {
             reason: 'Vérification terminée, rôle attribué.',
         });
 
-        res.send(
+        sendHtml(
+            res,
+            200,
             page(
                 '✅ Vérification réussie',
                 '<p class="ok">Ton compte est vérifié et le rôle a été attribué sur le serveur. Tu peux fermer cette page.</p>',
             ),
         );
+    }
+
+    const server = http.createServer(async (req, res) => {
+        // L'URL absolue n'est utilisée que pour parser le path/searchParams ;
+        // l'host est ignoré côté logique.
+        let parsedUrl;
+        try {
+            parsedUrl = new URL(req.url || '/', 'http://internal.local');
+        } catch {
+            sendText(res, 400, 'Bad URL');
+            return;
+        }
+
+        try {
+            if (req.method === 'GET' && parsedUrl.pathname === '/health') {
+                sendText(res, 200, 'ok');
+                return;
+            }
+            if (req.method === 'GET' && parsedUrl.pathname === '/verify/start') {
+                await handleStart(req, res, parsedUrl);
+                return;
+            }
+            if (req.method === 'POST' && parsedUrl.pathname === '/verify/submit') {
+                await handleSubmit(req, res, parsedUrl);
+                return;
+            }
+            sendText(res, 404, 'Not found');
+        } catch (e) {
+            console.error('[verifyServer]', e);
+            if (!res.headersSent) {
+                sendHtml(res, 500, page('Erreur serveur', '<p class="err">Erreur interne.</p>'));
+            } else {
+                try { res.end(); } catch { /* déjà fermé */ }
+            }
+        }
     });
 
-    const server = app.listen(opts.httpPort, () => {
+    server.listen(opts.httpPort, () => {
         console.log(`[http] Verif sur le port ${opts.httpPort} — base ${opts.publicBaseUrl}`);
     });
 
-    return { app, server };
+    return { server };
 }
 
 module.exports = { createVerifyServer, clientIp };
