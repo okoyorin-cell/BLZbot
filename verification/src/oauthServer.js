@@ -115,16 +115,38 @@ function createOAuthServer(opts) {
     const state = firstQueryString(req.query.state);
     const err = firstQueryString(req.query.error);
 
+    /**
+     * Émet un log enrichi (géoloc + alts) si le callback `onVerificationLog` est branché.
+     * On résout la géo + les alts à la volée pour ne pas dupliquer la logique sur chaque branche d'erreur.
+     */
+    const emitLog = async (payload) => {
+      if (!opts.onVerificationLog) return;
+      let geo = null;
+      try {
+        geo = await lookupIp(ip);
+      } catch { /* géo indisponible : on log sans */ }
+      let alts = [];
+      if (payload.guildId && payload.userId) {
+        const ipH = hashIp(ip);
+        try {
+          alts = findAltsByIp(payload.guildId, ipH, payload.userId) || [];
+        } catch { alts = []; }
+      }
+      try {
+        await opts.onVerificationLog({ ...payload, ip, userAgent, geo, alts });
+      } catch (logErr) {
+        console.error('[onVerificationLog]', logErr);
+      }
+    };
+
     if (err) {
       const decoded = state ? verifyState(state, opts.stateSecret) : null;
-      if (decoded && opts.onVerificationLog) {
-        await opts.onVerificationLog({
+      if (decoded) {
+        await emitLog({
           guildId: decoded.guildId,
           userId: decoded.discordUserId,
           success: false,
           reason: `OAuth refusé ou erreur Discord : ${String(err)}`,
-          ip,
-          userAgent,
         });
       }
       res.status(400).send(page('Refusé', `<p>Discord a renvoyé une erreur : <code>${String(err)}</code></p>`));
@@ -145,17 +167,13 @@ function createOAuthServer(opts) {
 
     const cfg = getGuildConfig(guildId);
     if (!cfg || !cfg.verified_role_id) {
-      if (opts.onVerificationLog) {
-        await opts.onVerificationLog({
-          guildId,
-          userId: discordUserId,
-          success: false,
-          reason:
-            'Serveur non configuré (rôle vérifié manquant). Un administrateur doit utiliser /setup-verification.',
-          ip,
-          userAgent,
-        });
-      }
+      await emitLog({
+        guildId,
+        userId: discordUserId,
+        success: false,
+        reason:
+          'Serveur non configuré (rôle vérifié manquant). Un administrateur doit utiliser /setup-verification.',
+      });
       res
         .status(503)
         .send(page('Configuration manquante', '<p>Ce serveur n\'a pas encore terminé la configuration de la vérification.</p>'));
@@ -171,16 +189,12 @@ function createOAuthServer(opts) {
       });
       const me = await fetchDiscordMe(tokenJson.access_token);
       if (String(me.id) !== String(discordUserId)) {
-        if (opts.onVerificationLog) {
-          await opts.onVerificationLog({
-            guildId,
-            userId: discordUserId,
-            success: false,
-            reason: 'Mauvais compte Discord utilisé pendant OAuth (compte différent du lien).',
-            ip,
-            userAgent,
-          });
-        }
+        await emitLog({
+          guildId,
+          userId: discordUserId,
+          success: false,
+          reason: 'Mauvais compte Discord utilisé pendant OAuth (compte différent du lien).',
+        });
         res.status(400).send(
           page(
             'Mauvais compte Discord',
@@ -193,18 +207,14 @@ function createOAuthServer(opts) {
       const email = me.email;
       const emailVerified = me.verified === true;
       if (!email || typeof email !== 'string' || !emailVerified) {
-        if (opts.onVerificationLog) {
-          await opts.onVerificationLog({
-            guildId,
-            userId: discordUserId,
-            success: false,
-            reason: !email
-              ? 'Email Discord absent sur le compte OAuth.'
-              : 'Email Discord présent mais non marqué comme vérifié par Discord (active la vérif email sur ton compte).',
-            ip,
-            userAgent,
-          });
-        }
+        await emitLog({
+          guildId,
+          userId: discordUserId,
+          success: false,
+          reason: !email
+            ? 'Email Discord absent sur le compte OAuth.'
+            : 'Email Discord présent mais non marqué comme vérifié par Discord (active la vérif email sur ton compte).',
+        });
         res.status(400).send(
           page(
             'Email Discord requis',
@@ -216,38 +226,31 @@ function createOAuthServer(opts) {
 
       const emailNorm = normalizeEmail(email);
       if (!emailNorm.includes('@')) {
-        if (opts.onVerificationLog) {
-          await opts.onVerificationLog({
-            guildId,
-            userId: discordUserId,
-            success: false,
-            reason: 'Email Discord invalide.',
-            ip,
-            userAgent,
-          });
-        }
+        await emitLog({
+          guildId,
+          userId: discordUserId,
+          success: false,
+          reason: 'Email Discord invalide.',
+        });
         res.status(400).send(page('Email invalide', '<p>Email Discord invalide.</p>'));
         return;
       }
 
       const emailHash = hashEmail(emailNorm);
+      const ipH = hashIp(ip);
 
       try {
         assertUniqueVerificationEmail(guildId, discordUserId, emailHash);
       } catch (e) {
         if (e instanceof DuplicateEmailError) {
-          if (opts.onVerificationLog) {
-            await opts.onVerificationLog({
-              guildId,
-              userId: discordUserId,
-              success: false,
-              reason: 'Double compte : cette adresse e-mail est déjà liée à un autre compte sur ce serveur.',
-              ip,
-              userAgent,
-              email: emailNorm,
-              existingUserId: e.otherDiscordUserId,
-            });
-          }
+          await emitLog({
+            guildId,
+            userId: discordUserId,
+            success: false,
+            reason: 'Double compte : cette adresse e-mail est déjà liée à un autre compte sur ce serveur.',
+            email: emailNorm,
+            existingUserId: e.otherDiscordUserId,
+          });
           res.status(409).send(
             page(
               'Double compte détecté',
@@ -262,17 +265,13 @@ function createOAuthServer(opts) {
       try {
         await addGuildMemberRole(opts.botToken, guildId, discordUserId, cfg.verified_role_id);
       } catch (roleErr) {
-        if (opts.onVerificationLog) {
-          await opts.onVerificationLog({
-            guildId,
-            userId: discordUserId,
-            success: false,
-            reason: `Impossible d'attribuer le rôle vérifié : ${String(roleErr.message || roleErr)}`,
-            ip,
-            userAgent,
-            email: emailNorm,
-          });
-        }
+        await emitLog({
+          guildId,
+          userId: discordUserId,
+          success: false,
+          reason: `Impossible d'attribuer le rôle vérifié : ${String(roleErr.message || roleErr)}`,
+          email: emailNorm,
+        });
         res.status(502).send(
           page(
             'Rôle non attribué',
@@ -283,22 +282,18 @@ function createOAuthServer(opts) {
       }
 
       try {
-        saveVerifiedForGuild(guildId, discordUserId, emailHash);
+        saveVerifiedForGuild(guildId, discordUserId, emailHash, ipH);
       } catch (e) {
         await removeGuildMemberRole(opts.botToken, guildId, discordUserId, cfg.verified_role_id).catch(() => {});
         if (e instanceof DuplicateEmailError) {
-          if (opts.onVerificationLog) {
-            await opts.onVerificationLog({
-              guildId,
-              userId: discordUserId,
-              success: false,
-              reason: 'Conflit email (race) : un autre compte a été enregistré entre-temps.',
-              ip,
-              userAgent,
-              email: emailNorm,
-              existingUserId: e.otherDiscordUserId,
-            });
-          }
+          await emitLog({
+            guildId,
+            userId: discordUserId,
+            success: false,
+            reason: 'Conflit email (race) : un autre compte a été enregistré entre-temps.',
+            email: emailNorm,
+            existingUserId: e.otherDiscordUserId,
+          });
           res.status(409).send(
             page(
               'Double compte détecté',
@@ -307,30 +302,22 @@ function createOAuthServer(opts) {
           );
           return;
         }
-        if (opts.onVerificationLog) {
-          await opts.onVerificationLog({
-            guildId,
-            userId: discordUserId,
-            success: false,
-            reason: `Erreur enregistrement base : ${String(e.message || e)}`,
-            ip,
-            userAgent,
-          });
-        }
+        await emitLog({
+          guildId,
+          userId: discordUserId,
+          success: false,
+          reason: `Erreur enregistrement base : ${String(e.message || e)}`,
+        });
         throw e;
       }
 
-      if (opts.onVerificationLog) {
-        await opts.onVerificationLog({
-          guildId,
-          userId: discordUserId,
-          success: true,
-          reason: 'Vérification terminée, rôle attribué.',
-          ip,
-          userAgent,
-          email: emailNorm,
-        });
-      }
+      await emitLog({
+        guildId,
+        userId: discordUserId,
+        success: true,
+        reason: 'Vérification terminée, rôle attribué.',
+        email: emailNorm,
+      });
 
       res.send(
         page(
@@ -340,16 +327,12 @@ function createOAuthServer(opts) {
       );
     } catch (e) {
       console.error('[oauth/callback]', e);
-      if (opts.onVerificationLog) {
-        await opts.onVerificationLog({
-          guildId,
-          userId: discordUserId,
-          success: false,
-          reason: `Erreur technique : ${String(e.message || e)}`,
-          ip,
-          userAgent,
-        });
-      }
+      await emitLog({
+        guildId,
+        userId: discordUserId,
+        success: false,
+        reason: `Erreur technique : ${String(e.message || e)}`,
+      });
       res.status(500).send(
         page('Erreur', `<p>Une erreur technique est survenue.</p><pre>${escapeHtml(String(e.message || e))}</pre>`),
       );
