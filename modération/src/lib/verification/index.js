@@ -342,6 +342,13 @@ function installVerificationSystem(client, opts) {
                 await handleVerifyButton(interaction, opts, client);
                 return;
             }
+            if (
+                interaction.isButton() &&
+                (cid?.startsWith('verify:manual_grant:') || cid?.startsWith('verify:manual_reject:'))
+            ) {
+                await handleManualReview(interaction, opts, client);
+                return;
+            }
             if (interaction.isModalSubmit() && cid === 'setup:embed_submit') {
                 await handleEmbedModalSubmit(interaction);
                 return;
