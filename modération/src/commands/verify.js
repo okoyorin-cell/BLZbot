@@ -20,9 +20,14 @@ const { addGuildMemberRole } = require('../lib/verification/discordApi');
 const { buildVerifyUrl } = require('../lib/verification');
 
 module.exports = {
+    // Déploiement guild-only (jamais en global) : l'app Discord est proche des 100
+    // commandes globales et ce flag évite de consommer un slot global.
+    // Voir `src/utils/deploy-slash-commands.js` → GUILD_ONLY_BY_COMMAND pour la liste
+    // des guildes cibles.
+    guildOnly: true,
     data: new SlashCommandBuilder()
         .setName('verify')
-        .setDescription('Obtenir le lien de vérification (anti double-compte par email Discord).'),
+        .setDescription('Obtenir le lien de vérification (anti double-compte par IP).'),
     async execute(interaction) {
         if (!interaction.guild) {
             await interaction.reply({
