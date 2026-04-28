@@ -16,14 +16,16 @@
  *      (Cloudflare Tunnel, ngrok, Nginx, Render, Railway…).
  */
 const express = require('express');
-const { verifyState, hashEmail, normalizeEmail } = require('./cryptoUtil');
+const { verifyState, hashEmail, hashIp, normalizeEmail } = require('./cryptoUtil');
 const {
   saveVerifiedForGuild,
   DuplicateEmailError,
   getGuildConfig,
   assertUniqueVerificationEmail,
+  findAltsByIp,
 } = require('./database');
 const { addGuildMemberRole, removeGuildMemberRole } = require('./discordApi');
+const { lookupIp } = require('./geolocation');
 
 function page(title, bodyHtml) {
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>${title}</title>
