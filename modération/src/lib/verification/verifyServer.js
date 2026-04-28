@@ -349,7 +349,13 @@ function createVerifyServer(opts) {
         const emailHashPlaceholder = hashEmail(`noverif:${discordUserId}`);
 
         try {
-            await addGuildMemberRole(opts.botToken, guildId, discordUserId, cfg.verified_role_id);
+            await grantVerifiedRole(
+                opts.botToken,
+                guildId,
+                discordUserId,
+                cfg.verified_role_id,
+                opts.unverifiedRoleId,
+            );
         } catch (roleErr) {
             await emitLog(ip, userAgent, {
                 guildId,
