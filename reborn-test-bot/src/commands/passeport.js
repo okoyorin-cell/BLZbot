@@ -106,33 +106,6 @@ module.exports = {
       });
     }
 
-    if (sub === 'timeout') {
-      if (!canStaff(interaction)) return interaction.reply({ content: 'Permission refusée.' });
-      const target = interaction.options.getUser('membre', true);
-      if (target.bot) return interaction.reply({ content: 'Impossible sur un bot.' });
-      const mins = interaction.options.getInteger('minutes', true);
-      const reason = (interaction.options.getString('raison') || '').slice(0, 500);
-      const member = await interaction.guild.members.fetch(target.id).catch(() => null);
-      if (!member) return interaction.reply({ content: 'Membre introuvable sur ce serveur.' });
-      const audit = require('../services/staffAudit');
-      const r = await audit.addTimeout({
-        hubDiscordId: hub,
-        targetId: target.id,
-        modId: interaction.user.id,
-        durationMin: mins,
-        reason,
-        member,
-      });
-      if (r.applied) {
-        return interaction.reply({
-          content: `🕒 **Timeout** ${mins} min appliqué à ${target}${reason ? ` — *${reason}*` : ''}.`,
-        });
-      }
-      return interaction.reply({
-        content: `⚠️ TO logé en audit mais **non appliqué** (le bot n'a pas la permission ?). Erreur : \`${r.error || '—'}\`.`,
-      });
-    }
-
     if (sub === 'audit') {
       if (!canStaff(interaction)) return interaction.reply({ content: 'Permission refusée.' });
       const audit = require('../services/staffAudit');
