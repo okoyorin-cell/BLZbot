@@ -202,6 +202,7 @@ module.exports = {
     getEffectiveEmbed,
     resetEmbedToDefault,
     findVerifiedInGuild,
+    deleteVerifiedForGuild,
     findAltsByIp,
     saveVerifiedForGuild,
     assertUniqueVerificationEmail,
