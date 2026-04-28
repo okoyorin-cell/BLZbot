@@ -134,7 +134,7 @@ function drawHeader(ctx, displayName, avatarImg) {
   const tx = W / 2;
   const ty = 82;
   ctx.fillStyle = TITLE_COLOR;
-  ctx.fillText('QUÊTES — REBORN', tx, ty);
+  ctx.fillText('QUÊTES', tx, ty);
 
   ctx.font = '500 18px Inter, Arial, sans-serif';
   ctx.fillStyle = 'rgba(232,222,250,0.78)';
