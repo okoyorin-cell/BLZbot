@@ -31,6 +31,9 @@ module.exports = {
     const deg = interaction.options.getString('degre', true);
     const raison = interaction.options.getString('raison') || '';
     const r = passport.addWarn(hub, t.id, interaction.user.id, deg, raison);
+    try {
+      require('../services/staffAudit').audit(hub, interaction.user.id, t.id, `warn_${deg}`, raison);
+    } catch { /* ignore */ }
     return interaction.reply({
       content: `Warn **${deg}** → <@${t.id}> — points de sécu : **${r.newPoints}**`,
     });
