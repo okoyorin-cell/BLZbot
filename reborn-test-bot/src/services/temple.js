@@ -141,4 +141,22 @@ function publicLines(userId, hubDiscordId) {
   return { lines, status: st };
 }
 
-module.exports = { sync, parseSources, statusFor, publicLines, markKey, SOURCE_DEFS, STAR_RP, STAR_GRP };
+/**
+ * Classement Temple sur le hub :
+ *   1) Roi du Temple : meilleur `temple_points` (≥ 6 clés). En cas d'égalité,
+ *      celui qui a déverrouillé le Temple en premier (`temple_unlocked = 1`).
+ *   2) Légende : top 5 suivants (≥ 3 clés).
+ * Renvoie `{ kings: [...], legends: [...] }`.
+ */
+function classement(limit = 10) {
+  const rows = db
+    .prepare(
+      'SELECT id, username, temple_points, temple_unlocked FROM users WHERE COALESCE(temple_points,0) > 0 ORDER BY temple_points DESC, temple_unlocked DESC LIMIT ?',
+    )
+    .all(Math.max(1, Math.min(50, limit)));
+  const kings = rows.filter((r) => (r.temple_points || 0) >= 6);
+  const legends = rows.filter((r) => (r.temple_points || 0) >= 3 && (r.temple_points || 0) < 6);
+  return { kings, legends, all: rows };
+}
+
+module.exports = { sync, parseSources, statusFor, publicLines, markKey, classement, SOURCE_DEFS, STAR_RP, STAR_GRP };
