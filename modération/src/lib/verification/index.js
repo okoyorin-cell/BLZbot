@@ -138,53 +138,109 @@ async function refreshPublicPanel(guild) {
     await msg.edit({ embeds: [embed], components: [row] }).catch(() => {});
 }
 
-async function sendChannelEmbed(client, channelId, embed) {
-    if (!channelId) return;
+async function sendChannelMessage(client, channelId, payload) {
+    if (!channelId) return null;
     try {
         const ch = await client.channels.fetch(channelId);
-        if (ch && ch.isTextBased()) await ch.send({ embeds: [embed] });
+        if (ch && ch.isTextBased()) return await ch.send(payload);
     } catch (e) {
         console.error("[verif] impossible d'envoyer dans le salon", channelId, e.message || e);
     }
+    return null;
 }
 
-async function dmUserEmbed(client, userId, embed) {
+async function dmUserMessage(client, userId, payload) {
     try {
         const user = await client.users.fetch(userId);
-        await user.send({ embeds: [embed] });
+        await user.send(payload);
     } catch (e) {
         console.error('[verif/dm] impossible de DM', userId, e.message || e);
     }
 }
 
 /**
- * Construit l'embed approprié selon le payload (succès / alt / échec) puis l'envoie :
- *  - dans le salon de logs sans IP (config par guilde)
- *  - en DM aux ownerDmIds (avec IP greffée)
+ * Détermine la "kind" effective d'un payload de log. On honore d'abord la valeur
+ * remontée par `verifyServer.js` ; sinon on retombe sur l'inférence historique
+ * (success + alts → alt, !success → failed, etc.) pour rétro-compat.
  */
-async function dispatchVerificationLog(client, ownerDmIds, p) {
-    const { guildId, success, alts } = p;
-    const cfg = getGuildConfig(guildId);
+function resolveLogKind(p) {
+    if (p.kind) return p.kind;
+    if (!p.success) return 'failed';
+    if ((p.alts || []).length > 0) return 'alt_granted_legacy';
+    return 'success';
+}
 
-    let publicEmbed;
-    if (!success) publicEmbed = await buildFailEmbed(client, p);
-    else if ((alts || []).length > 0) publicEmbed = await buildAltEmbed(client, p);
-    else publicEmbed = await buildSuccessEmbed(client, p);
+async function buildEmbedForKind(client, kind, p) {
+    switch (kind) {
+        case 'success':
+            return buildSuccessEmbed(client, p);
+        case 'pending_alt':
+        case 'alt_granted_legacy':
+            return buildAltEmbed(client, p);
+        case 'vpn_blocked':
+            return buildVpnEmbed(client, p);
+        case 'failed':
+        default:
+            return buildFailEmbed(client, p);
+    }
+}
+
+/**
+ * Pour les cas où la personne doit être prévenue (VPN actif), poste un message
+ * dans le salon de notice qui la ping en clair. Pas d'embed → c'est un message
+ * d'aide direct, pas un log.
+ */
+async function notifyMemberInChannel(client, channelId, userId, content) {
+    if (!channelId) return;
+    await sendChannelMessage(client, channelId, {
+        content: `<@${userId}> ${content}`,
+        allowedMentions: { users: [userId], parse: [] },
+    });
+}
+
+/**
+ * Construit l'embed approprié selon le payload puis l'envoie :
+ *  - dans le salon de logs sans IP (config par guilde) — avec bouton si pending_alt
+ *  - en DM aux ownerDmIds (avec IP greffée)
+ *  - dans le salon VPN (ping membre) si kind === 'vpn_blocked'
+ */
+async function dispatchVerificationLog(client, options, p) {
+    const { ownerDmIds, vpnNoticeChannelId } = options;
+    const { guildId, userId } = p;
+    const cfg = getGuildConfig(guildId);
+    const kind = resolveLogKind(p);
+
+    const publicEmbed = await buildEmbedForKind(client, kind, p);
+    const components = kind === 'pending_alt' ? [buildAltActionRow(p)] : [];
 
     if (cfg?.log_channel_no_ip_id) {
-        await sendChannelEmbed(client, cfg.log_channel_no_ip_id, publicEmbed);
+        await sendChannelMessage(client, cfg.log_channel_no_ip_id, {
+            embeds: [publicEmbed],
+            components,
+        });
     }
 
     if (ownerDmIds.length > 0) {
-        let dmEmbed;
-        if (!success) dmEmbed = await buildFailEmbed(client, p);
-        else if ((alts || []).length > 0) dmEmbed = await buildAltEmbed(client, p);
-        else dmEmbed = await buildSuccessEmbed(client, p);
+        const dmEmbed = await buildEmbedForKind(client, kind, p);
         withSensitiveFields(dmEmbed, p);
-        await Promise.allSettled(ownerDmIds.map((id) => dmUserEmbed(client, id, dmEmbed)));
+        await Promise.allSettled(
+            ownerDmIds.map((id) => dmUserMessage(client, id, { embeds: [dmEmbed] })),
+        );
     } else {
         console.warn(
             "[verif] OWNER_DM_IDS vide — le log avec IP n'a été envoyé à personne. Ajoute des IDs dans .env.",
+        );
+    }
+
+    if (kind === 'vpn_blocked') {
+        await notifyMemberInChannel(
+            client,
+            vpnNoticeChannelId,
+            userId,
+            "🚫 La vérification a détecté que **tu utilisais un VPN ou un proxy**. " +
+                "Pour des raisons de sécurité (anti double-compte), c'est bloqué automatiquement.\n" +
+                "**Désactive ton VPN, ferme l'app, puis recommence avec le bouton 🔐 Vérifier ou la commande `/verify`.**\n" +
+                "Si tu n'utilises pas de VPN, contacte le staff (ton FAI peut être marqué à tort).",
         );
     }
 }
