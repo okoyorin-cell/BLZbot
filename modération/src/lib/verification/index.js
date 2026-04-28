@@ -489,7 +489,7 @@ async function handleManualReview(interaction, opts, client) {
     // manual_grant : on attribue le rôle + on enregistre en DB pour qu'au prochain
     // /verify de cette personne, ça soit considéré "déjà vérifié" (idempotent).
     try {
-        await addGuildMemberRole(client.token, guildId, userId, cfg.verified_role_id);
+        await grantVerifiedRole(client.token, guildId, userId, cfg.verified_role_id, opts.unverifiedRoleId);
     } catch (e) {
         await interaction.reply({
             content: `❌ Impossible d'attribuer le rôle : ${e.message || e}. Vérifie que le rôle du bot est **au-dessus** du rôle vérifié.`,
