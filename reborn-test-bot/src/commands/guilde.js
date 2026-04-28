@@ -185,6 +185,16 @@ module.exports = {
       const cap = pg.effectiveMemberCap(g);
       const treasuryB = BigInt(g.treasury || '0');
       const gxpB = BigInt(g.gxp || '0');
+      // Statut anti-séparation (grade Star OU top 3 GRP du hub).
+      const sep = ladder.antiSepStatus(g.id, hub);
+      const sepLine = sep.protected
+        ? `🛡️ **Anti-séparation** : oui — *${sep.reason}*`
+        : 'Anti-séparation : non';
+      // Rôles internes custom
+      const roles = pg.listInternalRoles(g.id);
+      const rolesLine = roles.length
+        ? `Rôles internes : ${roles.map((r) => `<@${r.user_id}> *${r.role_label}*`).join(' · ')}`
+        : '';
       const desc = [
         `ID \`${g.id}\``,
         `Chef <@${g.leader_id}>`,
@@ -193,9 +203,10 @@ module.exports = {
         `Grade **${label(g.grade || '')}**`,
         `GXP **${gxpB.toLocaleString('fr-FR')}**`,
         `Trésorerie **${treasuryB.toLocaleString('fr-FR')}** starss`,
-        `Anti-séparation : **${g.anti_separation ? 'oui' : 'non'}**`,
+        sepLine,
         g.salon_channel_id ? `Salon : <#${g.salon_channel_id}>` : 'Salon : *aucun* (utilise \`/guilde salon\`).',
         g.description ? `Description : ${g.description}` : '',
+        rolesLine,
       ].filter(Boolean).join('\n');
       const e = new EmbedBuilder().setTitle(g.name).setDescription(desc).setColor(0xe67e22);
       return interaction.reply({ embeds: [e] });
