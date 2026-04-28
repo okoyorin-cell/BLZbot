@@ -25,6 +25,14 @@ function activeSeparationForGuild(guildId) {
 function startSeparation(hubDiscordId, guildId, initiatorId) {
   const g = playerGuilds.getGuild(guildId);
   if (!g || g.hub_discord_id !== hubDiscordId) return { ok: false, error: 'Guilde invalide.' };
+  // Protection : grade Star OU top 3 GRP du serveur (règle « haut de ladder »).
+  try {
+    const ladder = require('./guildLadder');
+    const status = ladder.antiSepStatus(guildId, hubDiscordId);
+    if (status.protected) {
+      return { ok: false, error: `Cette guilde est **protégée** : ${status.reason}` };
+    }
+  } catch { /* ignore */ }
   if (g.anti_separation) return { ok: false, error: 'Cette guilde a **Anti-séparation** (grade Star).' };
   if (activeSeparationForGuild(guildId)) return { ok: false, error: 'Une séparation est déjà en cours.' };
   const now = Date.now();
