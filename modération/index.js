@@ -826,7 +826,8 @@ async function start() {
 
         installVerificationSystem(client, {
             botToken: config.BOT_TOKEN,
-            clientId: String(process.env.DISCORD_CLIENT_ID || '').trim(),
+            // L'app Discord a un seul Client ID — on accepte les 2 noms (DISCORD_CLIENT_ID vs CLIENT_ID)
+            clientId: String(process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID || '').trim(),
             clientSecret: String(process.env.DISCORD_CLIENT_SECRET || '').trim(),
             redirectUri: String(process.env.OAUTH_REDIRECT_URI || '').trim(),
             publicBaseUrl: String(process.env.PUBLIC_BASE_URL || '').trim(),
