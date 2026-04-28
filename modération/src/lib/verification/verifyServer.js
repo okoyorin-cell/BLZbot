@@ -138,22 +138,28 @@ function sendText(res, status, text) {
  * }) => Promise<void>} [opts.onVerificationLog]
  */
 function createVerifyServer(opts) {
-    /** Émet un log enrichi (géo + alts) si le callback `onVerificationLog` est branché. */
+    /**
+     * Émet un log enrichi (géo + alts) si le callback `onVerificationLog` est branché.
+     * Le payload accepte aussi un `kind` machine-readable (`success` / `pending_alt` /
+     * `vpn_blocked` / `failed`) pour que le dispatcher choisisse le bon embed.
+     */
     const emitLog = async (ip, userAgent, payload) => {
         if (!opts.onVerificationLog) return;
-        let geo = null;
-        try {
-            geo = await lookupIp(ip);
-        } catch { /* géo indisponible : on log sans */ }
-        let alts = [];
-        if (payload.guildId && payload.userId) {
+        let geo = payload.geo || null;
+        if (!geo) {
+            try {
+                geo = await lookupIp(ip);
+            } catch { /* géo indisponible : on log sans */ }
+        }
+        let alts = payload.alts;
+        if (!Array.isArray(alts) && payload.guildId && payload.userId) {
             const ipH = hashIp(ip);
             try {
                 alts = findAltsByIp(payload.guildId, ipH, payload.userId) || [];
             } catch { alts = []; }
         }
         try {
-            await opts.onVerificationLog({ ...payload, ip, userAgent, geo, alts });
+            await opts.onVerificationLog({ ...payload, ip, userAgent, geo, alts: alts || [] });
         } catch (logErr) {
             console.error('[onVerificationLog]', logErr);
         }
