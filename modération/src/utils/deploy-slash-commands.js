@@ -24,8 +24,22 @@ const COMMANDS_DIR = path.join(__dirname, '..', 'commands');
  */
 const DEFAULT_SUPPORT_GUILD_ID = String(CONFIG.TICKETS?.SUPPORT_GUILD_ID || '1351221530998345828');
 
-/** Commandes strictement guild-only (aucune pour l’instant — tout passe en global + miroir support). */
-const GUILD_ONLY_BY_COMMAND = new Map();
+/**
+ * Commandes strictement guild-only (jamais en global, déployées en commande guild
+ * sur les guilds explicitement listées). Utile quand l'app Discord approche les
+ * 100 commandes globales (limite Discord) — on évite de consommer les slots globaux.
+ *
+ * Pour `/setup-verification` et `/verify` : on les déploie sur le serveur support et
+ * sur le main BLZ. Si tu veux activer la vérif sur d'autres serveurs, ajoute leur ID ici.
+ */
+const VERIF_GUILD_TARGETS = new Set([
+    '1351221530998345828', // support BLZ
+    '1097110036192448656', // main BLZ
+]);
+const GUILD_ONLY_BY_COMMAND = new Map([
+    ['setup-verification', VERIF_GUILD_TARGETS],
+    ['verify', VERIF_GUILD_TARGETS],
+]);
 
 /**
  * Guildes où on enregistre **toutes** les commandes modération en guild (`commands.set`),
