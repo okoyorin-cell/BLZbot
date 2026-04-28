@@ -111,6 +111,67 @@ module.exports = {
       });
     }
 
+    if (sub === 'classe') {
+      const classes = skillTree.playerClasses(uid);
+      const lines = ['# 🎓 Tes classes', ''];
+      for (const c of classes) {
+        const perk = CLASS_PERKS[c.id] || '';
+        lines.push(`${c.icon} **${c.name}** — ${perk}`);
+      }
+      lines.push('');
+      lines.push(
+        '*Une classe se débloque dès qu’une **branche atteint 5/5**. Maîtrise les **5** branches et tu deviens **Maître des voies**.*',
+      );
+      const td = new TextDisplayBuilder().setContent(lines.join('\n'));
+      return interaction.reply({
+        components: [new ContainerBuilder().addTextDisplayComponents(td)],
+        flags: MessageFlags.IsComponentsV2,
+      });
+    }
+
+    if (sub === 'separatiste') {
+      const action = interaction.options.getString('action', true);
+      if (action === 'voir') {
+        const cur = skillTree.separatistStep(uid);
+        const pts = skillTree.separatistPoints(uid);
+        const td = new TextDisplayBuilder().setContent(
+          [
+            '# 🗡️ Branche séparatiste',
+            `Palier actuel : **${cur}** / 5 · points dispo : **${pts}**`,
+            '',
+            'Effets cumulés :',
+            '• **1/5** — +5 % GRP perso pendant les phases 2',
+            '• **2/5** — -10 % perte starss en cas de défaite split',
+            '• **3/5** — +10 % récompense de victoire séparatiste (cumul +25 %)',
+            '• **4/5** — -10 % cooldown perso `/separation lancer`',
+            '• **5/5** — *ULTIME* : ×2 starss-victoire séparatiste',
+            '',
+            '*Gagne **1 point séparatiste** par séparation gagnée côté split.*',
+          ].join('\n'),
+        );
+        return interaction.reply({
+          components: [new ContainerBuilder().addTextDisplayComponents(td)],
+          flags: MessageFlags.IsComponentsV2,
+        });
+      }
+      // action === 'acheter'
+      const r = skillTree.buySeparatistStep(uid);
+      if (!r.ok) {
+        const err = new TextDisplayBuilder().setContent(`❌ ${r.error}`);
+        return interaction.reply({
+          components: [new ContainerBuilder().addTextDisplayComponents(err)],
+          flags: MessageFlags.IsComponentsV2,
+        });
+      }
+      const td = new TextDisplayBuilder().setContent(
+        `✅ Branche **séparatiste** → **${r.newStep}** / 5\nPoints restants : **${skillTree.separatistPoints(uid)}**`,
+      );
+      return interaction.reply({
+        components: [new ContainerBuilder().addTextDisplayComponents(td)],
+        flags: MessageFlags.IsComponentsV2,
+      });
+    }
+
     const br = interaction.options.getString('branche', true);
     const r = skillTree.buy(uid, br);
     if (!r.ok) {
