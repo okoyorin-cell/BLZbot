@@ -426,7 +426,7 @@ function isStaffReviewer(interaction) {
  * d'alerte alt. CustomId : `verify:manual_grant:<guildId>:<userId>` ou
  * `verify:manual_reject:<guildId>:<userId>`.
  */
-async function handleManualReview(interaction, _opts, client) {
+async function handleManualReview(interaction, opts, client) {
     if (!interaction.guild) {
         await interaction.reply({ content: 'Utilisable seulement sur un serveur.', flags: MessageFlags.Ephemeral });
         return;
