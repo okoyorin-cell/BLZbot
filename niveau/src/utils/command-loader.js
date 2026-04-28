@@ -13,6 +13,16 @@ function isArchivedSlashCommandFile(basename) {
 }
 
 /**
+ * Fichiers `testprofil*.js` : aperçus de profils legacy. Ne doivent JAMAIS être chargés
+ * (même s'ils traînent encore sur certains hébergements après un upload manuel d'avant
+ * leur dépréciation). Le bot ne les require pas, et `deploy-commands.js` les marque
+ * déjà comme obsolètes côté Discord.
+ */
+function isLegacyTestProfilFile(basename) {
+    return typeof basename === 'string' && /^testprofil/i.test(basename);
+}
+
+/**
  * Charge les commandes slash depuis commands/core, guilde, admin, misc.
  * @param {import('discord.js').Client} client
  */
