@@ -826,12 +826,10 @@ async function start() {
 
         installVerificationSystem(client, {
             botToken: config.BOT_TOKEN,
-            // L'app Discord a un seul Client ID — on accepte les 2 noms (DISCORD_CLIENT_ID vs CLIENT_ID)
-            clientId: String(process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID || '').trim(),
-            clientSecret: String(process.env.DISCORD_CLIENT_SECRET || '').trim(),
-            redirectUri: String(process.env.OAUTH_REDIRECT_URI || '').trim(),
             publicBaseUrl: String(process.env.PUBLIC_BASE_URL || '').trim(),
-            stateSecret: String(process.env.OAUTH_STATE_SECRET || '').trim(),
+            // Le nom historique `OAUTH_STATE_SECRET` est conservé pour ne pas casser
+            // d'anciens .env, même si le flux n'utilise plus OAuth.
+            stateSecret: String(process.env.OAUTH_STATE_SECRET || process.env.VERIF_STATE_SECRET || '').trim(),
             httpPort: parseInt(process.env.HTTP_PORT || '3782', 10),
             ownerDmIds,
         });
