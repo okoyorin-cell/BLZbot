@@ -22,7 +22,7 @@ const {
     getGuildConfig,
     findVerifiedInGuild,
 } = require('../lib/verification/database');
-const { addGuildMemberRole } = require('../lib/verification/discordApi');
+const { grantVerifiedRole } = require('../lib/verification/discordApi');
 const { buildVerifyUrl } = require('../lib/verification');
 
 module.exports = {
