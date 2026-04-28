@@ -107,9 +107,64 @@ module.exports = {
       }
       if (score != null) users.setModTestsScore(target.id, score);
       if (cand) users.setCandidatureStatus(target.id, cand);
+      try {
+        require('../services/staffAudit').audit(
+          hub,
+          interaction.user.id,
+          target.id,
+          'maj_staff',
+          [score != null ? `tests=${score}` : '', cand ? `candidature=${cand}` : ''].filter(Boolean).join(' '),
+        );
+      } catch { /* ignore */ }
       return interaction.reply({
         content: `Passeport staff mis à jour pour **${target.username}**.`,
       });
+    }
+
+    if (sub === 'timeout') {
+      if (!canStaff(interaction)) return interaction.reply({ content: 'Permission refusée.' });
+      const target = interaction.options.getUser('membre', true);
+      if (target.bot) return interaction.reply({ content: 'Impossible sur un bot.' });
+      const mins = interaction.options.getInteger('minutes', true);
+      const reason = (interaction.options.getString('raison') || '').slice(0, 500);
+      const member = await interaction.guild.members.fetch(target.id).catch(() => null);
+      if (!member) return interaction.reply({ content: 'Membre introuvable sur ce serveur.' });
+      const audit = require('../services/staffAudit');
+      const r = await audit.addTimeout({
+        hubDiscordId: hub,
+        targetId: target.id,
+        modId: interaction.user.id,
+        durationMin: mins,
+        reason,
+        member,
+      });
+      if (r.applied) {
+        return interaction.reply({
+          content: `🕒 **Timeout** ${mins} min appliqué à ${target}${reason ? ` — *${reason}*` : ''}.`,
+        });
+      }
+      return interaction.reply({
+        content: `⚠️ TO logé en audit mais **non appliqué** (le bot n'a pas la permission ?). Erreur : \`${r.error || '—'}\`.`,
+      });
+    }
+
+    if (sub === 'audit') {
+      if (!canStaff(interaction)) return interaction.reply({ content: 'Permission refusée.' });
+      const audit = require('../services/staffAudit');
+      const target = interaction.options.getUser('membre');
+      const limit = interaction.options.getInteger('limite') || 25;
+      const rows = target ? audit.recentForTarget(hub, target.id, limit) : audit.recent(hub, limit);
+      if (!rows.length) return interaction.reply({ content: 'Aucune entrée d’audit.' });
+      const fmt = (r) => {
+        const t = `<t:${Math.floor(r.created_ms / 1000)}:R>`;
+        return `${t} · **${r.action}** mod <@${r.mod_id}> → cible <@${r.target_id}>${r.details ? ` — *${r.details.slice(0, 80)}*` : ''}`;
+      };
+      const { EmbedBuilder } = require('discord.js');
+      const e = new EmbedBuilder()
+        .setTitle(target ? `Audit — cible ${target.username}` : 'Audit staff (récent)')
+        .setColor(0x95a5a6)
+        .setDescription(rows.map(fmt).join('\n').slice(0, 4000));
+      return interaction.reply({ embeds: [e] });
     }
 
     const target = interaction.options.getUser('membre') || interaction.user;
