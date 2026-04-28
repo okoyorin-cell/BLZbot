@@ -173,12 +173,17 @@ function assertUniqueVerificationEmail(guildId, discordUserId, emailHash) {
 /**
  * Persiste la ligne guild_verifications (appeler après assertUnique + attribution du rôle).
  * Gère la course rare deux inserts concurrents (UNIQUE sur email par guilde).
+ *
+ * @param {string} guildId
+ * @param {string} discordUserId
+ * @param {string} emailHash
+ * @param {string|null} ipHash  hash SHA-256 de l'IP (peut être null si non capturée)
  */
-function saveVerifiedForGuild(guildId, discordUserId, emailHash, verifiedAt = Date.now()) {
+function saveVerifiedForGuild(guildId, discordUserId, emailHash, ipHash = null, verifiedAt = Date.now()) {
   try {
     db.transaction(() => {
       delGuildUser.run(guildId, discordUserId);
-      insertGuildVerification.run(guildId, discordUserId, emailHash, verifiedAt);
+      insertGuildVerification.run(guildId, discordUserId, emailHash, ipHash, verifiedAt);
     })();
   } catch (e) {
     const code = e && e.code;
