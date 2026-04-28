@@ -114,11 +114,14 @@ module.exports = async function deployCommands(client) {
     // 1. Charger toutes les commandes locales depuis le disque
     const localCommands = new Map();
 
+    const isLoadable = (file) =>
+        file.endsWith('.js') && !isArchivedSlashCommandFile(file) && !isLegacyTestProfilFile(file);
+
     for (const sub of mainCommandSubdirs) {
         const dir = path.join(commandsPath, sub);
         if (!fs.existsSync(dir)) continue;
         fs.readdirSync(dir)
-            .filter((file) => file.endsWith('.js') && !isArchivedSlashCommandFile(file))
+            .filter(isLoadable)
             .forEach((file) => {
                 const commandData = loadCommandData(path.join(dir, file));
                 if (commandData) localCommands.set(commandData.name, { ...commandData, source: 'normal' });
@@ -127,7 +130,7 @@ module.exports = async function deployCommands(client) {
 
     if (fs.existsSync(halloweenCommandsPath)) {
         fs.readdirSync(halloweenCommandsPath)
-            .filter((file) => file.endsWith('.js') && !isArchivedSlashCommandFile(file))
+            .filter(isLoadable)
             .forEach((file) => {
                 const commandData = loadCommandData(path.join(halloweenCommandsPath, file));
                 if (commandData) localCommands.set(commandData.name, { ...commandData, source: 'halloween' });
@@ -136,7 +139,7 @@ module.exports = async function deployCommands(client) {
 
     if (fs.existsSync(christmasCommandsPath)) {
         fs.readdirSync(christmasCommandsPath)
-            .filter((file) => file.endsWith('.js') && !isArchivedSlashCommandFile(file))
+            .filter(isLoadable)
             .forEach((file) => {
                 const commandData = loadCommandData(path.join(christmasCommandsPath, file));
                 if (commandData) localCommands.set(commandData.name, { ...commandData, source: 'christmas' });
@@ -145,7 +148,7 @@ module.exports = async function deployCommands(client) {
 
     if (fs.existsSync(valentinCommandsPath)) {
         fs.readdirSync(valentinCommandsPath)
-            .filter((file) => file.endsWith('.js') && !isArchivedSlashCommandFile(file))
+            .filter(isLoadable)
             .forEach((file) => {
                 const commandData = loadCommandData(path.join(valentinCommandsPath, file));
                 if (commandData) localCommands.set(commandData.name, { ...commandData, source: 'valentin' });
