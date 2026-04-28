@@ -191,8 +191,8 @@ async function dispatchVerificationLog(client, ownerDmIds, p) {
  * -------------------------------------------------------------------------- */
 
 /**
- * Construit l'URL OAuth signée (state HMAC, expiration 30 min). Exposée pour les
- * commandes slash `/verify` et le bouton public `verify:go`.
+ * Construit l'URL de vérification signée (state HMAC, expiration 30 min). Exposée
+ * pour les commandes slash `/verify` et le bouton public `verify:go`.
  *
  * @param {{ publicBaseUrl: string, stateSecret: string }} cfg
  * @param {string} discordUserId
@@ -201,19 +201,20 @@ async function dispatchVerificationLog(client, ownerDmIds, p) {
 function buildVerifyUrl(cfg, discordUserId, guildId) {
     const state = signState({ discordUserId, guildId }, cfg.stateSecret);
     const base = cfg.publicBaseUrl.replace(/\/$/, '');
-    return `${base}/oauth/start?state=${encodeURIComponent(state)}`;
+    return `${base}/verify/start?state=${encodeURIComponent(state)}`;
 }
 
 /**
  * Démarre le serveur Express + pose les listeners Discord.js sur le client passé.
  * Conçu pour cohabiter avec les listeners existants du bot modération.
  *
+ * Version sans OAuth : pas besoin de Client Secret. Le membre clique sur 🔐 Vérifier,
+ * reçoit en DM un lien `/verify/start?state=<HMAC>` valide 30 min, ouvre la page,
+ * confirme via un bouton (POST), et son IP est capturée à ce moment-là.
+ *
  * @param {import('discord.js').Client} client
  * @param {{
  *   botToken: string,
- *   clientId: string,
- *   clientSecret: string,
- *   redirectUri: string,
  *   publicBaseUrl: string,
  *   stateSecret: string,
  *   httpPort: number,
@@ -221,7 +222,7 @@ function buildVerifyUrl(cfg, discordUserId, guildId) {
  * }} opts
  */
 function installVerificationSystem(client, opts) {
-    const required = ['botToken', 'clientId', 'clientSecret', 'redirectUri', 'publicBaseUrl', 'stateSecret'];
+    const required = ['botToken', 'publicBaseUrl', 'stateSecret'];
     for (const k of required) {
         if (!opts || !opts[k]) {
             console.warn(`[verif] désactivé : option manquante ${k}.`);
@@ -240,11 +241,8 @@ function installVerificationSystem(client, opts) {
         console.log(`[verif] Logs avec IP → DM à ${ownerDmIds.length} owner(s).`);
     }
 
-    const { server } = createOAuthServer({
+    const { server } = createVerifyServer({
         botToken: opts.botToken,
-        clientId: opts.clientId,
-        clientSecret: opts.clientSecret,
-        redirectUri: opts.redirectUri,
         publicBaseUrl: opts.publicBaseUrl,
         stateSecret: opts.stateSecret,
         httpPort,
