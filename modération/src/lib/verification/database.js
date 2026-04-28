@@ -138,6 +138,17 @@ function findVerifiedInGuild(guildId, discordUserId) {
 }
 
 /**
+ * Supprime l'entrée de vérification d'un membre. Utilisé par `/unverify` pour
+ * permettre au membre de repasser le flux de vérif (et libérer son IP du
+ * registre d'alts pour cette guilde). Renvoie `true` si une ligne a été
+ * effectivement supprimée.
+ */
+function deleteVerifiedForGuild(guildId, discordUserId) {
+    const info = delGuildUser.run(guildId, discordUserId);
+    return Boolean(info && info.changes > 0);
+}
+
+/**
  * Trouve tous les autres comptes Discord ayant la même empreinte IP que le membre courant
  * sur la même guilde. Renvoie un tableau (peut être vide).
  *
