@@ -49,6 +49,47 @@ function recordGrpPeaksIfNeeded(hubDiscordId, userId, grpTotal) {
       ).run(hubDiscordId, userId, rk, season);
     }
   }
+  // Distribution des récompenses « ranked guilde » : si la guilde du joueur
+  // n'a jamais touché ce palier cette saison, on crédite tous les membres.
+  try {
+    const m = playerGuilds.getMembershipInHub(userId, hubDiscordId);
+    if (m) {
+      for (let i = 0; i <= idx; i++) {
+        const rk = GRP_RANK_KEYS[i];
+        if (grpTotal < GRP_THRESHOLDS[i]) continue;
+        distributeGuildRankReward(hubDiscordId, m.guild_id, rk, season);
+      }
+    }
+  } catch (e) {
+    console.error('[grp guild reward]', e?.message || e);
+  }
+}
+
+/** Crédite tous les membres d'une guilde une fois par (saison, palier). */
+function distributeGuildRankReward(hubDiscordId, guildId, rankKey, season) {
+  const def = GUILD_RANK_REWARDS[rankKey];
+  if (!def) return false;
+  const already = db
+    .prepare(
+      'SELECT 1 FROM guild_grp_rank_rewards WHERE hub_discord_id = ? AND guild_id = ? AND season_key = ? AND rank_key = ?',
+    )
+    .get(hubDiscordId, guildId, season, rankKey);
+  if (already) return false;
+  const members = db
+    .prepare('SELECT user_id FROM player_guild_members WHERE guild_id = ?')
+    .all(guildId);
+  if (!members.length) return false;
+  for (const { user_id } of members) {
+    users.addStars(user_id, def.stars);
+    for (const it of def.items || []) {
+      users.addInventory(user_id, it.id, it.qty);
+    }
+  }
+  db.prepare(
+    `INSERT OR IGNORE INTO guild_grp_rank_rewards (hub_discord_id, guild_id, season_key, rank_key, claimed_ms)
+     VALUES (?, ?, ?, ?, ?)`,
+  ).run(hubDiscordId, guildId, season, rankKey, Date.now());
+  return { reward: def, members: members.length };
 }
 
 /** Reset GRP tous les hubs le 1er du mois UTC (doc : saison mensuelle). */
