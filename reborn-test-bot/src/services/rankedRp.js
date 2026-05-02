@@ -1,6 +1,7 @@
 const db = require('../db');
 const users = require('./users');
 const skillTree = require('./skillTree');
+const rankedRoles = require('./rankedRoles');
 
 const POOL_CAP = 300_000n;
 const BAND_LOW = 50_000n;
