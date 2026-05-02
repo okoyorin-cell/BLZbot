@@ -3,29 +3,48 @@ const CONFIG = require('../config.js');
 const { renderStaffProfileCardV2 } = require('../utils/canvas-staff-v2');
 const { isBotOwner } = require('../utils/bot-owner');
 
+/**
+ * Liste des IDs de rôles « hauts admins » : tout rôle de `STAFF_ROLES` avec
+ * `points >= 4` (Administrateur Test, Administrateur, Directeur, avia, Owner).
+ * On la calcule une seule fois au require pour éviter une boucle à chaque appel.
+ */
+const HIGH_ADMIN_ROLE_IDS = new Set(
+    (CONFIG.STAFF_ROLES || [])
+        .filter((r) => Number(r.points || 0) >= 4)
+        .map((r) => r.id)
+);
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('profil-staff')
         .setDescription(
             'Fiche synthèse staff : candidatures, tests modo, sanctions, appréciations et sensibilité.'
         )
-        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+        // Filtre Discord côté UI : on demande Administrator pour ne pas afficher
+        // la commande aux modos lambda. Le filtre runtime ci-dessous reste
+        // l'autorité finale (rôles « hauts admins »).
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addUserOption((option) =>
             option
                 .setName('utilisateur')
-                .setDescription('Staff à afficher (par défaut : toi-même). Réservé aux comptes staff.')
+                .setDescription('Staff à afficher (par défaut : toi-même). Réservé aux hauts administrateurs.')
                 .setRequired(false)
         ),
 
     async execute(interaction, { dbManager }) {
         const member = interaction.member;
 
-        const hasStaffRole =
+        // Restriction : owner du bot OU un des rôles « hauts admins »
+        // (Administrateur Test, Administrateur, Directeur, avia, Owner).
+        // Volonté du chef : éviter le « concours » entre staffs lambda.
+        const isHighAdmin =
             isBotOwner(interaction.user.id) ||
-            CONFIG.STAFF_ROLES.some((role) => member.roles.cache.has(role.id));
-        if (!hasStaffRole) {
+            (member?.roles?.cache &&
+                [...HIGH_ADMIN_ROLE_IDS].some((id) => member.roles.cache.has(id)));
+        if (!isHighAdmin) {
             return interaction.reply({
-                content: '❌ Cette commande est réservée aux membres du staff.',
+                content:
+                    '❌ Cette commande est réservée aux **hauts administrateurs** (Admin / Directeur / Owner).',
                 ephemeral: true,
             });
         }
