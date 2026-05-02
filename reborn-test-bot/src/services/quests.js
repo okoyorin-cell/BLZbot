@@ -94,6 +94,42 @@ function trackCatlOpen(userId) {
   return null;
 }
 
+/**
+ * Compteur de victoires en minijeux. À appeler depuis le module minijeu
+ * (par exemple `niveau/src/commands/minijeu.js` après une victoire).
+ */
+function trackMinijeuWin(userId) {
+  let row = syncDayWeek(getState(userId));
+  if (row.selection_id !== 'defi_minijeu' || row.selection_claimed) return null;
+  const next = (row.selection_progress || 0) + 1;
+  db.prepare('UPDATE user_quest_state SET selection_progress = ? WHERE user_id = ?').run(next, userId);
+  if (next >= SELECTIONS.defi_minijeu.target) {
+    db.prepare('UPDATE user_quest_state SET selection_claimed = 1 WHERE user_id = ?').run(userId);
+    const reward = SELECTIONS.defi_minijeu.reward * skillTree.questRewardMult(userId);
+    users.addStars(userId, reward);
+    return { reward, label: SELECTIONS.defi_minijeu.label };
+  }
+  return null;
+}
+
+/**
+ * Détection de franchissement de tier ranked.
+ * Appelé depuis `rankedRp.grantFromActivity` quand le user atteint un nouveau
+ * tier. `tierKey` doit être l'une des clés exposées par `rankedRoles.TIERS`.
+ */
+function trackRankReached(userId, tierKey) {
+  let row = syncDayWeek(getState(userId));
+  if (row.selection_id !== 'defi_master' || row.selection_claimed) return null;
+  // Pour la quête actuelle, on ne valide qu'à partir de Master.
+  const target = SELECTIONS.defi_master.tier || 'master';
+  const order = ['bronze', 'argent', 'or', 'platine', 'diamond', 'master', 'apex'];
+  if (order.indexOf(tierKey) < order.indexOf(target)) return null;
+  db.prepare('UPDATE user_quest_state SET selection_claimed = 1, selection_progress = 1 WHERE user_id = ?').run(userId);
+  const reward = SELECTIONS.defi_master.reward * skillTree.questRewardMult(userId);
+  users.addStars(userId, reward);
+  return { reward, label: SELECTIONS.defi_master.label };
+}
+
 function trackStarssGain(userId, amount) {
   let row = syncDayWeek(getState(userId));
   const sid = row.selection_id;
