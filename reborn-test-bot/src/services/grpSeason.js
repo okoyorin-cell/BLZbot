@@ -105,4 +105,12 @@ function tickCalendarFirstOfMonthUTC() {
   meta.set(tag, '1');
 }
 
-module.exports = { currentSeasonKey, maybeResetMonthlyGrp, recordGrpPeaksIfNeeded, grpRankFromTotal, tickCalendarFirstOfMonthUTC };
+module.exports = {
+  currentSeasonKey,
+  maybeResetMonthlyGrp,
+  recordGrpPeaksIfNeeded,
+  grpRankFromTotal,
+  tickCalendarFirstOfMonthUTC,
+  distributeGuildRankReward,
+  GUILD_RANK_REWARDS,
+};
