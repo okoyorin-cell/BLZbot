@@ -6,6 +6,7 @@ const {
   ComponentType,
 } = require('discord.js');
 const db = require('../db');
+const users = require('../services/users');
 const playerGuilds = require('../services/playerGuilds');
 const rankedRoles = require('../services/rankedRoles');
 const { label: gradeLabel } = require('../reborn/grades');
