@@ -112,6 +112,8 @@ function registerEarn(client) {
       users.addXp(uid, C.XP_PER_MESSAGE);
       rankedRp.decayForUserIfIdle(uid);
       rankedRp.grantFromActivity(uid, 'msg');
+      rankedRoles.syncRankRoleForUser(client, hub, uid).catch(() => { /* best-effort */ });
+      indexRoles.syncIndexFullRole(client, hub, uid).catch(() => { /* best-effort */ });
       const u = users.getUser(uid);
       const gr = C.gxpRatesForPlayerLevel(u?.level || 1);
       const mult = gxpMultForUser(uid);
