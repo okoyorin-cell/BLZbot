@@ -335,6 +335,24 @@ client.on('interactionCreate', async (interaction) => {
     return;
   }
 
+  // ─── Autocomplete (ex. /guilde focus cible:) ───────────────────────
+  if (interaction.isAutocomplete()) {
+    const cmdAuto = client.commands.get(interaction.commandName);
+    if (!cmdAuto?.autocomplete) {
+      try { await interaction.respond([]); } catch { /* ignore */ }
+      return;
+    }
+    try {
+      await cmdAuto.autocomplete(interaction);
+    } catch (e) {
+      // Pas de followUp possible sur l'autocomplete : on log et on ignore.
+      if (e?.code !== 10062 && e?.code !== 40060) {
+        console.error(`[autocomplete ${interaction.commandName}]`, e?.message || e);
+      }
+    }
+    return;
+  }
+
   if (!interaction.isChatInputCommand()) return;
   const cmd = client.commands.get(interaction.commandName);
   if (!cmd) return;
