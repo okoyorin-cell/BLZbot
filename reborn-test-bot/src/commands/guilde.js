@@ -294,8 +294,9 @@ module.exports = {
       const tm = pg.memberRow(m.guild_id, target.id);
       if (!tm) return interaction.reply({ content: 'Cible pas dans ta guilde.' });
       const p = pg.getMemberPerms(m.guild_id, target.id);
+      const subLeader = pg.isSubLeader(m.guild_id, target.id) ? ' · 🥈 sous-chef' : '';
       const txt = p
-        ? `depot **${p.depot}** · retrait **${p.retrait}** · kick **${p.kick}** · roles **${p.roles}** · focus **${p.focus}**`
+        ? `depot **${p.depot}** · retrait **${p.retrait}** · kick **${p.kick}** · roles **${p.roles}**${subLeader}`
         : '—';
       return interaction.reply({ content: `Permissions <@${target.id}> : ${txt}` });
     }
