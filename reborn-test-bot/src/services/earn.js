@@ -67,6 +67,11 @@ function grantVoiceMinutes(guildId, userId, minutes) {
   }
   rankedRp.decayForUserIfIdle(userId);
   rankedRp.grantFromActivity(userId, 'voc', minutes);
+  if (_earnClient) {
+    rankedRoles
+      .syncRankRoleForUser(_earnClient, guildId, userId)
+      .catch(() => { /* best-effort */ });
+  }
   const gr = C.gxpRatesForPlayerLevel(row?.level || 1);
   const mult = gxpMultForUser(userId);
   const gxpBp = skillTree.guildGxpMultBp(userId);
