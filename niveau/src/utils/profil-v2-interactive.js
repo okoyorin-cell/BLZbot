@@ -620,7 +620,10 @@ async function sendProfilV2WithButtons(interaction, session) {
             } else if (i.customId.startsWith(`${BACK}_`)) {
                 const mainFile = await buildMainFile();
                 const mg = new MediaGalleryBuilder().addItems({ media: { url: 'attachment://profil-v2-main.png' } });
-                const cont = new ContainerBuilder().addMediaGalleryComponents(mg).addActionRowComponents(buildButtons(false));
+                const cont = addAllButtonRows(
+                    new ContainerBuilder().addMediaGalleryComponents(mg),
+                    false,
+                );
 
                 currentRender.attachmentName = 'profil-v2-main.png';
                 currentRender.buildBuffer = renderMainPngBuffer;
