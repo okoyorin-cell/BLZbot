@@ -430,6 +430,22 @@ function dissolveGuild(hubDiscordId, guildId, leaderId) {
   return { ok: true };
 }
 
+/** Active/désactive le focus pour une guilde (admin). */
+function setFocusDisabled(guildId, disabled) {
+  const g = getGuild(guildId);
+  if (!g) return { ok: false, error: 'Guilde introuvable.' };
+  db.prepare('UPDATE player_guilds SET focus_disabled = ? WHERE id = ?').run(disabled ? 1 : 0, guildId);
+  return { ok: true };
+}
+
+/** Réinitialise le cooldown focus (admin). */
+function resetFocusCooldown(guildId) {
+  const g = getGuild(guildId);
+  if (!g) return { ok: false, error: 'Guilde introuvable.' };
+  db.prepare('UPDATE player_guilds SET last_focus_ms = 0 WHERE id = ?').run(guildId);
+  return { ok: true };
+}
+
 function getMemberPerms(guildId, userId) {
   const g = getGuild(guildId);
   const m = memberRow(guildId, userId);
