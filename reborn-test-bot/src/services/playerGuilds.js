@@ -106,12 +106,60 @@ function canInviteMembers(guildId, actorId) {
   return Boolean(parsePermsJson(m.perms_json).roles);
 }
 
+/**
+ * Lancer un focus est réservé au **chef** ou aux **sous-chefs**.
+ * La perm `focus` du système de permissions a été retirée — c'est la promotion
+ * en sous-chef (`/guilde sous-chef ajouter`) qui donne le droit, et c'est une
+ * action symbolique forte que le chef pose explicitement.
+ */
 function canLaunchFocus(guildId, actorId) {
   const g = getGuild(guildId);
   const m = memberRow(guildId, actorId);
   if (!g || !m) return false;
   if (g.leader_id === actorId) return true;
-  return Boolean(parsePermsJson(m.perms_json).focus);
+  return Boolean(m.is_sub_leader);
+}
+
+const SUB_LEADER_CAP = 3;
+
+function isSubLeader(guildId, userId) {
+  const m = memberRow(guildId, userId);
+  return Boolean(m?.is_sub_leader);
+}
+
+function listSubLeaders(guildId) {
+  return db
+    .prepare('SELECT user_id FROM player_guild_members WHERE guild_id = ? AND is_sub_leader = 1')
+    .all(guildId)
+    .map((r) => r.user_id);
+}
+
+/**
+ * Promotion / rétrogradation d'un membre en sous-chef.
+ * @param {string} guildId
+ * @param {string} leaderId  Le chef de la guilde (seul autorisé à promouvoir)
+ * @param {string} targetId  Membre concerné
+ * @param {boolean} value    `true` = promouvoir, `false` = rétrograder
+ */
+function setSubLeader(guildId, leaderId, targetId, value) {
+  const g = getGuild(guildId);
+  if (!g) return { ok: false, error: 'Guilde introuvable.' };
+  if (g.leader_id !== leaderId) return { ok: false, error: 'Seul le chef peut nommer des sous-chefs.' };
+  if (targetId === leaderId) return { ok: false, error: 'Le chef ne peut pas être son propre sous-chef.' };
+  if (!memberRow(guildId, targetId)) return { ok: false, error: 'Cible pas membre de la guilde.' };
+  if (value) {
+    const current = listSubLeaders(guildId);
+    if (current.includes(targetId)) return { ok: true, already: true };
+    if (current.length >= SUB_LEADER_CAP) {
+      return { ok: false, error: `Limite atteinte (${SUB_LEADER_CAP} sous-chefs max). Rétrograde quelqu'un avant.` };
+    }
+  }
+  db.prepare('UPDATE player_guild_members SET is_sub_leader = ? WHERE guild_id = ? AND user_id = ?').run(
+    value ? 1 : 0,
+    guildId,
+    targetId,
+  );
+  return { ok: true };
 }
 
 function getGuild(guildId) {
