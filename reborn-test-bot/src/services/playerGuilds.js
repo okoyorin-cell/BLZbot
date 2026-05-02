@@ -535,4 +535,6 @@ module.exports = {
   getInternalRole,
   setInternalRole,
   listInternalRoles,
+  setFocusDisabled,
+  resetFocusCooldown,
 };
