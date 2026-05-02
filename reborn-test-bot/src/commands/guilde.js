@@ -67,10 +67,29 @@ module.exports = {
               { name: 'Retrait trésorerie', value: 'retrait' },
               { name: 'Expulsion membre', value: 'kick' },
               { name: 'Invitations', value: 'roles' },
-              { name: 'Lancer un focus', value: 'focus' },
             ),
         )
         .addBooleanOption((o) => o.setName('actif').setDescription('Activé').setRequired(true)),
+    )
+    .addSubcommandGroup((g) =>
+      g
+        .setName('sous-chef')
+        .setDescription('Gérer les sous-chefs (max 3 par guilde, peuvent lancer un focus).')
+        .addSubcommand((sc) =>
+          sc
+            .setName('ajouter')
+            .setDescription('Promouvoir un membre en sous-chef (chef uniquement).')
+            .addUserOption((o) => o.setName('membre').setDescription('Membre à promouvoir').setRequired(true)),
+        )
+        .addSubcommand((sc) =>
+          sc
+            .setName('retirer')
+            .setDescription('Rétrograder un sous-chef (chef uniquement).')
+            .addUserOption((o) => o.setName('membre').setDescription('Sous-chef à rétrograder').setRequired(true)),
+        )
+        .addSubcommand((sc) =>
+          sc.setName('lister').setDescription('Voir les sous-chefs actuels de ta guilde.'),
+        ),
     )
     .addSubcommand((sc) =>
       sc
