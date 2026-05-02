@@ -35,6 +35,19 @@ const SELECTIONS = {
     target: 1,
     reward: 250_000n,
   },
+  defi_master: {
+    label: 'Défi Master+ : atteindre le tier Master en RP cette semaine',
+    kind: 'rank_reached',
+    target: 1,
+    reward: 500_000n,
+    tier: 'master',
+  },
+  defi_minijeu: {
+    label: 'Défi Minijeux : remporter 3 minijeux cette semaine',
+    kind: 'minijeu_wins',
+    target: 3,
+    reward: 120_000n,
+  },
 };
 
 /**
