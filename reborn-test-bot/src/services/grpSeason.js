@@ -1,6 +1,23 @@
 const db = require('../db');
 const { GRP_RANK_KEYS, GRP_THRESHOLDS, grpRankFromTotal } = require('../reborn/grades');
 const meta = require('./meta');
+const users = require('./users');
+const playerGuilds = require('./playerGuilds');
+
+/**
+ * Récompense de palier de guilde (saison courante) :
+ * quand un membre fait franchir un nouveau rang à la guilde, tous ses membres
+ * touchent la récompense correspondante. Une seule fois par saison.
+ */
+const GUILD_RANK_REWARDS = {
+  bronze: { stars: 50_000n, items: [] },
+  argent: { stars: 100_000n, items: [] },
+  or: { stars: 250_000n, items: [{ id: 'planete', qty: 1 }] },
+  platine: { stars: 500_000n, items: [{ id: 'corail', qty: 1 }] },
+  diamant: { stars: 1_000_000n, items: [{ id: 'requin', qty: 1 }] },
+  goat: { stars: 2_000_000n, items: [{ id: 'galaxie', qty: 1 }] },
+  star: { stars: 5_000_000n, items: [{ id: 'crystal', qty: 1 }] },
+};
 
 function currentSeasonKey() {
   const d = new Date();
