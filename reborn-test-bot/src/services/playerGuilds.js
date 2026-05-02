@@ -585,4 +585,8 @@ module.exports = {
   listInternalRoles,
   setFocusDisabled,
   resetFocusCooldown,
+  isSubLeader,
+  listSubLeaders,
+  setSubLeader,
+  SUB_LEADER_CAP,
 };
