@@ -250,6 +250,9 @@ function migrate(db) {
   addColumnIfMissing(db, 'trades', 'from_items_json', "TEXT NOT NULL DEFAULT '[]'");
   addColumnIfMissing(db, 'trades', 'to_items_json', "TEXT NOT NULL DEFAULT '[]'");
   addColumnIfMissing(db, 'player_guild_members', 'perms_json', "TEXT NOT NULL DEFAULT '{}'");
+  // Sous-chef d'une guilde (max 3 par guilde, géré côté code) — peut lancer un focus
+  // sans avoir besoin de la permission « focus » (qui a été retirée du système).
+  addColumnIfMissing(db, 'player_guild_members', 'is_sub_leader', 'INTEGER NOT NULL DEFAULT 0');
   addColumnIfMissing(db, 'user_quest_state', 'lifetime_msgs', 'INTEGER NOT NULL DEFAULT 0');
   addColumnIfMissing(db, 'user_quest_state', 'weekly_skips_used', 'INTEGER NOT NULL DEFAULT 0');
   addColumnIfMissing(db, 'users', 'last_event_spawner_claim_ms', 'INTEGER NOT NULL DEFAULT 0');
