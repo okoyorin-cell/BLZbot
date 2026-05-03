@@ -354,7 +354,9 @@ async function handleVerifyCommand(interaction, buildVerifyUrl, client) {
   }
   const url = buildVerifyUrl(interaction.user.id, interaction.guild.id);
   await interaction.reply({
-    content: `🔗 Lien de vérification :\n${url}`,
+    content:
+      'Clique sur le bouton pour ouvrir la page de vérification (même **compte Discord**).',
+    components: [buildVerifyLinkRow(url)],
     flags: MessageFlags.Ephemeral,
   });
 }
