@@ -686,6 +686,22 @@ function buildSlashCommands() {
       .setDescription('Panneau admin : salon du bouton, rôle, salon logs, contenu de l’embed')
       .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
       .toJSON(),
+    new SlashCommandBuilder()
+      .setName('unverify')
+      .setDescription("Retirer la vérification d'un membre (rôle + entrée DB) — staff uniquement")
+      .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+      .setDMPermission(false)
+      .addUserOption((opt) =>
+        opt.setName('user').setDescription('Membre à dévérifier').setRequired(true),
+      )
+      .addStringOption((opt) =>
+        opt
+          .setName('raison')
+          .setDescription('Raison (optionnelle, affichée dans les logs)')
+          .setRequired(false)
+          .setMaxLength(400),
+      )
+      .toJSON(),
   ];
 }
 
