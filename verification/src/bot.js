@@ -218,6 +218,11 @@ function createBot(opts) {
         await handleVerifyCommand(interaction, buildVerifyUrl, client);
         return;
       }
+
+      if (interaction.commandName === 'unverify') {
+        await handleUnverifyCommand(interaction, client);
+        return;
+      }
     } catch (e) {
       console.error('[InteractionCreate]', e);
       const payload = { content: `Erreur : ${e.message || e}`, flags: MessageFlags.Ephemeral };
