@@ -31,6 +31,7 @@ const {
   ChannelType,
 } = require('discord.js');
 const { signState } = require('./cryptoUtil');
+const { VERIF_BUILD_ID } = require('./buildId');
 const {
   getGuildConfig,
   upsertGuildConfig,
