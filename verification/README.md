@@ -115,18 +115,20 @@ L'URL publique devient `https://verify.tonsite.com`. Reporte-la dans le portail 
 
 ## 4. Configuration `.env`
 
-```bash
-cd verification
-cp .env.example .env
-```
+Tu as **2 options** pour le `.env` :
 
-Édite `verification/.env` :
+### Option 1 — `.env` partagé avec les autres bots BLZ (recommandé sur Pebble)
+
+Ajoute simplement les lignes ci-dessous **à la fin** de ton `.env` existant
+(racine du repo en local, ou `/home/container/.env` sur Pebble) — sans toucher
+aux variables du bot modération qui s'y trouvent déjà :
 
 ```env
-# Obligatoire
-BOT_TOKEN=<token de la nouvelle app Discord>
-DISCORD_CLIENT_ID=<application ID>
-DISCORD_CLIENT_SECRET=<client secret OAuth>
+# ─── Bot de vérification (variables préfixées pour éviter les conflits) ───
+VERIFICATION_BOT_TOKEN=<token de la NOUVELLE app Discord du bot vérif>
+VERIFICATION_CLIENT_ID=<application ID de la même app>
+VERIFICATION_CLIENT_SECRET=<client secret OAuth de la même app>
+
 OAUTH_REDIRECT_URI=https://verify.tonsite.com/oauth/callback
 PUBLIC_BASE_URL=https://verify.tonsite.com
 HTTP_PORT=3782
@@ -139,16 +141,33 @@ OAUTH_STATE_SECRET=<≥ 32 caractères aléatoires>
 OWNER_DM_IDS=965984018216665099,1278372257483456603
 
 # Optionnel : verrou reverse proxy
-# Génère avec : node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 VERIFY_PROXY_SECRET=
 ```
+
+⚠️ **Le `BOT_TOKEN` du bot modération reste tel quel** — le bot vérif lit
+`VERIFICATION_BOT_TOKEN` (préfixé) pour ne pas écraser celui de la modération.
+
+### Option 2 — `.env` standalone dans `verification/`
+
+Si tu préfères isoler la config du bot vérif :
+
+```bash
+cd verification
+cp .env.example .env
+```
+
+Tu peux alors utiliser **soit** les noms `VERIFICATION_*`, **soit** les noms
+historiques sans préfixe (`BOT_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`).
+Comme le `.env` est dédié, pas de risque de collision.
+
+### Cas particulier : Cloudflare Tunnel
 
 Si tu utilises Cloudflare Tunnel :
 
 - `PUBLIC_BASE_URL=https://verify.tonsite.com`
 - `OAUTH_REDIRECT_URI=https://verify.tonsite.com/oauth/callback`
 - `HTTP_HOST=127.0.0.1` (le tunnel boucle en localhost, donc le port n'est plus exposé sur Internet)
-- `VERIFY_PROXY_SECRET=` peut rester vide (le tunnel chiffre + cloisonne déjà — pas de port public à protéger)
+- `VERIFY_PROXY_SECRET=` peut rester vide (le tunnel chiffre + cloisonne déjà)
 
 ---
 
