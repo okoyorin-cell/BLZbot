@@ -344,13 +344,7 @@ async function handleVerifyButton(interaction, buildVerifyUrl, client) {
     return;
   }
   const url = buildVerifyUrl(interaction.user.id, interaction.guild.id);
-  await interaction.reply({
-    content:
-      'Clique sur le bouton ci-dessous (même **compte Discord** dans le navigateur).\n' +
-      'Une fois validé, tu recevras automatiquement le rôle.',
-    components: [buildVerifyLinkRow(url)],
-    flags: MessageFlags.Ephemeral,
-  });
+  await replyVerifyLinkEphemeral(interaction, url);
 }
 
 async function handleVerifyCommand(interaction, buildVerifyUrl, client) {
