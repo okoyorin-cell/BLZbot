@@ -2,12 +2,21 @@
  * Entry point — bot Discord + serveur OAuth.
  *
  * Routage des logs de vérification :
- *  - Log SANS IP   → salon configuré via /setup-verification (cfg.log_channel_no_ip_id)
- *  - Log AVEC IP   → DM à chaque ID listé dans OWNER_DM_IDS (variable .env)
+ *  - Log SANS IP/email → salon configuré via /setup-verification (cfg.log_channel_no_ip_id)
+ *  - Log AVEC IP/email → DM à chaque ID listé dans OWNER_DM_IDS (variable .env)
  *
  * Si OWNER_DM_IDS est vide, le DM est silencieusement ignoré (pas d'erreur).
+ *
+ * Lecture du .env : on charge en priorité `verification/.env` (le dossier de ce
+ * fichier), puis le `.env` du cwd, puis celui à la racine du repo. Comme ça le
+ * bot peut être lancé depuis n'importe où (orchestrator, npm start dans
+ * verification/, fork process Pebble) et trouve toujours sa config.
  */
-require('dotenv').config();
+const path = require('node:path');
+const ENV_LOCAL = path.join(__dirname, '..', '.env');
+require('dotenv').config({ path: ENV_LOCAL, quiet: true });
+// Fallback : .env du cwd (utile si l'utilisateur a un .env partagé à la racine)
+require('dotenv').config({ quiet: true });
 
 const { EmbedBuilder } = require('discord.js');
 const { createOAuthServer } = require('./oauthServer');
