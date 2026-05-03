@@ -224,6 +224,12 @@ async function main() {
   const publicBaseUrl = requireEnv('PUBLIC_BASE_URL');
   const stateSecret = requireEnv('OAUTH_STATE_SECRET');
   const httpPort = parseInt(process.env.HTTP_PORT || '3782', 10);
+  const httpHost = String(process.env.HTTP_HOST || '0.0.0.0').trim();
+  const trustedProxySecret = String(process.env.VERIFY_PROXY_SECRET || '').trim() || null;
+  const trustedProxyIps = String(process.env.VERIFY_PROXY_IPS || '')
+    .split(/[,\s]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
   const ownerDmIds = parseOwnerDmIds(process.env.OWNER_DM_IDS);
 
   if (ownerDmIds.length === 0) {
@@ -250,6 +256,9 @@ async function main() {
     publicBaseUrl,
     stateSecret,
     httpPort,
+    httpHost,
+    trustedProxySecret,
+    trustedProxyIps,
     onVerificationLog: (payload) => onVerificationLog(client, ownerDmIds, payload),
   });
 
