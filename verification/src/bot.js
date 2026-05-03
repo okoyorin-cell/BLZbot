@@ -115,6 +115,16 @@ function describeConfig(cfg) {
   );
 }
 
+/** Bouton ouvrant l'OAuth dans le navigateur (pas de lien brut dans le message → pas d'embed preview). */
+function buildVerifyLinkRow(url) {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setLabel('Ouvrir la vérification')
+      .setStyle(ButtonStyle.Link)
+      .setURL(url),
+  );
+}
+
 /**
  * @param {object} opts
  * @param {string} opts.publicBaseUrl
