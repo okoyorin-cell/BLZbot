@@ -3,7 +3,8 @@
  *  - /setup-verification : panneau admin avec menus (salon panneau, rôle vérifié, salon
  *    logs SANS IP, personnalisation embed, publication).
  *  - /verify : commande de secours pour obtenir le lien OAuth (équivalent du bouton).
- *  - Le bouton "Vérifier" du panneau public ouvre un lien éphémère vers `/oauth/start?...`.
+ *  - Le bouton "Vérifier" du panneau public ouvre un message éphémère avec un bouton
+ *    lien vers `/oauth/start?...`.
  *
  * Note : les logs AVEC IP partent en DM aux owners (voir `index.js`), pas dans un salon.
  * Pour cette raison, /setup-verification ne propose PAS de "salon logs avec IP".
