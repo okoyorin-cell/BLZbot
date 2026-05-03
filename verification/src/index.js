@@ -307,8 +307,7 @@ async function main() {
   }
 
   const { client } = createBot({
-    clientId,
-    redirectUri,
+    publicBaseUrl,
     stateSecret,
   });
 
