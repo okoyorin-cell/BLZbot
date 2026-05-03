@@ -72,11 +72,43 @@ function page(title, bodyHtml) {
   </head><body><h1>${escapeHtml(title)}</h1>${bodyHtml}</body></html>`;
 }
 
-function clientIp(req) {
-    const xff = req.headers['x-forwarded-for'];
-    if (typeof xff === 'string' && xff.trim()) return xff.split(',')[0].trim();
-    if (Array.isArray(xff) && xff[0]) return String(xff[0]).split(',')[0].trim();
+/**
+ * IP du client.
+ *
+ * Si `trustXForwardedFor === true`, on lit `X-Forwarded-For` (premier élément).
+ * Sinon on retourne l'IP du socket TCP (sans tenir compte du header XFF qui
+ * peut être forgé par n'importe qui).
+ *
+ * Le mode « trust XFF » n'est activé que si la requête vient bien du reverse
+ * proxy (vérifié via `X-Verif-Proxy-Secret` ou IP whitelist) — voir `isTrustedProxy`.
+ */
+function clientIp(req, trustXForwardedFor = true) {
+    if (trustXForwardedFor) {
+        const xff = req.headers['x-forwarded-for'];
+        if (typeof xff === 'string' && xff.trim()) return xff.split(',')[0].trim();
+        if (Array.isArray(xff) && xff[0]) return String(xff[0]).split(',')[0].trim();
+    }
     return req.socket?.remoteAddress || 'inconnue';
+}
+
+/**
+ * Détermine si la requête vient bien du reverse proxy autorisé.
+ *  - Si `trustedProxySecret` configuré : check `X-Verif-Proxy-Secret`.
+ *  - Sinon, si `trustedProxyIps` configurée : check IP source.
+ *  - Sinon (config absente), tout est accepté (mode dev / Pebble direct).
+ */
+function isTrustedProxy(req, opts) {
+    const secret = opts.trustedProxySecret;
+    if (secret) {
+        const provided = String(req.headers['x-verif-proxy-secret'] || '').trim();
+        return provided.length > 0 && provided === secret;
+    }
+    const list = opts.trustedProxyIps;
+    if (Array.isArray(list) && list.length > 0) {
+        const remote = String(req.socket?.remoteAddress || '').replace(/^::ffff:/, '');
+        return list.includes(remote);
+    }
+    return true; // Pas de restriction configurée → on accepte tout (mode legacy).
 }
 
 /** Lit un corps `application/x-www-form-urlencoded` borné en taille (4 Ko). */
