@@ -348,6 +348,112 @@ async function handleVerifyCommand(interaction, buildVerifyUrl, client) {
   });
 }
 
+async function handleUnverifyCommand(interaction, client) {
+  if (!interaction.guild) {
+    await interaction.reply({
+      content: 'Commande utilisable uniquement sur un serveur.',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+  if (!isStaffForUnverify(interaction)) {
+    await interaction.reply({
+      content:
+        'Réservé au staff (Administrateur, Gérer le serveur, Bannir, Expulser ou Modérer les membres).',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  const target = interaction.options.getUser('user', true);
+  const reason = (interaction.options.getString('raison') || '').trim();
+
+  if (target.bot) {
+    await interaction.reply({
+      content: 'Impossible de dévérifier un bot.',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+  const cfg = getGuildConfig(interaction.guild.id);
+  const dbRow = findVerifiedInGuild(interaction.guild.id, target.id);
+
+  const member = await interaction.guild.members
+    .fetch(target.id)
+    .catch(() => null);
+
+  const hasRole = Boolean(
+    cfg?.verified_role_id && member?.roles?.cache?.has(cfg.verified_role_id),
+  );
+
+  if (!dbRow && !hasRole) {
+    await interaction.editReply({
+      content: `${target} n'est pas vérifié sur ce serveur (aucune entrée en base, pas de rôle vérifié appliqué).`,
+    });
+    return;
+  }
+
+  let roleRemoved = false;
+  let roleError = null;
+  if (hasRole) {
+    try {
+      await removeGuildMemberRole(
+        client.token,
+        interaction.guild.id,
+        target.id,
+        cfg.verified_role_id,
+      );
+      roleRemoved = true;
+    } catch (e) {
+      roleError = e?.message || String(e);
+      console.error('[unverify] Échec retrait rôle :', roleError);
+    }
+  }
+
+  const dbDeleted = deleteVerifiedForGuild(interaction.guild.id, target.id);
+
+  const lines = [
+    `**${target.tag || target.username}** (\`${target.id}\`) — dévérifié.`,
+    `• Entrée DB supprimée : ${dbDeleted ? '✅' : '➖ (aucune)'}`,
+    `• Rôle vérifié retiré : ${
+      hasRole ? (roleRemoved ? '✅' : `❌ (${roleError || 'erreur'})`) : '➖ (pas appliqué)'
+    }`,
+  ];
+  if (reason) lines.push(`• Raison : ${reason}`);
+  lines.push('', "L'IP et l'email associés sont libérés : un autre compte peut désormais utiliser cet email sur ce serveur, et l'IP n'apparaîtra plus dans la détection d'alts.");
+
+  await interaction.editReply({ content: lines.join('\n') });
+
+  if (cfg?.log_channel_no_ip_id) {
+    try {
+      const logCh = await interaction.guild.channels
+        .fetch(cfg.log_channel_no_ip_id)
+        .catch(() => null);
+      if (logCh && logCh.isTextBased()) {
+        const embed = new EmbedBuilder()
+          .setTitle('Membre dévérifié')
+          .setColor(0xed4245)
+          .setDescription(
+            `**Cible :** ${target} (\`${target.id}\`)\n` +
+              `**Modérateur :** ${interaction.user} (\`${interaction.user.id}\`)\n` +
+              `**Rôle retiré :** ${
+                hasRole ? (roleRemoved ? 'oui' : 'tentative échouée') : 'pas appliqué'
+              }\n` +
+              `**Entrée DB :** ${dbDeleted ? 'supprimée' : 'aucune'}` +
+              (reason ? `\n**Raison :** ${reason}` : ''),
+          )
+          .setTimestamp(new Date());
+        await logCh.send({ embeds: [embed] }).catch(() => {});
+      }
+    } catch (e) {
+      console.error('[unverify] log channel error :', e?.message || e);
+    }
+  }
+}
+
 async function handleEmbedModalSubmit(interaction, client) {
   if (!interaction.guild || !isGuildAdmin(interaction)) {
     await interaction.reply({
