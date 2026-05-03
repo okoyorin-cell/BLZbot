@@ -231,11 +231,19 @@ function createOAuthServer(opts) {
     };
 
     if (err) {
-      const decoded = state ? verifyState(state, opts.stateSecret) : null;
-      if (decoded) {
+      let logDecoded = null;
+      if (state) {
+        if (OAUTH_TICKET_ID_RE.test(state)) {
+          logDecoded = peekOAuthTicket(state);
+          deleteOAuthTicket(state);
+        } else {
+          logDecoded = verifyState(state, opts.stateSecret);
+        }
+      }
+      if (logDecoded) {
         await emitLog({
-          guildId: decoded.guildId,
-          userId: decoded.discordUserId,
+          guildId: logDecoded.guildId,
+          userId: logDecoded.discordUserId,
           success: false,
           reason: `OAuth refusé ou erreur Discord : ${String(err)}`,
         });
