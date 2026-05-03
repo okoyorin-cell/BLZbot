@@ -239,7 +239,12 @@ function createVerifyServer(opts) {
     }
 
     async function handleSubmit(req, res, parsedUrl) {
-        const ip = clientIp(req);
+        // On ne fait confiance à `X-Forwarded-For` que si la requête a passé
+        // le check `isTrustedProxy` (et qu'un proxy est bien configuré).
+        // Si aucun proxy n'est configuré, on garde le comportement legacy
+        // (XFF accepté par défaut, sinon socket.remoteAddress).
+        const trustXff = proxyEnforced ? isTrustedProxy(req, opts) : true;
+        const ip = clientIp(req, trustXff);
         const userAgent = String(req.headers['user-agent'] || '').slice(0, 300);
 
         let bodyParams;
