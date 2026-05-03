@@ -29,6 +29,7 @@ const {
   TextInputStyle,
   ChannelType,
 } = require('discord.js');
+const { VERIF_BUILD_ID } = require('./buildId');
 const {
   getGuildConfig,
   upsertGuildConfig,
