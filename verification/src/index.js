@@ -263,9 +263,28 @@ async function onVerificationLog(client, ownerDmIds, p) {
 }
 
 async function main() {
-  const botToken = requireEnv('BOT_TOKEN');
-  const clientId = requireEnv('DISCORD_CLIENT_ID');
-  const clientSecret = requireEnv('DISCORD_CLIENT_SECRET');
+  // ─── Variables potentiellement en conflit avec d'autres bots du même .env ──
+  // On lit `VERIFICATION_*` en priorité, fallback sur les noms historiques.
+  const botToken = envWithPrefix('VERIFICATION_BOT_TOKEN', 'BOT_TOKEN');
+  if (!botToken) {
+    console.error(
+      "[verif] Variable manquante : VERIFICATION_BOT_TOKEN (ou BOT_TOKEN).\n" +
+        '       Ce token DOIT être différent de celui du bot modération.',
+    );
+    process.exit(1);
+  }
+  const clientId = envWithPrefix('VERIFICATION_CLIENT_ID', 'DISCORD_CLIENT_ID');
+  if (!clientId) {
+    console.error("[verif] Variable manquante : VERIFICATION_CLIENT_ID (ou DISCORD_CLIENT_ID).");
+    process.exit(1);
+  }
+  const clientSecret = envWithPrefix('VERIFICATION_CLIENT_SECRET', 'DISCORD_CLIENT_SECRET');
+  if (!clientSecret) {
+    console.error("[verif] Variable manquante : VERIFICATION_CLIENT_SECRET (ou DISCORD_CLIENT_SECRET).");
+    process.exit(1);
+  }
+
+  // ─── Variables uniques au bot vérif (pas de conflit possible) ─────────────
   const redirectUri = requireEnv('OAUTH_REDIRECT_URI');
   const publicBaseUrl = requireEnv('PUBLIC_BASE_URL');
   const stateSecret = requireEnv('OAUTH_STATE_SECRET');
