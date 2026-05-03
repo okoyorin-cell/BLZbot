@@ -29,33 +29,11 @@ const DEFAULT_SUPPORT_GUILD_ID = String(CONFIG.TICKETS?.SUPPORT_GUILD_ID || '135
  * sur les guilds explicitement listées). Utile quand l'app Discord approche les
  * 100 commandes globales (limite Discord) — on évite de consommer les slots globaux.
  *
- * Pour `/setup-verification` et `/verify` : on suit la liste dynamique de
- * `getSlashDeployGuildIds()` (= GUILD_ID + BLZ_MAIN_GUILD_ID) + le serveur support.
- * Comme ça, en mode TEST le déploiement va sur la test guild + main, et en prod
- * sur le serveur primaire. Surcharge possible via `BLZ_VERIF_GUILD_IDS=id1,id2`.
+ * Note : `/verify`, `/setup-verification`, `/unverify` ont été extraites dans le
+ * bot dédié `verification/` (app Discord séparée, son propre token). Plus rien
+ * lié à la vérif n'est déployé depuis ce déployeur.
  */
-function buildVerifGuildTargets() {
-    const ids = new Set(['1351221530998345828']); // support BLZ (toujours inclus)
-    const override = String(process.env.BLZ_VERIF_GUILD_IDS || '').trim();
-    if (override) {
-        for (const id of override.split(/[,;]/).map((s) => s.trim())) {
-            if (/^\d{17,22}$/.test(id)) ids.add(id);
-        }
-    } else {
-        // Suit la config standard du bot : guilde primaire + main BLZ
-        try {
-            const { getSlashDeployGuildIds } = require(path.join(__dirname, '..', '..', '..', 'blzbot-env.js'));
-            for (const id of getSlashDeployGuildIds()) ids.add(id);
-        } catch { /* en dehors du repo BLZ : on garde juste support */ }
-    }
-    return ids;
-}
-const VERIF_GUILD_TARGETS = buildVerifGuildTargets();
-const GUILD_ONLY_BY_COMMAND = new Map([
-    ['setup-verification', VERIF_GUILD_TARGETS],
-    ['verify', VERIF_GUILD_TARGETS],
-    ['unverify', VERIF_GUILD_TARGETS],
-]);
+const GUILD_ONLY_BY_COMMAND = new Map([]);
 
 /**
  * Guildes où on enregistre **toutes** les commandes modération en guild (`commands.set`),
