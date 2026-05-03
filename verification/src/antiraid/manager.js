@@ -1,8 +1,8 @@
 const path = require('path');
-const { PermissionFlagsBits, EmbedBuilder, ContainerBuilder, SectionBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize } = require('discord.js');
-const CONFIG = require('../config.js');
+const { PermissionFlagsBits, EmbedBuilder, ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize } = require('discord.js');
+const CONFIG = require('./config');
 const { isBlzTestGuild } = require(path.join(__dirname, '..', '..', '..', 'blzbot-env.js'));
-const { resolveAllLogChannelId } = require('../utils/log-channel-resolve');
+const { resolveRaidLogChannelId } = require('./logResolve');
 
 /**
  * Gestionnaire Anti-Raid Intelligent
