@@ -3,8 +3,12 @@
  * Utile si tu veux pousser les commandes sans démarrer le bot complet.
  *
  * Usage : `npm run deploy-commands` (depuis verification/)
+ *      ou `npm run verification:deploy` (depuis la racine du repo)
  */
-require('dotenv').config();
+const path = require('node:path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true });
+require('dotenv').config({ quiet: true });
+
 const { REST, Routes } = require('discord.js');
 const { buildSlashCommands } = require('../src/bot');
 
