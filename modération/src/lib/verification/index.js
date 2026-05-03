@@ -364,11 +364,25 @@ function installVerificationSystem(client, opts) {
 
     const dispatchOptions = { ownerDmIds, vpnNoticeChannelId };
 
+    if (trustedProxySecret) {
+        console.log('[verif] Reverse proxy obligatoire (header X-Verif-Proxy-Secret).');
+    } else if (trustedProxyIps.length > 0) {
+        console.log(`[verif] Reverse proxy obligatoire (whitelist ${trustedProxyIps.length} IP(s)).`);
+    } else {
+        console.warn(
+            '[verif] Aucun garde-fou reverse proxy — TOUT le monde peut hit le port HTTP.\n' +
+                '       Recommandé : VERIFY_PROXY_SECRET=<long random> ou VERIFY_PROXY_IPS=<ip1,ip2>',
+        );
+    }
+
     const { server } = createVerifyServer({
         botToken: opts.botToken,
         publicBaseUrl: opts.publicBaseUrl,
         stateSecret: opts.stateSecret,
         httpPort,
+        httpHost,
+        trustedProxySecret,
+        trustedProxyIps,
         unverifiedRoleId,
         onVerificationLog: (payload) => dispatchVerificationLog(client, dispatchOptions, payload),
     });
