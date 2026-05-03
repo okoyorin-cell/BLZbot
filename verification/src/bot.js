@@ -401,12 +401,7 @@ async function handleVerifyCommand(interaction, buildVerifyUrl, client) {
     return;
   }
   const url = buildVerifyUrl(interaction.user.id, interaction.guild.id);
-  await interaction.reply({
-    content:
-      'Clique sur le bouton pour ouvrir la page de vérification (même **compte Discord**).',
-    components: [buildVerifyLinkRow(url)],
-    flags: MessageFlags.Ephemeral,
-  });
+  await replyVerifyLinkEphemeral(interaction, url);
 }
 
 async function handleUnverifyCommand(interaction, client) {
