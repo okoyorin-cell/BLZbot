@@ -62,9 +62,9 @@ const client = new Client({
 });
 
 /**
- * Registre unique : /settings et statuts. Par défaut on ne fork plus que modération + niveau
- * (évite plusieurs sessions Discord avec le même token — linkScanner/Bug/IA restent optionnels).
- * BLZ_FORK_SERVICES=moderation,niveau,ia | all | liste: checktoken,moderation,niveau,linkscanner,ia,bug
+ * Registre unique : /settings et statuts. Par défaut on fork modération + niveau + verification.
+ * (`verification` = bot Discord SÉPARÉ avec son propre token, voir verification/README.md)
+ * BLZ_FORK_SERVICES=moderation,niveau,ia,verification | all | liste: checktoken,moderation,niveau,linkscanner,ia,bug,verification
  */
 const SCRIPT_REGISTRY = [
   { key: 'checktoken', name: 'workers/CheckToken.js', description: 'Vérif token (webhook)', status: 'inactive' },
@@ -73,10 +73,13 @@ const SCRIPT_REGISTRY = [
   { key: 'linkscanner', name: 'workers/linkScanner.js', description: 'Scan des liens (2e session même token)', status: 'inactive' },
   { key: 'ia', name: 'ia/index.js', description: 'Module IA (GROQ_API_KEY requis)', status: 'inactive' },
   { key: 'bug', name: 'workers/Bug.js', description: 'Commande /bug (2e session même token)', status: 'inactive' },
+  // Bot de vérification standalone — app Discord SÉPARÉE (BOT_TOKEN propre dans verification/.env).
+  // Sert le serveur OAuth + commandes /verify et /setup-verification.
+  { key: 'verification', name: 'verification/src/index.js', description: 'Bot de vérification OAuth (app Discord séparée)', status: 'inactive' },
 ];
 
 function parseForkServiceKeys() {
-  const raw = (process.env.BLZ_FORK_SERVICES || 'moderation,niveau,ia').trim().toLowerCase();
+  const raw = (process.env.BLZ_FORK_SERVICES || 'moderation,niveau,ia,verification').trim().toLowerCase();
   if (!raw || raw === 'all' || raw === '*') return null;
   return new Set(raw.split(/[,;]/).map((k) => k.trim()).filter(Boolean));
 }
