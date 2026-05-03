@@ -1,153 +1,250 @@
-# BLZ Verification
+# BLZ Verification — bot Discord standalone
 
-Bot Discord de **vérification OAuth** + **capture IP**, avec logs séparés (sans IP en salon, **avec IP en DM aux owners**).
+Bot Discord **séparé** dédié à la vérification des membres :
 
-Adapté du système Killua (`Killua bot verif`) — partie modération/antiraid retirée car gérée par le bot `modération` du repo principal.
+- OAuth Discord avec récupération de l'**email vérifié** du membre (anti double-compte)
+- Capture de l'**IP** du visiteur
+- Détection **VPN/proxy/datacenter** (refus auto)
+- Détection des **alts** par IP partagée
+- Logs séparés : **embed sans IP/email en salon** + **DM aux owners avec IP + email + UA**
+- Verrou **reverse proxy** (header `X-Verif-Proxy-Secret`) pour cacher l'IP du serveur
 
----
-
-## Comment ça marche
-
-1. Un admin lance **`/setup-verification`** sur son serveur. Un panneau éphémère s'affiche pour configurer :
-   - Salon où poster le panneau public
-   - Rôle attribué après vérification
-   - Salon des logs **sans IP** (publics, visibles par le staff)
-   - (Optionnel) Personnaliser titre/description/couleur de l'embed
-   - Bouton **Publier / mettre à jour le panneau**
-2. Le panneau public contient un embed + un bouton **"🔐 Vérifier"**.
-3. Quand un membre clique, il reçoit un **lien éphémère** vers `${PUBLIC_BASE_URL}/oauth/start?state=...`.
-4. Le membre est redirigé vers Discord OAuth2 (scope `identify email`), accepte, revient sur `/oauth/callback`.
-5. Le serveur :
-   - vérifie que le compte Discord est le bon (anti-spoof),
-   - vérifie que l'email Discord est confirmé,
-   - hashe l'email (anti double-compte sur la guilde),
-   - donne le rôle vérifié,
-   - log dans les 2 canaux (salon sans IP + DM owners avec IP).
-
-Tout ce que la DB stocke par membre = `(guild_id, discord_user_id, email_hash, verified_at)`. **Aucun email en clair, aucune IP** ne sont persistés en base.
+> ⚠️ Ce bot a son **propre token Discord** et sa **propre application Discord**, séparés du bot modération. Ils tournent en parallèle sur le même hébergement (Pebble).
 
 ---
 
-## 1. Installation locale
+## Architecture 2 bots
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    Hébergement Pebble                │
+│                                                       │
+│  ┌──────────────────┐      ┌──────────────────┐     │
+│  │ Bot modération   │      │ Bot vérification │     │
+│  │ (token A)        │      │ (token B)        │     │
+│  │                  │      │                  │     │
+│  │ - /ban /mute     │      │ - /verify        │     │
+│  │ - /tickets       │      │ - /setup-verif   │     │
+│  │ - /panel-deban   │      │ - bouton 🔐      │     │
+│  │ - logs           │      │ - serveur OAuth  │     │
+│  │ - anti-raid      │      │   port 3782      │     │
+│  └──────────────────┘      └──────────────────┘     │
+│         │                          │                 │
+│         └────────┬─────────────────┘                 │
+│                  ▼                                   │
+│            Orchestrator                              │
+│         (1 process, fork les 2)                      │
+└─────────────────────────────────────────────────────┘
+                  │
+                  ▼ (port 3782, optionnellement derrière reverse proxy)
+            Membres Discord
+```
+
+Pourquoi 2 bots séparés ?
+
+- **Sessions Discord propres** : pas de conflit entre les boutons `verify:go` du panneau de vérif et le reste de la modération.
+- **Permissions minimales** : le bot vérif n'a besoin que de `Manage Roles` + lecture, pas des perms de modération.
+- **OAuth isolé** : le `DISCORD_CLIENT_SECRET` est dangereux — il vit dans une app Discord dédiée.
+- **Crash isolé** : si le bot vérif crash, la modération continue de tourner (et inversement).
+
+---
+
+## 1. Installation
+
+```bash
+# Depuis la racine du repo BLZbot-main :
+npm run verification:install
+```
+
+Ou depuis le dossier `verification/` :
 
 ```bash
 cd verification
 npm install
 ```
 
-Si tu as un souci `better-sqlite3` / `NODE_MODULE_VERSION` :
+---
+
+## 2. Création de l'app Discord (à faire UNE FOIS)
+
+Sur https://discord.com/developers/applications :
+
+1. Clique **New Application** → nom au choix (ex. « BLZ Verification »).
+2. Onglet **Bot** :
+   - **Reset Token** → copie → c'est `BOT_TOKEN`.
+   - **Privileged Gateway Intents** → active **Server Members Intent**.
+3. Onglet **General Information** :
+   - **Application ID** → copie → c'est `DISCORD_CLIENT_ID`.
+4. Onglet **OAuth2** :
+   - **Reset Secret** → copie → c'est `DISCORD_CLIENT_SECRET`.
+   - **Redirects** → ajoute l'URL de callback (cf. choix de l'URL ci-dessous).
+5. Onglet **OAuth2 → URL Generator** :
+   - Scopes : `bot`, `applications.commands`
+   - Permissions : `Manage Roles`, `View Channels`, `Send Messages`, `Read Message History`
+   - Copie l'URL → ouvre-la → invite le bot sur ton serveur.
+6. Sur ton serveur Discord : place le **rôle du bot AU-DESSUS** du rôle vérifié dans Server Settings → Roles (sinon il ne pourra pas attribuer le rôle).
+
+---
+
+## 3. Choix de l'URL publique
+
+Le serveur OAuth tourne sur le port `3782` (par défaut). Il doit être joignable depuis Internet pour que les membres puissent terminer le flow OAuth.
+
+| Option | URL exemple | Setup | Cache l'IP de Pebble ? |
+|---|---|---|---|
+| **A. IP + port direct** | `http://145.239.X.X:3782/oauth/callback` | 0 min | ❌ Non |
+| **B. Cloudflare Tunnel** ⭐ | `https://verify.tonsite.com/oauth/callback` | 30 min, gratuit | ✅ Oui |
+| **C. VPS + Caddy + Cloudflare** | `https://verify.tonsite.com/oauth/callback` | 1h, ~3 €/mois | ✅ Oui |
+| **D. ngrok (test local)** | `https://abc123.ngrok-free.app/oauth/callback` | 5 min | ✅ Oui (mais URL change) |
+
+**Recommandation : Cloudflare Tunnel (gratuit + cache l'IP)**.
 
 ```bash
-npm rebuild better-sqlite3
+# Installer cloudflared sur Pebble (ou ton hosting) :
+# https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/
+
+cloudflared tunnel login
+cloudflared tunnel create blz-verify
+cloudflared tunnel route dns blz-verify verify.tonsite.com
+cloudflared tunnel run --url http://localhost:3782 blz-verify
 ```
 
----
-
-## 2. Application Discord
-
-Sur le **portail développeur Discord** (https://discord.com/developers/applications) :
-
-1. Crée (ou réutilise) une application + un bot.
-2. **Bot → Reset Token** → copie dans `.env` (`BOT_TOKEN`).
-3. **General Information → Application ID** → copie dans `.env` (`DISCORD_CLIENT_ID`).
-4. **OAuth2 → Client Secret** → copie dans `.env` (`DISCORD_CLIENT_SECRET`).
-5. **OAuth2 → Redirects** → ajoute l'URL de callback :
-   - **Local** : `http://localhost:3782/oauth/callback`
-   - **Prod**  : `https://verif.tondomaine.com/oauth/callback`
-6. **Bot → Privileged Gateway Intents** : active **Server Members Intent** (pour réattribuer le rôle si un vérifié re-rejoint).
-7. **OAuth2 → URL Generator** : génère l'URL d'invitation avec scopes `bot applications.commands` et permissions au moins **Manage Roles** + **Send Messages** + **Read Messages/View Channels**.
-8. Invite le bot sur ton serveur. **Important** : le rôle du bot doit être placé **AU-DESSUS** du rôle vérifié dans la hiérarchie (sinon il ne pourra pas l'attribuer).
+L'URL publique devient `https://verify.tonsite.com`. Reporte-la dans le portail Discord (OAuth2 → Redirects → `https://verify.tonsite.com/oauth/callback`).
 
 ---
 
-## 3. Variables d'environnement
-
-Copie `.env.example` en `.env` et remplis :
+## 4. Configuration `.env`
 
 ```bash
+cd verification
 cp .env.example .env
 ```
 
-Génère un secret aléatoire pour `OAUTH_STATE_SECRET` :
+Édite `verification/.env` :
 
-```bash
-node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
+```env
+# Obligatoire
+BOT_TOKEN=<token de la nouvelle app Discord>
+DISCORD_CLIENT_ID=<application ID>
+DISCORD_CLIENT_SECRET=<client secret OAuth>
+OAUTH_REDIRECT_URI=https://verify.tonsite.com/oauth/callback
+PUBLIC_BASE_URL=https://verify.tonsite.com
+HTTP_PORT=3782
+HTTP_HOST=0.0.0.0
+
+# Génère avec : node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
+OAUTH_STATE_SECRET=<≥ 32 caractères aléatoires>
+
+# Owners qui reçoivent les logs IP+email en DM (séparés par virgule)
+OWNER_DM_IDS=965984018216665099,1278372257483456603
+
+# Optionnel : verrou reverse proxy
+# Génère avec : node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+VERIFY_PROXY_SECRET=
 ```
 
-Variables clés :
+Si tu utilises Cloudflare Tunnel :
 
-| Variable | Rôle |
-|---|---|
-| `BOT_TOKEN` | Token du bot Discord |
-| `DISCORD_CLIENT_ID` | Application ID |
-| `DISCORD_CLIENT_SECRET` | Client Secret OAuth2 |
-| `OAUTH_REDIRECT_URI` | URL exacte de callback (matche le portail) |
-| `PUBLIC_BASE_URL` | URL publique du serveur, sans `/` final |
-| `HTTP_PORT` | Port d'écoute Express (défaut 3782) |
-| `OAUTH_STATE_SECRET` | Secret HMAC du state OAuth (≥ 32 chars) |
-| `OWNER_DM_IDS` | IDs Discord (virgule) qui reçoivent les **logs IP en DM** |
-
-Par défaut : `OWNER_DM_IDS=965984018216665099,1278372257483456603`.
+- `PUBLIC_BASE_URL=https://verify.tonsite.com`
+- `OAUTH_REDIRECT_URI=https://verify.tonsite.com/oauth/callback`
+- `HTTP_HOST=127.0.0.1` (le tunnel boucle en localhost, donc le port n'est plus exposé sur Internet)
+- `VERIFY_PROXY_SECRET=` peut rester vide (le tunnel chiffre + cloisonne déjà — pas de port public à protéger)
 
 ---
 
-## 4. Hébergement (le serveur OAuth doit être joignable)
+## 5. Démarrage
 
-Le serveur Express doit être **accessible publiquement** par les membres pour que le flow OAuth fonctionne. Plusieurs options :
+### Option A — Avec l'orchestrator BLZ (recommandé sur Pebble)
 
-### Option A — Test local (ngrok)
-
-```bash
-npm install -g ngrok
-ngrok http 3782
-```
-
-Récupère l'URL HTTPS donnée par ngrok (ex. `https://abc123.ngrok-free.app`) et :
-- Mets-la dans `.env` → `PUBLIC_BASE_URL=https://abc123.ngrok-free.app`
-- Mets-la dans `.env` → `OAUTH_REDIRECT_URI=https://abc123.ngrok-free.app/oauth/callback`
-- Ajoute la même URL dans le portail Discord → **OAuth2 → Redirects**
-
-### Option B — Production (Cloudflare Tunnel, VPS, Render, Railway…)
-
-Pointe un domaine (ex. `verif.tondomaine.com`) vers le port `HTTP_PORT` du process. Le `app.set('trust proxy', 1)` du serveur Express lit `x-forwarded-for` (la vraie IP du visiteur derrière le proxy).
-
----
-
-## 5. Lancer le bot
+Le bot vérif est ajouté au registre `orchestrator/maintemp.js` et démarre automatiquement avec les autres :
 
 ```bash
 npm start
+# Lance : modération + niveau + ia + verification
 ```
 
-Tu dois voir :
+Pour ne lancer QUE le bot vérif :
+
+```bash
+BLZ_FORK_SERVICES=verification npm start
+```
+
+### Option B — Standalone (test local)
+
+```bash
+npm run verification:start
+# ou
+cd verification && npm start
+```
+
+Tu dois voir au boot :
 
 ```
-[bot] Connecté : NomDuBot#1234
+[bot] Connecté : BLZVerification#0001
 [bot] Commandes slash globales enregistrées (/verify, /setup-verification).
 [verif] Logs avec IP → DM à 2 owner(s) : 965984018216665099, 1278372257483456603
-[http] OAuth sur le port 3782 — callback http://localhost:3782/oauth/callback
+[http] OAuth sur 0.0.0.0:3782 — callback https://verify.tonsite.com/oauth/callback
 ```
 
 ---
 
-## 6. Configuration côté Discord
+## 6. Configuration côté serveur Discord
 
 Sur ton serveur :
 
 1. Lance `/setup-verification` (admin requis).
-2. Sélectionne le **salon panneau** (où le bouton apparaîtra).
-3. Sélectionne le **rôle vérifié** (donné après vérif).
-4. Sélectionne le **salon logs sans IP**.
-5. (Optionnel) Bouton **"Personnaliser l'embed"** → titre/description/couleur.
-6. Bouton **"Publier / mettre à jour le panneau"** → poste le message public.
+2. Sélectionne :
+   - **Salon panneau** : où le bouton 🔐 Vérifier sera publié
+   - **Rôle vérifié** : attribué après vérification réussie
+   - **Salon logs sans IP** : embed public avec géoloc + alts (sans IP/email)
+3. (Optionnel) Bouton **« Personnaliser l'embed »** pour modifier titre/desc/couleur.
+4. Bouton **« Publier / mettre à jour le panneau »** → poste le message public.
 
 Les membres voient le panneau, cliquent **🔐 Vérifier**, suivent le lien dans le DM éphémère, et obtiennent le rôle.
 
-Les owners (`OWNER_DM_IDS`) reçoivent un DM à chaque vérification (réussie ou échouée) avec **IP + User-Agent + email Discord**.
+Les owners (`OWNER_DM_IDS`) reçoivent un DM à chaque vérification (réussie ou échouée) avec :
+- 🛰️ **IP** brute
+- 📧 **Email Discord** vérifié
+- 🖥️ **User-Agent** du navigateur
+- 🌐 **Géolocalisation** + ISP
+- 🔗 **Comptes liés** (si alts détectés)
 
 ---
 
-## 7. Commandes Slash
+## 7. Reverse proxy (optionnel mais recommandé)
+
+Pour cacher l'IP du serveur d'hébergement (Pebble) et chiffrer le trafic :
+
+### Avec Cloudflare Tunnel (gratuit)
+
+Voir section 3 ci-dessus. Cloudflare Tunnel chiffre le trafic et masque l'IP de Pebble. Pas besoin de `VERIFY_PROXY_SECRET` car le tunnel boucle en `localhost`.
+
+### Avec Caddy/nginx sur VPS
+
+Configure `verification/.env` :
+
+```env
+HTTP_HOST=0.0.0.0
+VERIFY_PROXY_SECRET=<long random hex 64>
+```
+
+Puis configure ton VPS Caddy pour qu'il ajoute le header :
+
+```Caddyfile
+verify.tonsite.com {
+    reverse_proxy IP_PEBBLE:3782 {
+        header_up X-Verif-Proxy-Secret "<même valeur que VERIFY_PROXY_SECRET>"
+    }
+}
+```
+
+→ Toute requête arrivant sur Pebble:3782 sans le bon header est rejetée en `403 Forbidden`.
+
+Voir aussi `modération/deploy/reverse-proxy/` pour les configs détaillées (les mêmes principes s'appliquent).
+
+---
+
+## 8. Commandes Slash
 
 | Commande | Qui | Quoi |
 |---|---|---|
@@ -156,20 +253,16 @@ Les owners (`OWNER_DM_IDS`) reçoivent un DM à chaque vérification (réussie o
 
 ---
 
-## 8. Sécurité & vie privée
+## 9. Sécurité & vie privée
 
-- **Pas d'email en clair** — uniquement un hash SHA-256 dans `data/verification.sqlite`.
-- **Pas d'IP persistée** — seulement transmise dans les DMs aux owners en temps réel.
-- **State OAuth signé** (HMAC-SHA256) avec expiration 30 min — pas de replay/CSRF.
-- **Vérification croisée** : le compte qui termine OAuth doit être le même que celui qui a cliqué (anti-impersonation).
+- **Email en clair JAMAIS persisté** — uniquement un hash SHA-256 dans `data/verification.sqlite`. L'email en clair n'apparaît que dans le DM en temps réel aux owners.
+- **IP JAMAIS persistée en clair** — uniquement un hash SHA-256 (pour la détection d'alts par IP).
+- **State OAuth signé** (HMAC-SHA256) avec expiration 30 min — anti-replay/CSRF.
+- **Anti-impersonation** : le compte qui termine OAuth doit être le même que celui qui a cliqué.
 - **Anti double-compte** par guilde via `UNIQUE(guild_id, email_hash)`.
-- **Sessions courtes** : aucune cookie / session persistée côté navigateur.
-
----
-
-## 9. Migrer depuis l'ancien Killua bot
-
-La structure DB est compatible (mêmes noms de colonnes). Tu peux copier `Killua bot verif/data/verification.sqlite` dans `verification/data/verification.sqlite` — la colonne `log_channel_with_ip_id` sera juste ignorée (les logs IP partent en DM maintenant).
+- **Détection VPN/proxy/datacenter** : refus automatique avant même OAuth.
+- **Verrou reverse proxy** : si `VERIFY_PROXY_SECRET` ou `VERIFY_PROXY_IPS` configuré, toute requête venant directement (hors proxy) est rejetée 403.
+- **Bind interface** : `HTTP_HOST=127.0.0.1` rend le port invisible depuis Internet (utile si proxy local).
 
 ---
 
@@ -177,9 +270,30 @@ La structure DB est compatible (mêmes noms de colonnes). Tu peux copier `Killua
 
 | Problème | Solution |
 |---|---|
-| Bot ne donne pas le rôle | Place le rôle du bot **au-dessus** du rôle vérifié dans Server Settings → Roles. |
-| Lien `/oauth/start` 404 | Vérifie `PUBLIC_BASE_URL` et que le serveur Express est joignable. |
+| Bot ne donne pas le rôle | Place le rôle du bot **AU-DESSUS** du rôle vérifié dans Server Settings → Roles. |
+| Lien `/oauth/start` 404 | Vérifie `PUBLIC_BASE_URL` et que le port 3782 est joignable. |
 | `oauth2/token 401` | `DISCORD_CLIENT_SECRET` incorrect ou `OAUTH_REDIRECT_URI` ≠ portail. |
-| Email non vérifié | Demande au membre d'activer la vérification email Discord (Paramètres → Mon compte). |
+| OAuth réussi mais `400 Mauvais compte Discord` | L'utilisateur a switché de compte Discord entre le clic et le callback. |
+| Email non vérifié | Demande au membre d'activer la vérif email Discord (Paramètres → Mon compte). |
 | DM owners non reçu | Owners doivent **autoriser les DMs depuis ce serveur** (Privacy Settings de la guilde). |
-| Erreur `NODE_MODULE_VERSION` | `npm rebuild better-sqlite3` |
+| Erreur `NODE_MODULE_VERSION` (better-sqlite3) | `npm rebuild better-sqlite3 --prefix verification` |
+| `403 Forbidden` après config proxy | Vérifie que le proxy injecte bien `X-Verif-Proxy-Secret` avec la même valeur que dans `.env`. Tester : `curl https://verify.tonsite.com/health` (doit renvoyer `ok`). |
+| Bouton 🔐 Vérifier ne fait rien | Vérifie que le bot vérif tourne (`/health` répond ok) et que c'est bien le bot vérif, pas le bot modération, qui est invité avec le scope `bot`. |
+
+---
+
+## 11. Migration depuis l'ancien système intégré (modération)
+
+Le système de vérif était précédemment intégré au bot modération (`modération/src/lib/verification/`). Il a été **complètement retiré** au profit de ce bot standalone.
+
+Conséquences :
+
+- ✅ Les commandes `/verify`, `/setup-verification`, `/unverify` n'existent plus côté bot modération (auto-supprimées de Discord au prochain déploiement slash via `LEGACY_COMMAND_NAMES_TO_REMOVE`).
+- ✅ Les variables `OAUTH_STATE_SECRET`, `PUBLIC_BASE_URL`, `HTTP_PORT`, `OWNER_DM_IDS` du `.env` modération **ne sont plus lues** — elles vivent maintenant dans `verification/.env`.
+- ⚠️ La DB `data/verification.sqlite` du bot modération est **différente** de celle du bot vérif (`verification/data/verification.sqlite`). Si tu veux conserver les vérifications existantes, copie le fichier :
+
+```bash
+cp modération/data/verification.sqlite verification/data/verification.sqlite
+```
+
+(Vérifie l'emplacement exact selon ton setup — la DB modération peut être ailleurs.)
