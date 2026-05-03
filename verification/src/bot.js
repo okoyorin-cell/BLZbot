@@ -29,8 +29,6 @@ const {
   TextInputStyle,
   ChannelType,
 } = require('discord.js');
-const { signState } = require('./cryptoUtil');
-const { VERIF_BUILD_ID } = require('./buildId');
 const {
   getGuildConfig,
   upsertGuildConfig,
@@ -38,6 +36,7 @@ const {
   resetEmbedToDefault,
   findVerifiedInGuild,
   deleteVerifiedForGuild,
+  createOAuthTicket,
 } = require('./database');
 const { addGuildMemberRole, removeGuildMemberRole } = require('./discordApi');
 
