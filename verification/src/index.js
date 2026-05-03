@@ -7,16 +7,53 @@
  *
  * Si OWNER_DM_IDS est vide, le DM est silencieusement ignoré (pas d'erreur).
  *
- * Lecture du .env : on charge en priorité `verification/.env` (le dossier de ce
- * fichier), puis le `.env` du cwd, puis celui à la racine du repo. Comme ça le
- * bot peut être lancé depuis n'importe où (orchestrator, npm start dans
- * verification/, fork process Pebble) et trouve toujours sa config.
+ * Lecture du .env : on cherche dans cet ordre, premier trouvé gagne :
+ *   1. `verification/.env` (cas standalone, dev local)
+ *   2. `/home/container/.env` (Pebble Host — partagé avec les autres bots BLZ)
+ *   3. `<racine repo>/.env` (clone local, .env partagé à la racine)
+ *   4. `<cwd>/.env` (fallback ultime)
+ *
+ * Variables : on lit en priorité les noms préfixés `VERIFICATION_*` pour éviter
+ * les collisions avec le bot modération (qui utilise aussi `BOT_TOKEN` mais
+ * avec un token différent). Fallback sur les noms historiques sans préfixe
+ * pour conserver la compat avec un `verification/.env` standalone.
  */
 const path = require('node:path');
-const ENV_LOCAL = path.join(__dirname, '..', '.env');
-require('dotenv').config({ path: ENV_LOCAL, quiet: true });
-// Fallback : .env du cwd (utile si l'utilisateur a un .env partagé à la racine)
-require('dotenv').config({ quiet: true });
+const fs = require('node:fs');
+
+const candidates = [
+  path.join(__dirname, '..', '.env'),               // verification/.env (standalone)
+  '/home/container/.env',                            // Pebble Host (partagé)
+  path.join(__dirname, '..', '..', '.env'),         // racine du repo
+  path.join(process.cwd(), '.env'),                  // cwd
+];
+let envLoaded = false;
+for (const p of candidates) {
+  try {
+    if (p && fs.existsSync(p)) {
+      require('dotenv').config({ path: p, quiet: true });
+      console.log(`[verif] .env chargé : ${p}`);
+      envLoaded = true;
+      break;
+    }
+  } catch { /* continue */ }
+}
+if (!envLoaded) {
+  console.warn('[verif] Aucun .env trouvé — variables d\'environnement OS uniquement.');
+}
+
+/**
+ * Lit une variable préfixée `VERIFICATION_*` en priorité, fallback sur le nom
+ * historique. Évite les collisions quand le bot vérif partage le `.env` du bot
+ * modération (`BOT_TOKEN` modération ≠ `BOT_TOKEN` vérif).
+ */
+function envWithPrefix(prefixedName, fallbackName) {
+  const a = process.env[prefixedName];
+  if (a && String(a).trim()) return String(a).trim();
+  const b = process.env[fallbackName];
+  if (b && String(b).trim()) return String(b).trim();
+  return '';
+}
 
 const { EmbedBuilder } = require('discord.js');
 const { createOAuthServer } = require('./oauthServer');
