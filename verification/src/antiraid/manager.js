@@ -95,11 +95,9 @@ class AntiRaidManager {
         for (const [odString, messages] of this.messageHistory.entries()) {
             const filtered = messages.filter(m => (now - m.timestamp) < messageWindow * 6);
             if (filtered.length === 0) {
-                this.messageHistory.delete(odString
-                );
+                this.messageHistory.delete(odString);
             } else {
-                this.messageHistory.set(odString
-                , filtered);
+                this.messageHistory.set(odString, filtered);
             }
         }
     }
