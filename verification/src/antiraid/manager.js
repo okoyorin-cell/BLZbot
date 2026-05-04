@@ -844,124 +844,48 @@ class AntiRaidManager {
      * Crée un incident de raid dans la base de données
      */
     async createIncident(guildId, score, criteria, lockdown) {
-        return new Promise((resolve, reject) => {
-            const db = this.dbManager.getRaidIncidentsDb();
-            if (!db) {
-                resolve(null);
-                return;
-            }
-
-            const now = Date.now();
-            const raiders = this.currentRaiders.get(guildId);
-            const raiderCount = raiders ? raiders.size : 0;
-
-            db.run(
-                `INSERT INTO raid_incidents (guildId, detected_at, peak_score, raider_count, criteria_triggered, action_taken, lockdown_activated)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [guildId, now, score, raiderCount, criteria, 'RAID_MODE_ACTIVATED', lockdown ? 1 : 0],
-                function(err) {
-                    if (err) {
-                        console.error('[ANTI-RAID] Erreur création incident:', err);
-                        resolve(null);
-                    } else {
-                        resolve(this.lastID);
-                    }
-                }
-            );
-        });
+        if (!this.raidDb) return null;
+        const raiders = this.currentRaiders.get(guildId);
+        const raiderCount = raiders ? raiders.size : 0;
+        return this.raidDb.createIncident(guildId, score, criteria, lockdown, raiderCount);
     }
 
     /**
      * Met à jour un incident pour le lockdown
      */
     async updateIncidentLockdown(incidentId, lockdown) {
-        return new Promise((resolve) => {
-            const db = this.dbManager.getRaidIncidentsDb();
-            if (!db || !incidentId) {
-                resolve();
-                return;
-            }
-
-            db.run(
-                `UPDATE raid_incidents SET lockdown_activated = ?, action_taken = ? WHERE id = ?`,
-                [lockdown ? 1 : 0, 'LOCKDOWN_ACTIVATED', incidentId],
-                (err) => {
-                    if (err) console.error('[ANTI-RAID] Erreur mise à jour incident:', err);
-                    resolve();
-                }
-            );
-        });
+        if (!this.raidDb || !incidentId) return;
+        this.raidDb.updateIncidentLockdown(incidentId, lockdown);
     }
 
     /**
      * Résout un incident
      */
     async resolveIncident(incidentId, resolvedBy) {
-        return new Promise((resolve) => {
-            const db = this.dbManager.getRaidIncidentsDb();
-            if (!db || !incidentId) {
-                resolve();
-                return;
-            }
-
-            db.run(
-                `UPDATE raid_incidents SET resolved_at = ?, resolved_by = ? WHERE id = ?`,
-                [Date.now(), resolvedBy, incidentId],
-                (err) => {
-                    if (err) console.error('[ANTI-RAID] Erreur résolution incident:', err);
-                    resolve();
-                }
-            );
-        });
+        if (!this.raidDb || !incidentId) return;
+        this.raidDb.resolveIncident(incidentId, resolvedBy);
     }
 
     /**
      * Enregistre une action sur un raider
      */
     async recordRaiderAction(member, action) {
-        const db = this.dbManager.getRaidIncidentsDb();
-        if (!db) return;
+        if (!this.raidDb) return;
 
         const data = this.guildScores.get(member.guild.id);
         const incidentId = data?.currentIncidentId;
         if (!incidentId) return;
 
         const accountAge = Math.floor((Date.now() - member.user.createdTimestamp) / (1000 * 60 * 60 * 24));
-
-        db.run(
-            `INSERT INTO detected_raiders (incident_id, odString, username, account_age_days, join_timestamp, action_applied)
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [incidentId, member.id, member.user.username, accountAge, Date.now(), action],
-            (err) => {
-                if (err) console.error('[ANTI-RAID] Erreur enregistrement raider:', err);
-            }
-        );
+        this.raidDb.recordRaiderAction(incidentId, member.id, member.user.username, accountAge, action);
     }
 
     /**
      * Récupère l'historique des incidents
      */
     async getIncidentHistory(guildId, limit = 10) {
-        return new Promise((resolve) => {
-            const db = this.dbManager.getRaidIncidentsDb();
-            if (!db) {
-                resolve([]);
-                return;
-            }
-
-            db.all(
-                `SELECT * FROM raid_incidents WHERE guildId = ? ORDER BY detected_at DESC LIMIT ?`,
-                [guildId, limit],
-                (err, rows) => {
-                    if (err) {
-                        console.error('[ANTI-RAID] Erreur récupération historique:', err);
-                        resolve([]);
-                    } else {
-                        resolve(rows || []);
-                    }
-                }
-            );
-        });
+        if (!this.raidDb) return [];
+        return this.raidDb.getIncidentHistory(guildId, limit);
     }
 
     // ==================== GETTERS POUR LA COMMANDE ====================
