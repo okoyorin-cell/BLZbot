@@ -74,7 +74,7 @@ module.exports = {
         if (!antiRaidManager) {
             return interaction.reply({
                 content: '❌ Le système anti-raid n\'est pas initialisé.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral,
             });
         }
 
