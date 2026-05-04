@@ -359,13 +359,6 @@ class DatabaseManager {
     }
 
     /**
-     * Récupère la base de données des incidents de raid
-     */
-    getRaidIncidentsDb() {
-        return this.databases.raidIncidents;
-    }
-
-    /**
      * Récupère la base de données des absences staff
      */
     getStaffAbsencesDb() {
