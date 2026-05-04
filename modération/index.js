@@ -794,8 +794,8 @@ async function start() {
 
         const loggingEvents = require('./src/events/loggingEvents');
         if (loggingEvents.init) {
-            loggingEvents.init(client, null);
-            if (!BLZ_COMPACT) console.log('✓ Système de logs initialisé (anti-raid sur BLZbot-protect)');
+            loggingEvents.init(client);
+            if (!BLZ_COMPACT) console.log('✓ Système de logs initialisé');
         }
     } catch (error) {
         console.error('❌ Erreur lors du chargement des logs:', error?.message || error);

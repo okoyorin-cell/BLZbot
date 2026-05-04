@@ -10,11 +10,9 @@ const logDeletionHistory = [];
 module.exports = {
     name: 'loggingEvents',
     logger: null,
-    antiRaidManager: null,
 
-    init(client, antiRaidManager = null) {
+    init(client) {
         this.logger = new Logger(client);
-        this.antiRaidManager = antiRaidManager;
 
         // Vocal
         client.on(Events.VoiceStateUpdate, (oldState, newState) => this.handleVoiceStateUpdate(oldState, newState));
