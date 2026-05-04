@@ -248,6 +248,14 @@ function createBot(opts) {
     }
   });
 
+  client.on(Events.MessageCreate, async (message) => {
+    try {
+      await antiRaidManager.trackMessage(message);
+    } catch (e) {
+      console.error('[MessageCreate] Anti-raid trackMessage :', e.message || e);
+    }
+  });
+
   client.on(Events.InteractionCreate, async (interaction) => {
     try {
       if (interaction.isButton() && interaction.customId === 'verify:go') {
