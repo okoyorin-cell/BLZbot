@@ -346,6 +346,59 @@ function createOAuthServer(opts) {
       }
 
       const emailHash = hashEmail(emailNorm);
+
+      try {
+        assertUniqueVerificationEmail(guildId, discordUserId, emailHash);
+      } catch (e) {
+        if (e instanceof DuplicateEmailError) {
+          await emitLog({
+            guildId,
+            userId: discordUserId,
+            success: false,
+            reason: 'Double compte : cette adresse e-mail est déjà liée à un autre compte sur ce serveur.',
+            email: emailNorm,
+            existingUserId: e.otherDiscordUserId,
+            geo: geoEarly,
+          });
+          res.status(409).send(
+            page(
+              'Double compte détecté',
+              `<p>Cette adresse e-mail est déjà utilisée par un autre compte Discord sur ce serveur.</p><p>Ton ID : <code>${discordUserId}</code></p>`,
+            ),
+          );
+          return;
+        }
+        throw e;
+      }
+
+      try {
+        geoEarly = await lookupIp(ip);
+      } catch {
+        geoEarly = null;
+      }
+      if (geoEarly && isVpnOrProxy(geoEarly)) {
+        await emitLog({
+          guildId,
+          userId: discordUserId,
+          success: false,
+          reason: 'Connexion VPN/proxy/datacenter détectée — vérification refusée.',
+          email: emailNorm,
+          geo: geoEarly,
+        });
+        res.status(403).send(
+          page(
+            '🚫 Vérification refusée — VPN détecté',
+            `<p class="err">Un VPN, proxy ou service de tunneling a été détecté sur ta connexion.</p>
+           <p>Pour des raisons de sécurité (anti double-compte), la vérification est refusée tant qu'un VPN est actif.</p>
+           <ul>
+             <li>Désactive ton VPN / proxy / Tor</li>
+             <li>Reviens sur Discord et utilise le bouton 🔐 Vérifier ou la commande <code>/verify</code></li>
+           </ul>`,
+          ),
+        );
+        return;
+      }
+
       const ipH = hashIp(ip);
 
       try {
