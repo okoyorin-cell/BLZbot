@@ -792,6 +792,7 @@ function buildSlashCommands() {
           .setMaxLength(400),
       )
       .toJSON(),
+    antiraidSlash.data.toJSON(),
   ];
 }
 
