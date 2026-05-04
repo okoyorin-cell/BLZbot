@@ -285,36 +285,7 @@ function createOAuthServer(opts) {
       return;
     }
 
-    // 1) Détection VPN/proxy/datacenter AVANT de brûler du quota OAuth.
-    //    On bloque tôt pour donner un message clair au membre.
     let geoEarly = null;
-    try {
-      geoEarly = await lookupIp(ip);
-    } catch {
-      /* géo indisponible : on continue sans */
-    }
-    if (geoEarly && isVpnOrProxy(geoEarly)) {
-      await emitLog({
-        guildId,
-        userId: discordUserId,
-        success: false,
-        reason: 'Connexion VPN/proxy/datacenter détectée — vérification refusée.',
-        geo: geoEarly,
-      });
-      res.status(403).send(
-        page(
-          '🚫 Vérification refusée — VPN détecté',
-          `<p class="err">Un VPN, proxy ou service de tunneling a été détecté sur ta connexion.</p>
-           <p>Pour des raisons de sécurité (anti double-compte), la vérification est refusée tant qu'un VPN est actif.</p>
-           <ul>
-             <li>Désactive ton VPN / proxy / Tor</li>
-             <li>Reviens sur Discord et utilise le bouton 🔐 Vérifier ou la commande <code>/verify</code></li>
-           </ul>`,
-        ),
-      );
-      return;
-    }
-
     try {
       const tokenJson = await exchangeDiscordCode({
         clientId: opts.clientId,
