@@ -792,13 +792,10 @@ async function start() {
     try {
         if (!BLZ_COMPACT) console.log('[DEBUG] Attempting to load loggingEvents...');
 
-        antiRaidManager = new AntiRaidManager(client, dbManager);
-        if (!BLZ_COMPACT) console.log('✓ AntiRaidManager initialisé');
-
         const loggingEvents = require('./src/events/loggingEvents');
         if (loggingEvents.init) {
-            loggingEvents.init(client, antiRaidManager);
-            if (!BLZ_COMPACT) console.log('✓ Système de logs initialisé avec anti-raid');
+            loggingEvents.init(client, null);
+            if (!BLZ_COMPACT) console.log('✓ Système de logs initialisé (anti-raid sur BLZbot-protect)');
         }
     } catch (error) {
         console.error('❌ Erreur lors du chargement des logs:', error?.message || error);
