@@ -404,7 +404,7 @@ client.on('interactionCreate', async interaction => {
         }
 
         try {
-            await command.execute(interaction, { dbManager, voteManager, snipeManager, recruitmentManager, antiRaidManager, config, client });
+            await command.execute(interaction, { dbManager, voteManager, snipeManager, recruitmentManager, config, client });
         } catch (error) {
             const { handleCommandError } = require('./src/utils/error-handler');
             await handleCommandError(interaction, error, client);
