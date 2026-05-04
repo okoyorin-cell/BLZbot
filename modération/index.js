@@ -33,7 +33,6 @@ const VoteManager = require('./src/modules/votes');
 const SnipeManager = require('./src/modules/snipe');
 const RecruitmentManager = require('./src/modules/recruitment');
 const Scheduler = require('./src/modules/scheduler');
-const AntiRaidManager = require('./src/modules/antiraid');
 const { deployModerationSlashCommands } = require('./src/utils/deploy-slash-commands');
 const { handleTicketBridgeMessage } = require('./src/events/ticketBridge');
 const { ensureTicketPanelIfMissing } = require('./src/utils/ticket-panel-payload');
